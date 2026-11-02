@@ -5,7 +5,7 @@ import { updateFog } from '../../src/engine/fog';
 import { getPlayerView } from '../../src/engine/view';
 import { cityAt } from '../../src/engine/query';
 import { endTurn, resign } from '../../src/engine/turn';
-import { pathMapFromView, findPath } from '../../src/engine/path';
+import { pathMapFromState, pathMapFromView, findPath } from '../../src/engine/path';
 import type { Command, GameState } from '../../src/engine/types';
 import { addUnit, makeGame } from '../helpers';
 
@@ -77,6 +77,18 @@ describe('teams', () => {
     const view = getPlayerView(s, 0);
     const path = findPath(pathMapFromView(view), view.myUnits.find((x) => x.id === u.id)!, { x: 4, y: 0 });
     expect(path).not.toBeNull();
+  });
+
+  it('let standing orders run into an ally\'s city that already holds an allied unit', () => {
+    const s = game();
+    addUnit(s, 'army', 1, 4, 0); // the ally's own garrison
+    const fighter = addUnit(s, 'fighter', 0, 3, 1);
+    updateFog(s, 0);
+    const path = findPath(pathMapFromState(s, 0), fighter, { x: 4, y: 0 });
+    expect(path).toEqual([{ x: 4, y: 0 }]);
+    // ...but a square in the open with an ally on it still blocks.
+    addUnit(s, 'army', 1, 5, 1);
+    expect(pathMapFromState(s, 0).enemy.has(1 * s.width + 5)).toBe(true);
   });
 
   it('repair a damaged unit in an ally\'s city', () => {
