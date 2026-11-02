@@ -6,7 +6,7 @@ import { cityAt, destroyUnit, spawnUnit, topLevelUnitsAt, trimCargo, unitsAt } f
 import { areFriendly } from './relations';
 import { resolveCombat } from './combat';
 import { relocate, settleAircraft, slowArmor, spendMove } from './movement';
-import { canPlayerSeeUnit, reveal } from './fog';
+import { canPlayerSeeUnit, noteCityTaken, reveal } from './fog';
 import { WAR_TORN_MAX } from './production';
 
 /** Promotions rule: a sea unit that wins a fight gains a win; a new rank heals one hit and is announced. */
@@ -235,7 +235,7 @@ export function attackCity(s: GameState, rng: RandomSource, att: Unit, city: Cit
   city.production = null;
   city.progress = 0;
   city.lastBuilt = null;
-  if (from !== null) s.fog[from].knownCityOwner[city.id] = att.owner;
+  noteCityTaken(s, city.id, from, att.owner);
   destroyUnit(s, att, 'garrison', events);
   // An undamaged Armor that takes a city leaves an Army there at once (as in the original Advanced rules); it has no moves left.
   if (att.type === 'armor' && att.damage === 0) spawnUnit(s, 'army', att.owner, city.x, city.y).movesLeft = 0;

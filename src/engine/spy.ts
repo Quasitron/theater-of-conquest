@@ -3,6 +3,7 @@ import type { RandomSource } from './rng';
 import { chebyshev } from './map';
 import { cityAt, destroyUnit } from './query';
 import { areFriendly } from './relations';
+import { noteCityTaken } from './fog';
 import { WAR_TORN_MAX, buildTime } from './production';
 import { hitsOf, rankOf } from './units';
 import { recordWin } from './attack';
@@ -97,7 +98,7 @@ export function incitePeople(s: GameState, rng: RandomSource, spy: Unit, events:
   city.progress = 0;
   city.lastBuilt = null;
   delete city.route;
-  s.fog[from].knownCityOwner[city.id] = spy.owner;
+  noteCityTaken(s, city.id, from, spy.owner);
   spy.movesLeft = 0;
   spy.movedThisTurn = true;
   spy.orders = null;

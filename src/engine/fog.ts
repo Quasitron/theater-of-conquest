@@ -2,7 +2,7 @@ import type { GameEvent, GameState, PlayerId, Unit, UnitType } from './types';
 import { UNIT_STATS, rankOf } from './units';
 import { chebyshev, index, normalize } from './map';
 import { cityAt, destroyUnit } from './query';
-import { areFriendly } from './relations';
+import { areFriendly, teammatesOf } from './relations';
 
 const SIGHT = 1;
 const ADVANCED_SIGHT = 2;
@@ -75,6 +75,15 @@ export function canPlayerSeeUnit(s: GameState, pid: PlayerId, target: Unit): boo
 export function reveal(s: GameState, pid: PlayerId, u: Unit): void {
   if (areFriendly(s, pid, u.owner)) return;
   s.fog[pid].lastSeen[u.id] = { unitId: u.id, type: u.type, owner: u.owner, x: u.x, y: u.y, turnSeen: s.turn, ...(rankOf(u.wins) > 0 ? { rank: rankOf(u.wins) } : {}) };
+}
+
+/**
+ * A city has changed hands: its old owner knows it, and so do the old owner's teammates (they share its sight, and may
+ * have lost sight of the city with the garrison that was killed, so would otherwise keep showing it as theirs).
+ */
+export function noteCityTaken(s: GameState, cityId: number, from: PlayerId | null, newOwner: PlayerId): void {
+  if (from === null) return;
+  for (const p of [from, ...teammatesOf(s, from)]) s.fog[p].knownCityOwner[cityId] = newOwner;
 }
 
 export function updateFog(s: GameState, pid: PlayerId): void {

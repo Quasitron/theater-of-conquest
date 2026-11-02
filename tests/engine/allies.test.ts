@@ -91,6 +91,21 @@ describe('teams', () => {
     expect(pathMapFromState(s, 0).enemy.has(1 * s.width + 5)).toBe(true);
   });
 
+  it('tell my team a city of theirs was taken even if nobody of ours still sees it', () => {
+    const s = game();
+    let r = null as ReturnType<typeof run> | null;
+    for (let tries = 0; tries < 60 && !r?.events.some((e) => e.type === 'cityCaptured'); tries++) {
+      const foe = addUnit(s, 'army', 2, 5, 0);
+      s.currentPlayer = 2;
+      r = run(s, { type: 'move', player: 2, unitId: foe.id, dir: 6 }); // west onto player 1's city
+      Object.assign(s, r.state);
+    }
+    expect(cityAt(s, 4, 0)!.owner).toBe(2);
+    expect(s.fog[1].knownCityOwner[cityAt(s, 4, 0)!.id]).toBe(2);
+    expect(s.fog[0].knownCityOwner[cityAt(s, 4, 0)!.id]).toBe(2); // player 0 is player 1's teammate, with no unit near the city
+    expect(getPlayerView(s, 0).knownCities.find((c) => c.x === 4)?.owner).toBe(2);
+  });
+
   it('repair a damaged unit in an ally\'s city', () => {
     const s = game();
     const ship = addUnit(s, 'army', 0, 4, 0, { damage: 1 });
