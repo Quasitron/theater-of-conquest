@@ -11,6 +11,8 @@ export interface BattleLine {
   at: Pos;
   /** True when the attacker won. */
   attackerWon: boolean;
+  /** How the result is for me and my team: good (green), bad (red), or neither (a fight between others). */
+  outcome: 'good' | 'bad' | 'neutral';
   /** The fight, so the report's Show button can play it on the map. */
   fight?: Fight;
 }
@@ -21,8 +23,9 @@ export interface BattleLine {
  * after a reload.
  */
 export function battlesAgainstMe(
-  entries: readonly LogEntry[], me: PlayerId, names: string[], lookup: DescribeLookup,
+  entries: readonly LogEntry[], me: PlayerId, names: string[], lookup: DescribeLookup, allies: readonly PlayerId[] = [],
 ): BattleLine[] {
+  const mine = (p: PlayerId | null) => p !== null && (p === me || allies.includes(p));
   const starts: number[] = [];
   entries.forEach((e, i) => {
     if (e.event.type === 'turnStarted' && e.event.player === me) starts.push(i);
@@ -38,7 +41,10 @@ export function battlesAgainstMe(
     const e = entry.event;
     if (e.type !== 'combat' || e.attackerOwner === me) continue;
     const text = describeEvent(e, me, names, lookup);
-    if (text !== null) out.push({ turn: entry.turn, text, at: { x: e.x, y: e.y }, attackerWon: e.attackerWon, fight: fights[out.length] });
+    if (text === null) continue;
+    // Good for my side when my team's attacker wins or my team's defender holds; the reverse is bad.
+    const outcome = mine(e.attackerOwner) ? (e.attackerWon ? 'good' : 'bad') : mine(e.defender.owner) ? (e.attackerWon ? 'bad' : 'good') : 'neutral';
+    out.push({ turn: entry.turn, text, at: { x: e.x, y: e.y }, attackerWon: e.attackerWon, outcome, fight: fights[out.length] });
   }
   return out;
 }
