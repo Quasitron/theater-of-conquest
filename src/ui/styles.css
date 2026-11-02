@@ -92,6 +92,10 @@ canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-ra
 }
 
 .muted { color: var(--muted); font-size: 0.85rem; }
+.loading-overlay { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 1.1rem; font-weight: 600; }
+.loading-overlay p { margin: 0; }
+.loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: loading-spin 0.9s linear infinite; }
+@keyframes loading-spin { to { transform: rotate(360deg); } }
 .actions { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
 .actions button, .orders-menu button { font-size: 0.85rem; padding: 4px 8px; margin: 0; }
 .actions button { width: 100%; text-align: left; }

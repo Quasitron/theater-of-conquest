@@ -58,6 +58,7 @@ export function TitleScreen({ store, onStart }: Props) {
   const [panel, setPanel] = useState<'menu' | 'new' | 'load'>('menu');
   const [soundOpen, setSoundOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [mapKind, setMapKind] = useState<'random' | 'theater'>('random');
   const [theaterId, setTheaterId] = useState(THEATERS[0]?.id ?? '');
   const theater = mapKind === 'theater' ? theaterById(theaterId) : undefined;
@@ -130,6 +131,11 @@ export function TitleScreen({ store, onStart }: Props) {
     }
   };
   const load = async (name: string) => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    // Rebuilding a busy game blocks the page, so let the "Loading" notice paint before starting.
+    await new Promise<void>((done) => requestAnimationFrame(() => setTimeout(done, 0)));
     try {
       const save = await store.get(name);
       if (!save) return setError(`No save named "${name}".`);
@@ -139,6 +145,8 @@ export function TitleScreen({ store, onStart }: Props) {
       onStart(GameSession.fromSave(r.save, store, r.note));
     } catch (e) {
       setError(`Could not load "${name}": ${(e as Error).message}`);
+    } finally {
+      setLoading(false);
     }
   };
   const remove = async (name: string) => {
@@ -372,6 +380,7 @@ export function TitleScreen({ store, onStart }: Props) {
       <p class="title-version">{VERSION_LABEL} · Anonymous visit counts, no cookies</p>
       {soundOpen && <SettingsDialog onClose={() => setSoundOpen(false)} />}
       {manualOpen && <ManualDialog onClose={() => setManualOpen(false)} />}
+      {loading && <div class="loading-overlay" role="status"><div class="loading-spinner" /><p>Loading game…</p></div>}
     </main>
   );
 }
