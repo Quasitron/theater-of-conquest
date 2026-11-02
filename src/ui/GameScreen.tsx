@@ -1144,7 +1144,7 @@ export function GameScreen({ session, onQuit }: Props) {
   );
 
   // Reports: battles others started since your last turn (from the log), and recent enemy sightings (from fog).
-  const battles = useMemo(() => battlesAgainstMe(session.log(view.me), view.me, names, lookup), [view]);
+  const battles = useMemo(() => battlesAgainstMe(session.log(view.me), view.me, names, lookup, view.allies), [view]);
   const sightings = useMemo(() => recentSightings(view, names), [view]);
   // Which way each of your units last moved, so a ship or aircraft picture can face the way it is going.
   const headingLeft = useMemo(() => unitsHeadingLeft(session.log(view.me), view.width, view.wrap, view.me), [view]);

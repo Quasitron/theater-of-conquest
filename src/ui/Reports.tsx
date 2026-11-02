@@ -54,7 +54,7 @@ export function Reports({ view, colors, tab: first, battles, sightings, onShow, 
             <ul class="report-list">
               {battles.map((b, i) => (
                 <li key={i}>
-                  <span class={b.attackerWon ? 'lost-battle' : 'won-battle'}>{b.text}</span>
+                  <span class={b.outcome === 'good' ? 'won-battle' : b.outcome === 'bad' ? 'lost-battle' : undefined}>{b.text}</span>
                   <span class="muted">at {b.at.x},{b.at.y}</span>
                   <button onClick={(e) => { blur(e); onShow(b.at, b.fight); }}>Show</button>
                 </li>

@@ -32,6 +32,27 @@ describe('battlesAgainstMe', () => {
     expect(lines[0].text).toBe("Computer's Cruiser attacked your Army and won.");
   });
 
+  it('colours each fight by what it means for me and my team', () => {
+    const fight = (attacker: number, defender: number | null, won: boolean): LogEntry => ({
+      turn: 1,
+      event: {
+        type: 'combat', attackerId: 9, attackerOwner: attacker, attackerType: 'army',
+        defender: { kind: 'unit', unitId: 4, owner: defender ?? 3, unitType: 'army' },
+        x: 1, y: 1, attackerWon: won, attackerDamage: 0, defenderDamage: 1,
+      } satisfies GameEvent,
+    });
+    // I am 0, my ally is 1, the enemies are 2 and 3.
+    const log: LogEntry[] = [
+      started(1, 0), started(1, 1),
+      fight(2, 0, true), fight(2, 1, false), // an enemy beats my unit (bad); an enemy fails against my ally (good)
+      fight(1, 2, true), fight(1, 2, false), // my ally beats an enemy (good); my ally loses to an enemy (bad)
+      fight(2, 3, true), // enemies fighting each other (neither)
+      started(2, 0),
+    ];
+    const lines = battlesAgainstMe(log, 0, ['Me', 'Ally', 'Foe', 'Foe2'], lookup, [1]);
+    expect(lines.map((l) => l.outcome)).toEqual(['bad', 'good', 'good', 'bad', 'neutral']);
+  });
+
   it('gives each line its fight, so the report can play it again', () => {
     const log: LogEntry[] = [
       started(1, 0), combat(1, 0, true), // my own attack is not a line, and must not shift the fights
