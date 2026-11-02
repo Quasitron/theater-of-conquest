@@ -63,8 +63,12 @@ export function pathMapFromState(s: GameState, pid: PlayerId, opts: { blockOwn?:
   }
   const enemy = new Set<number>();
   for (const e of Object.values(fog.lastSeen)) if (e.turnSeen === s.turn) enemy.add(index(s, e.x, e.y));
-  // Allied units standing in the open block the square as an enemy would (nothing may share it).
-  for (const u of s.units) if (u.owner !== pid && u.carriedBy === null && areFriendly(s, u.owner, pid)) enemy.add(index(s, u.x, u.y));
+  // Allied units standing in the open block the square as an enemy would (nothing may share it); a city can be shared.
+  for (const u of s.units) {
+    if (u.owner === pid || u.carriedBy !== null || !areFriendly(s, u.owner, pid)) continue;
+    const i = index(s, u.x, u.y);
+    if (s.terrain[i] !== 'city') enemy.add(i);
+  }
   const m = { width: s.width, terrain };
   return {
     width: s.width, height: s.height, wrap: s.wrap, me: pid, turn: s.turn,
