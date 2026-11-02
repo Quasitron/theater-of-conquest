@@ -182,6 +182,8 @@ export function GameScreen({ session, onQuit }: Props) {
   const [reportIdx, setReportIdx] = useState(0);
   // Set when Prod. was pressed on a production report: closing the production dialog then moves on to the next report.
   const reportProd = useRef(false);
+  /** The city screen was opened by a capture: closing it returns the map to the next ready unit. */
+  const capturedOpen = useRef(false);
 
   // Show a one-off load notice (e.g. an older save) when the game opens.
   useEffect(() => {
@@ -688,7 +690,7 @@ export function GameScreen({ session, onQuit }: Props) {
     const ev = session.lastEvents.find((e) => e.type === 'cityCaptured' && e.by === view.me);
     const captured = ev && ev.type === 'cityCaptured' ? ev : null;
     // Last, so that the city screen's focus wins over any selection or auto-fit camera move.
-    const finish = () => { if (captured) openCity(captured.cityId); };
+    const finish = () => { if (captured) { capturedOpen.current = true; openCity(captured.cityId); } };
     if (session.phase !== 'playing') return finish();
     const v = session.view();
     if (v.me !== view.me) return finish();
@@ -1351,9 +1353,15 @@ export function GameScreen({ session, onQuit }: Props) {
           onSelectUnit={(id) => { const u = view.myUnits.find((x) => x.id === id); if (u) selectUnit(u); }}
           onClose={() => {
             setCityOpen(null);
+            const afterCapture = capturedOpen.current;
+            capturedOpen.current = false;
             if (reportProd.current) {
               reportProd.current = false;
               nextReport();
+            } else if (afterCapture && selection?.kind === 'unit') {
+              // After a capture the next ready unit was selected behind the city screen: bring the map back to it.
+              const next = session.view().myUnits.find((u) => u.id === selection.id);
+              if (next) focus(next);
             }
           }}
         />
