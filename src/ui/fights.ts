@@ -16,6 +16,8 @@ export interface Fight {
   attackerType: UnitType;
   /** The defending unit's type; null when the defender was a city. */
   defenderType: UnitType | null;
+  /** The defending city's id; undefined when the defender was a unit. */
+  cityId?: number;
   attackerWon: boolean;
   /** The winning attacker moved into the defender's square afterwards. */
   moved: boolean;
@@ -44,6 +46,7 @@ export function fightsFromEvents(events: readonly GameEvent[], describe: (e: Gam
     if (e.type === 'combat') {
       cur = {
         ...(e.strike ? { struck: true } : {}),
+        ...(e.defender.kind === 'city' ? { cityId: e.defender.cityId } : {}),
         at: { x: e.x, y: e.y }, attackerId: e.attackerId, from: e.from ? { ...e.from } : null,
         attackerOwner: e.attackerOwner, defenderOwner: e.defender.owner, attackerType: e.attackerType,
         defenderType: e.defender.kind === 'unit' ? e.defender.unitType : null,
@@ -55,7 +58,8 @@ export function fightsFromEvents(events: readonly GameEvent[], describe: (e: Gam
     } else if (cur && ((e.type === 'unitDestroyed' && e.reason === 'combat') || e.type === 'cityBombed')) {
       cur.destroyed = true; // a bombed city blows up too, whether it lost its production or a unit
     } else if (cur && e.type === 'cityCaptured') {
-      cur.captured = true;
+      // Only the won fight against that very city took it; a capture logged later (a revolt, a fight we cannot see) is not this fight's.
+      if (cur.attackerWon && cur.cityId === e.cityId) cur.captured = true;
     } else if (cur && e.type === 'unitPromoted') {
       cur.promoted = true;
       cur.promotedRank = e.rank;
