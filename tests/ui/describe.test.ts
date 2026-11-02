@@ -17,6 +17,13 @@ const lookup = {
 };
 
 describe('describeEvent', () => {
+  it('names whose bomber hit a city, even when the viewer is a bystander', () => {
+    const hit = (by: number, owner: number) => ({ type: 'cityBombed' as const, cityId: 3, by, owner, effect: 'production' as const });
+    expect(describeEvent(hit(0, 1), 0, names, lookup)).toBe('Your bomber hit Paris: it lost its production.');
+    expect(describeEvent(hit(1, 0), 0, names, lookup)).toBe("Ben's bomber hit Paris: it lost its production.");
+    expect(describeEvent(hit(1, 2), 0, ['Ann', 'Ben', 'Cy'], lookup)).toBe("Ben's bomber hit Paris: it lost its production.");
+  });
+
   it('describes key events from the viewer perspective', () => {
     expect(describeEvent({ type: 'cityCaptured', cityId: 3, by: 0, from: null }, 0, names, lookup)).toBe('You captured Paris.');
     expect(describeEvent({ type: 'cityCaptured', cityId: 3, by: 1, from: 0 }, 0, names, lookup)).toBe('Ben captured Paris, one of your cities!');

@@ -91,7 +91,7 @@ export function describeEvent(
     case 'cityBombed': {
       const city = lookup?.city(e.cityId) ?? 'a city';
       const effect = e.effect === 'unit' ? `lost ${withArticle(UNIT_STATS[e.unitType ?? 'army'].name)}` : 'lost its production';
-      return e.owner === me ? `An enemy bomber hit ${city}: it ${effect}.` : `Your bomber hit ${city}: it ${effect}.`;
+      return `${whose(e.by, true)} bomber hit ${city}: it ${effect}.`;
     }
     case 'unitPromoted':
       return `${unitName(e.unitId)} was promoted to ${RANK_NAMES[e.rank]}.`;
