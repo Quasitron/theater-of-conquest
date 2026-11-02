@@ -18,6 +18,11 @@ const combat = (attackerOwner: number, won: boolean, x = 3, y = 1): GameEvent =>
   defender: { kind: 'unit', unitId: 4, owner: attackerOwner === 0 ? 1 : 0, unitType: 'army' },
   x, y, attackerWon: won, attackerDamage: 0, defenderDamage: 1,
 });
+const cityFight = (attackerOwner: number, won: boolean, cityId: number, x = 3, y = 1): GameEvent => ({
+  type: 'combat', attackerId: 9, attackerOwner, attackerType: 'army', from: { x: x + 1, y },
+  defender: { kind: 'city', cityId, owner: attackerOwner === 0 ? 1 : 0 },
+  x, y, attackerWon: won, attackerDamage: 0, defenderDamage: 1,
+});
 const destroyed: GameEvent = { type: 'unitDestroyed', unitId: 4, owner: 0, unitType: 'army', reason: 'combat' };
 const captured: GameEvent = { type: 'cityCaptured', cityId: 2, by: 1, from: 0 };
 const started = (player: number, turn: number): LogEntry => ({ turn, event: { type: 'turnStarted', player, turn } });
@@ -51,10 +56,16 @@ describe('combat setting', () => {
 
 describe('fightsFromEvents', () => {
   it('folds the destruction and capture that follow a combat into that fight', () => {
-    const fights = fightsFromEvents([combat(1, true, 5, 2), destroyed, combat(1, false, 6, 2), combat(1, true, 7, 2), captured], describe1);
+    const fights = fightsFromEvents([combat(1, true, 5, 2), destroyed, combat(1, false, 6, 2), cityFight(1, true, 2, 7, 2), captured], describe1);
     expect(fights.map((f) => [f.at.x, f.attackerWon, f.destroyed, f.captured])).toEqual([
-      [5, true, true, false], [6, false, false, false], [7, true, false, true],
+      [5, true, true, false], [6, false, false, false], [7, true, true, true],
     ]);
+  });
+
+  it('does not credit a capture to a fight that did not take that city', () => {
+    // A lost fight, a won fight against a unit, and a lost attack on city 2, each followed by some other capture of city 2.
+    const fights = fightsFromEvents([combat(1, false, 5, 2), captured, combat(1, true, 6, 2), captured, cityFight(1, false, 2, 7, 2), captured, cityFight(1, true, 3, 8, 2), captured], describe1);
+    expect(fights.map((f) => f.captured)).toEqual([false, false, false, false]); // the last one fought city 3, not city 2
   });
 
   it('leaves out fights with no caption and ignores events before the first combat', () => {
