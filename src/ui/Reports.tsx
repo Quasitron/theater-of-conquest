@@ -4,10 +4,10 @@ import type { Fight } from './fights';
 import { blur } from './blur';
 import { UNIT_GLYPH } from './colors';
 import { PlacedDialog } from './LeaderLine';
-import type { BattleLine, Sighting } from './reportLines';
+import type { BattleLine, Sighting, SentryLine } from './reportLines';
 import { StatusTab } from './StatusReport';
 
-export type ReportTab = 'status' | 'combat' | 'recon';
+export type ReportTab = 'status' | 'combat' | 'recon' | 'sentry';
 
 interface Props {
   view: PlayerView;
@@ -16,6 +16,10 @@ interface Props {
   tab: ReportTab;
   battles: BattleLine[];
   sightings: Sighting[];
+  /** Units on sentry, longest-waiting first. */
+  sentries: SentryLine[];
+  /** Selects one of your units and centers the map on it; the reports then close. */
+  onSelectUnit: (id: number) => void;
   /** Centers the map on a square and flashes it, so a line in a report can be found on the map; a battle also plays out. */
   onShow: (at: Pos, fight?: Fight) => void;
   onClose: () => void;
@@ -25,12 +29,18 @@ const TABS: { id: ReportTab; label: string }[] = [
   { id: 'status', label: 'Status' },
   { id: 'combat', label: 'Combat' },
   { id: 'recon', label: 'Recon' },
+  { id: 'sentry', label: 'Sentry' },
 ];
 
+/** "12 turns", "1 turn", "this turn". */
+function sentryAge(turns: number): string {
+  return turns === 0 ? 'since this turn' : `for ${turns} ${turns === 1 ? 'turn' : 'turns'}`;
+}
+
 /** The Reports dialog, like the original's Reports menu: status, battles against you, and enemy sightings. */
-export function Reports({ view, colors, tab: first, battles, sightings, onShow, onClose }: Props) {
+export function Reports({ view, colors, tab: first, battles, sightings, sentries, onSelectUnit, onShow, onClose }: Props) {
   const [tab, setTab] = useState<ReportTab>(first);
-  const count = (id: ReportTab) => (id === 'combat' ? battles.length : id === 'recon' ? sightings.length : 0);
+  const count = (id: ReportTab) => (id === 'combat' ? battles.length : id === 'recon' ? sightings.length : id === 'sentry' ? sentries.length : 0);
   return (
     <PlacedDialog anchor={null} label="Reports" onKey={(e) => { if (e.key === 'Escape') { onClose(); return true; } return false; }}>
       <h2>Reports <span class="muted">turn {view.turn}</span></h2>
@@ -72,6 +82,24 @@ export function Reports({ view, colors, tab: first, battles, sightings, onShow, 
                 <li key={i}>
                   <span><span class="glyph">{UNIT_GLYPH[s.type]}</span> {s.owner}'s {UNIT_STATS[s.type].name}</span>
                   <span class="muted">at {s.at.x},{s.at.y} · {s.visibleNow ? 'in sight now' : `last seen turn ${s.turnSeen}`}</span>
+                  <button onClick={(e) => { blur(e); onShow(s.at); }}>Show</button>
+                </li>
+              ))}
+            </ul>
+          )
+      )}
+
+      {tab === 'sentry' && (
+        sentries.length === 0
+          ? <p class="muted">None of your units is on sentry.</p>
+          : (
+            <ul class="report-list">
+              {sentries.map((s) => (
+                <li key={s.unitId}>
+                  <button class="linklike" onClick={(e) => { blur(e); onSelectUnit(s.unitId); }}>
+                    <span class="glyph">{UNIT_GLYPH[s.type]}</span> {s.name}
+                  </button>
+                  <span class="muted">{s.where} · on sentry {sentryAge(s.turns)}</span>
                   <button onClick={(e) => { blur(e); onShow(s.at); }}>Show</button>
                 </li>
               ))}

@@ -37,6 +37,8 @@ export interface Unit {
   movedThisTurn: boolean;
   orders: Orders | null;
   unloadNextTurn: boolean;
+  /** The turn this unit was first seen on sentry at the end of its owner's turn (for the Sentry report); cleared when it wakes. */
+  sentrySince?: number;
   /** Player-given name, or null to show the default ordinal name. */
   name: string | null;
   /** Consecutive turns an order has been blocked (used by explore/goto retry logic). */

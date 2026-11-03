@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { advanceProduction, buildTime, setNextProduction, setProduction } from '../../src/engine/production';
 import type { GameEvent } from '../../src/engine/types';
-import { makeGame } from '../helpers';
+import { endTurn } from '../../src/engine/turn';
+import { addUnit, makeGame } from '../helpers';
 
 const P = ['*##.', '##*.'];
 
@@ -62,6 +63,23 @@ describe('production', () => {
     expect(s.cities[0].nextProduction).toBeUndefined();
     setProduction(s, s.cities[0], null);
     expect(setNextProduction(s, s.cities[0], 'army')).toBe('the city is not building anything');
+  });
+
+  it('stamps when a unit went on sentry at the end of its owner\'s turn, and clears it when it wakes', () => {
+    const s = makeGame(P);
+    const u = addUnit(s, 'army', 0, 1, 0, { orders: { kind: 'sentry' } });
+    s.turn = 7;
+    s.currentPlayer = 0;
+    endTurn(s, []);
+    expect(u.sentrySince).toBe(7);
+    s.turn = 9;
+    s.currentPlayer = 0;
+    endTurn(s, []);
+    expect(u.sentrySince).toBe(7); // kept while it stays on sentry
+    u.orders = null;
+    s.currentPlayer = 0;
+    endTurn(s, []);
+    expect(u.sentrySince).toBeUndefined();
   });
 
   it('only coastal cities build ships', () => {

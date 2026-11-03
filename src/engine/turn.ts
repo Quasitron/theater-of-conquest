@@ -18,6 +18,11 @@ function finishPlayerTurn(s: GameState, pid: PlayerId, events: GameEvent[]): voi
     if (u.fuel <= 0) destroyUnit(s, u, 'crashed', events);
   }
   for (const u of s.units) {
+    if (u.owner !== pid) continue;
+    if (u.orders?.kind !== 'sentry') delete u.sentrySince;
+    else if (u.sentrySince === undefined) u.sentrySince = s.turn;
+  }
+  for (const u of s.units) {
     if (u.owner !== pid || u.movedThisTurn || u.damage === 0) continue;
     const c = cityAt(s, u.x, u.y);
     if (c && areFriendly(s, c.owner, pid)) u.damage -= 1;
