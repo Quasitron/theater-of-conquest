@@ -2,9 +2,9 @@ import type { JSX } from 'preact';
 import { memo } from 'preact/compat';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { GameSession, SessionCommand } from '../app/session';
-import { unloadAndLand } from '../app/unloadAndLand';
+import { landOnSquare, unloadAndLand } from '../app/unloadAndLand';
 import {
-  UNIT_STATS, aircraftCanReach, arrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
+  UNIT_STATS, step, aircraftCanReach, arrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
@@ -31,7 +31,7 @@ import { keyToAction, type ActionId } from './keys';
 import { pathLabel, pluralUnit } from './labels';
 import { cityScreenPoint } from './placement';
 import { EXPLOSION_TAIL_MS } from './explosions';
-import { approachSquare, attackLabel, bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, viewRelief, visibleGarrison } from './plans';
+import { approachSquare, attackLabel, landersFor, bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, viewRelief, visibleGarrison } from './plans';
 import { ProductionReport } from './ProductionReport';
 import { MapCanvas, type ActiveFx } from './MapCanvas';
 import { getCombatMode, getReplayPace, getReportAfter, type ReplayPace } from './combatMode';
@@ -158,6 +158,8 @@ export function GameScreen({ session, onQuit }: Props) {
   const [hover, setHover] = useState<Pos | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [picker, setPicker] = useState<null | 'load' | 'unload'>(null);
+  // A loaded transport sent onto a land square: which unit to put ashore there.
+  const [landAt, setLandAt] = useState<null | { transportId: number; dir: Dir }>(null);
   const [infoId, setInfoId] = useState<number | null>(null);
   // The square whose hover preview is frozen after an order was given there, until the pointer leaves it.
   const [frozen, setFrozen] = useState<Pos | null>(null);
@@ -840,8 +842,18 @@ export function GameScreen({ session, onQuit }: Props) {
     setMessage(`${label} given to ${done} of ${ids.length} ${ids.length === 1 ? 'unit' : 'units'}.`);
   };
 
+  /** A transport with cargo told to move onto open land asks which unit to put ashore there; true when it asked. */
+  const offerLanding = (dir: Dir): boolean => {
+    if (!selectedUnit) return false;
+    const p = step(view as unknown as MapLike, selectedUnit.x, selectedUnit.y, dir);
+    if (!p || landersFor(view, selectedUnit, p).length === 0) return false;
+    setLandAt({ transportId: selectedUnit.id, dir });
+    return true;
+  };
+
   const moveSelected = (dir: number) => {
     if (!selectedUnit) return;
+    if (offerLanding(dir as Dir)) return;
     if (act({ type: 'move', unitId: selectedUnit.id, dir: dir as Dir })) {
       const still = session.view().myUnits.find((u) => u.id === selectedUnit.id);
       if (still) {
@@ -979,6 +991,10 @@ export function GameScreen({ session, onQuit }: Props) {
       else giveRoute(selectedUnit, { kind: 'patrol', a: { x: selectedUnit.x, y: selectedUnit.y }, b: p, toB: true }, p);
       return;
     }
+    if (selectedUnit) {
+      const landDir = dirTo(view, selectedUnit, p);
+      if (landDir !== null && offerLanding(landDir)) return;
+    }
     if (selectedUnit && targets.some((t) => t.x === p.x && t.y === p.y)) {
       const dir = dirTo(view, selectedUnit, p);
       if (dir !== null) return moveSelected(dir);
@@ -1080,11 +1096,12 @@ export function GameScreen({ session, onQuit }: Props) {
         else if (menu) setMenu(null);
         else if (info) setInfoId(null);
         else if (picker) setPicker(null);
+        else if (landAt) setLandAt(null);
         else if (target) setTarget(null);
         else setSelection(null);
         return;
       }
-      if (picker || info) return; // the picker and the info dialog are modal
+      if (picker || landAt || info) return; // the picker and the info dialog are modal
       if (a.kind === 'arrow' && selectedUnit && playing) {
         e.preventDefault();
         moveSelected(a.dir);
@@ -1316,6 +1333,29 @@ export function GameScreen({ session, onQuit }: Props) {
           />
         </div>
       )}
+      {landAt && (() => {
+        const ship = view.myUnits.find((u) => u.id === landAt.transportId);
+        const at = ship ? step(view as unknown as MapLike, ship.x, ship.y, landAt.dir) : null;
+        const landers = ship && at ? landersFor(view, ship, at) : [];
+        if (!ship || landers.length === 0) return null;
+        return (
+          <div class="overlay">
+            <UnitPicker
+              title={`Land from ${unitDisplayName(ship)} on this square`}
+              units={landers}
+              room={1}
+              onCancel={() => setLandAt(null)}
+              onConfirm={(ids) => {
+                if (ids.length === 0) return;
+                setLandAt(null);
+                const err = landOnSquare(session, ship.id, ids[0], landAt.dir);
+                afterOwnAct();
+                setMessage(err ?? `${unitDisplayName(landers.find((u) => u.id === ids[0])!)} landed.`);
+              }}
+            />
+          </div>
+        );
+      })()}
       {pickerUnit && picker === 'unload' && (
         <div class="overlay">
           <UnitPicker
