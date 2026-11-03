@@ -91,10 +91,11 @@ const GameLog = memo(function GameLog({ lines }: { lines: LogLine[] }) {
 });
 
 /** Path, reachability and label from `u` to `to` (fuel-aware for aircraft). */
-function planPath(view: PlayerView, u: Unit, to: Pos): { path: Pos[] | null; ok: boolean; label: string } {
+function planPath(view: PlayerView, u: Unit, to: Pos, extraSteps = 0): { path: Pos[] | null; ok: boolean; label: string } {
   const map = pathMapFromView(view);
   const path = findPath(map, u, to);
-  const arrival = path ? arrivalTurn(u, path.length, view.turn) : null;
+  // extraSteps: moves past the end of the path (a spy's last step into the city it is walking to).
+  const arrival = path ? arrivalTurn(u, path.length + extraSteps, view.turn) : null;
   const fuel = u.fuel;
   // Aircraft keep a unit of fuel in hand unless they end at a refuel point.
   const reach = fuel === null || !path || aircraftCanReach(map, path.length, fuel, to);
@@ -330,7 +331,7 @@ export function GameScreen({ session, onQuit }: Props) {
     if (hostile) {
       const approach = approachSquare(view, selectedUnit, hover);
       if (approach === null) return dirTo(view, selectedUnit, hover) !== null ? { path: [{ x: hover.x, y: hover.y }], ok: true, label: 'infiltrate' } : { path: null, ok: false, label: 'no known path' };
-      const r = planPath(view, selectedUnit, approach);
+      const r = planPath(view, selectedUnit, approach, 1); // the step into the city comes after reaching the approach square
       return { ...r, label: r.ok ? `infiltrate · ${r.label}` : r.label };
     }
     // A loaded transport next to open land: a click offers to put a unit ashore there.
