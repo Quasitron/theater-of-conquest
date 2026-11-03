@@ -235,6 +235,7 @@ export function attackCity(s: GameState, rng: RandomSource, att: Unit, city: Cit
   city.production = null;
   city.progress = 0;
   city.lastBuilt = null;
+  delete city.nextProduction;
   noteCityTaken(s, city.id, from, att.owner);
   destroyUnit(s, att, 'garrison', events);
   // An undamaged Armor that takes a city leaves an Army there at once (as in the original Advanced rules); it has no moves left.

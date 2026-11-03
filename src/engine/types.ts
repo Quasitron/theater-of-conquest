@@ -95,6 +95,8 @@ export interface City {
   production: UnitType | null;
   progress: number;
   lastBuilt: UnitType | null;
+  /** Switch to this when the current unit completes (then it is cleared); absent keeps building the same unit. */
+  nextProduction?: UnitType;
   /** Hits taken in attacks (only with the city strength rule); heals one a turn. */
   damage?: number;
   /** Captures it has suffered lately (war-torn cities rule): each makes it build 25% slower; recovers over time. */
@@ -166,6 +168,7 @@ export interface GameState {
 export type Command =
   | { type: 'move'; player: PlayerId; unitId: number; dir: Dir }
   | { type: 'setProduction'; player: PlayerId; cityId: number; unitType: UnitType | null }
+  | { type: 'setNextProduction'; player: PlayerId; cityId: number; unitType: UnitType | null }
   | { type: 'disband'; player: PlayerId; unitId: number }
   | { type: 'load'; player: PlayerId; transportId: number; unitIds: number[] }
   | { type: 'unload'; player: PlayerId; transportId: number; unitIds: number[] | null }

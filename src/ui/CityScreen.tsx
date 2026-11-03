@@ -21,6 +21,8 @@ interface Props {
   error?: string | null;
   onPick: (t: UnitType | null) => void;
   onRename: (name: string) => void;
+  /** Sets (or with null, clears) what the city builds after the current unit completes. */
+  onSetNext?: (t: UnitType | null) => void;
   /** Sets (or with null, clears) the city's route. Returns true when it was accepted. */
   onSetRoute?: (route: Omit<CityRoute, 'by'> | null) => boolean;
   /** Mouse-only: selects a unit listed in the City view; the screen then closes. */
@@ -35,7 +37,7 @@ function routeSummary(view: PlayerView, route: CityRoute): string {
   return `${types} → ${dest ? dest.name : 'a lost city'}`;
 }
 
-export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetRoute, onSelectUnit, onClose }: Props) {
+export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetNext, onSetRoute, onSelectUnit, onClose }: Props) {
   const coastal = cityIsCoastal(view, city);
   const ROWS: (UnitType | null)[] = [null, ...buildableTypes(view.rules)];
   const usable = (t: UnitType | null) => t === null || coastal || UNIT_STATS[t].domain !== 'sea';
@@ -107,7 +109,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
   const defenceBlock = defence.length > 0 && <div class="city-defence">{defence.map((d) => <p key={d}>{d}</p>)}</div>;
   const bar = progress && (
     <div class="progress" title={`${progress.done}/${progress.total}`}>
-      <span>Producing: {UNIT_STATS[progress.type].name} {progress.done}/{progress.total}</span>
+      <span>Producing: {UNIT_STATS[progress.type].name} {progress.done}/{progress.total}{city.nextProduction ? `, then ${UNIT_STATS[city.nextProduction].name}` : ''}</span>
       <div class="progress-bar"><div class="progress-fill" style={{ width: `${Math.min(100, (progress.done / progress.total) * 100)}%` }} /></div>
     </div>
   );
@@ -144,6 +146,17 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
           </div>
           <p class="muted stats-line">{shown ? `${UNIT_STATS[shown].name}: ${statsText(shown)}` : 'Nothing will be built.'}</p>
           {bar}
+          {onSetNext && city.production !== null && (
+            <label class="next-production">Then build{' '}
+              <select
+                value={city.nextProduction ?? ''} aria-label="Then build"
+                onChange={(e) => { const v = (e.target as HTMLSelectElement).value; onSetNext(v === '' ? null : (v as UnitType)); }}
+              >
+                <option value="">Keep building {UNIT_STATS[city.production].name}</option>
+                {ROWS.filter((t): t is UnitType => t !== null && t !== city.production && usable(t)).map((t) => <option key={t} value={t}>{UNIT_STATS[t].name}</option>)}
+              </select>
+            </label>
+          )}
           {defenceBlock}
         </>
       ) : mode === 'city' ? (

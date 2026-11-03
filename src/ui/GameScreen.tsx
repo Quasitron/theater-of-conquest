@@ -1348,6 +1348,7 @@ export function GameScreen({ session, onQuit }: Props) {
         <CityScreen
           key={openCityObj.id} view={view} city={openCityObj} anchor={anchorFor(openCityObj)} color={colors[view.me]} error={dialogError}
           onPick={(unitType) => { act({ type: 'setProduction', cityId: openCityObj.id, unitType }, true); }}
+          onSetNext={(unitType) => { act({ type: 'setNextProduction', cityId: openCityObj.id, unitType }, true); }}
           onRename={(name) => { act({ type: 'renameCity', cityId: openCityObj.id, name }, true); }}
           onSetRoute={(route) => act({ type: 'setRoute', cityId: openCityObj.id, route }, true)}
           onSelectUnit={(id) => { const u = view.myUnits.find((x) => x.id === id); if (u) selectUnit(u); }}
