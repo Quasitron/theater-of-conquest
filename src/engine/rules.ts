@@ -33,5 +33,7 @@ export const CLASSIC_RULES: HouseRules = {
 };
 
 /** Bumped whenever a change alters how an old command log replays. 4: units arriving in a route city take the route. 5: a carrier leaving a city takes the fighters there. 6: a patrol tied to a carrier moves with it. 7: aircraft wait a turn when blocked. 8: equal-length paths prefer the straight line. 9: fighters aboard a carrier await orders instead of sleeping. 10: a player with no city and no unit able to take one is knocked out. 11: kills and losses are counted for the status report. 12: bombarding a city no longer counts as a win towards a promotion (with the city strength and promotions rules on, older games replay differently; older saves load from their saved position). 13: Armor can be promoted (with the Advanced units and promotions rules on, older games replay differently; older saves load from their saved position). 14: the submarine strike rule (only changes games that turn it on). 15: a Spy takes 16 turns to build, 14 for each after the first (with the Advanced units rule on, older games replay differently; older saves load from their saved position). 16: with the Advanced units rule on, a crippled unit attacks at half strength (older games replay differently; older saves load from their saved position). 17: standing orders may enter an ally's city even when an allied unit is in it (older games replay differently; older saves load from their saved position). 18: a captured city is known to the loser's teammates as its new owner's (older games replay
-differently; older saves load from their saved position). */
-export const RULES_VERSION = 18;
+differently; older saves load from their saved position). 19: units on sentry are stamped with the turn they went on it
+(the saved state differs, so an older save's history no longer matches its snapshot; older saves load from their saved
+position). */
+export const RULES_VERSION = 19;
