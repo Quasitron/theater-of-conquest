@@ -7,11 +7,13 @@ interface Props {
   units: Unit[];
   /** Free cargo space in slots (Armor takes two); the engine rejects loads over capacity. */
   room?: number;
+  /** Exactly one unit can be chosen: ticking another replaces the choice, and there is no All button. */
+  single?: boolean;
   onConfirm: (ids: number[]) => void;
   onCancel: () => void;
 }
 
-export function UnitPicker({ title, units, room, onConfirm, onCancel }: Props) {
+export function UnitPicker({ title, units, room, single, onConfirm, onCancel }: Props) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const slots = (u: Unit) => UNIT_STATS[u.type].slots;
   const used = units.filter((u) => checked.has(u.id)).reduce((n, u) => n + slots(u), 0);
@@ -19,6 +21,10 @@ export function UnitPicker({ title, units, room, onConfirm, onCancel }: Props) {
   const full = !units.some((u) => !checked.has(u.id) && fits(u));
 
   const toggle = (id: number) => {
+    if (single) {
+      setChecked(checked.has(id) ? new Set() : new Set([id]));
+      return;
+    }
     const next = new Set(checked);
     if (next.has(id)) next.delete(id);
     else if (fits(units.find((u) => u.id === id)!)) next.add(id);
@@ -48,15 +54,15 @@ export function UnitPicker({ title, units, room, onConfirm, onCancel }: Props) {
           <input
             type="checkbox"
             checked={checked.has(u.id)}
-            disabled={!checked.has(u.id) && !fits(u)}
+            disabled={!single && !checked.has(u.id) && !fits(u)}
             onChange={(e) => { blur(e); toggle(u.id); }}
           />
           {UNIT_STATS[u.type].name} #{u.id}
         </label>
       ))}
-      <span class="muted">{checked.size} selected{room === undefined ? '' : ` (space ${room})`}</span>
+      {!single && <span class="muted">{checked.size} selected{room === undefined ? '' : ` (space ${room})`}</span>}
       <div class="picker-actions">
-        <button onClick={(e) => { blur(e); toggleAll(); }}>All</button>
+        {!single && <button onClick={(e) => { blur(e); toggleAll(); }}>All</button>}
         <button class="primary" onClick={(e) => {
           blur(e);
           onConfirm(Array.from(checked).sort((a, b) => a - b));
