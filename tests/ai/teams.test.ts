@@ -4,7 +4,7 @@ import { DEFAULT_WORLD, SIZE_PRESETS } from '../../src/mapgen/options';
 
 describe('computer players on teams', () => {
   it('play on together without errors or stalls, and keep fighting the other side', () => {
-    const colors = ['#d7263d', '#1b98e0', '#f4a259', '#2e933c', '#8e44ad', '#e8c547', '#14b8a6', '#ff7eb6'];
+    const colors = ['#d7263d', '#1b98e0', '#a0622d', '#2e933c', '#8e44ad', '#e8c547', '#14b8a6', '#ff7eb6'];
     const teams = [1, 1, 2, 2, 1, 2, 1, 2];
     const seats = teams.map((team, i) => ({
       name: `P${i + 1}`, kind: i === 0 ? ('human' as const) : ('ai' as const), color: colors[i], team,
