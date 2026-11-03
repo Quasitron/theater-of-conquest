@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { UNIT_STATS, type PlayerView, type Pos } from '../engine';
+import { UNIT_STATS, UNIT_TYPES, type PlayerView, type Pos } from '../engine';
 import type { Fight } from './fights';
 import { blur } from './blur';
 import { UNIT_GLYPH } from './colors';
@@ -40,6 +40,9 @@ function sentryAge(turns: number): string {
 /** The Reports dialog, like the original's Reports menu: status, battles against you, and enemy sightings. */
 export function Reports({ view, colors, tab: first, battles, sightings, sentries, onSelectUnit, onShow, onClose }: Props) {
   const [tab, setTab] = useState<ReportTab>(first);
+  const [sentryOrder, setSentryOrder] = useState<'time' | 'type'>('time');
+  // The list arrives longest-waiting first; sorting by type keeps that order within each type.
+  const sortedSentries = sentryOrder === 'time' ? sentries : [...sentries].sort((a, b) => UNIT_TYPES.indexOf(a.type) - UNIT_TYPES.indexOf(b.type));
   const count = (id: ReportTab) => (id === 'combat' ? battles.length : id === 'recon' ? sightings.length : id === 'sentry' ? sentries.length : 0);
   return (
     <PlacedDialog anchor={null} label="Reports" onKey={(e) => { if (e.key === 'Escape') { onClose(); return true; } return false; }}>
@@ -93,17 +96,25 @@ export function Reports({ view, colors, tab: first, battles, sightings, sentries
         sentries.length === 0
           ? <p class="muted">None of your units is on sentry.</p>
           : (
+            <>
+            <label>Sort by{' '}
+              <select value={sentryOrder} onChange={(e) => setSentryOrder((e.target as HTMLSelectElement).value as 'time' | 'type')}>
+                <option value="time">Longest on sentry</option>
+                <option value="type">Unit type</option>
+              </select>
+            </label>
             <ul class="report-list">
-              {sentries.map((s) => (
+              {sortedSentries.map((s) => (
                 <li key={s.unitId}>
                   <button class="linklike" onClick={(e) => { blur(e); onSelectUnit(s.unitId); }}>
-                    <span class="glyph">{UNIT_GLYPH[s.type]}</span> {s.name}
+                    <span class="glyph">{UNIT_GLYPH[s.type]}</span> {s.name.includes(UNIT_STATS[s.type].name) ? s.name : <>{UNIT_STATS[s.type].name} <span class="muted">{s.name}</span></>}
                   </button>
                   <span class="muted">{s.where} · on sentry {sentryAge(s.turns)}</span>
                   <button onClick={(e) => { blur(e); onShow(s.at); }}>Show</button>
                 </li>
               ))}
             </ul>
+            </>
           )
       )}
 
