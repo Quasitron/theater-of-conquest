@@ -134,6 +134,9 @@ button.linklike { border: 0; background: none; padding: 0; text-align: left; col
 .report-list li { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: center; }
 .report-list li .muted { grid-column: 1; font-size: 0.8rem; }
 .report-list li button { grid-column: 2; grid-row: 1 / span 2; }
+/* A unit's name on the Sentry tab is a link above its details, not a second button in the right-hand column. */
+.report-list li button.linklike { grid-column: 1; grid-row: 1; justify-self: start; }
+.report-list li button.linklike + .muted { grid-row: 2; }
 .report-list .lost-battle { color: #ff8a80; }
 .report-list .won-battle { color: #9be7a5; }
 .status-facts { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; margin: 0; }
