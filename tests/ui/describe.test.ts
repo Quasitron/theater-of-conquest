@@ -77,4 +77,15 @@ describe('describeEvent', () => {
     );
     expect(text).toBe("Ben's Destroyer attacked your Transport and won.");
   });
+
+  it('names the city that was attacked when it is known', () => {
+    const e = {
+      type: 'combat' as const, attackerId: 1, attackerOwner: 0, attackerType: 'army' as const,
+      defender: { kind: 'city' as const, cityId: 5, owner: 1 },
+      x: 0, y: 0, attackerWon: false, attackerDamage: 1, defenderDamage: 0,
+    };
+    const lookup = { unit: () => undefined, city: (id: number) => (id === 5 ? 'Lyon' : undefined) };
+    expect(describeEvent(e, 0, names, lookup)).toBe("Your Army attacked Ben's city of Lyon and lost.");
+    expect(describeEvent(e, 0, names)).toBe("Your Army attacked Ben's city and lost.");
+  });
 });
