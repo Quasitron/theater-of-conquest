@@ -1341,9 +1341,9 @@ export function GameScreen({ session, onQuit }: Props) {
         return (
           <div class="overlay">
             <UnitPicker
-              title={`Land from ${unitDisplayName(ship)} on this square (one unit)`}
+              title={`Land from ${unitDisplayName(ship)} on this square`}
               units={landers}
-              room={Math.max(...landers.map((u) => UNIT_STATS[u.type].slots))}
+              single
               onCancel={() => setLandAt(null)}
               onConfirm={(ids) => {
                 if (ids.length === 0) return;
