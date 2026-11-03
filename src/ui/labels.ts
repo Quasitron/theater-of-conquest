@@ -1,6 +1,11 @@
 import { UNIT_STATS, UNIT_TYPES, buildTime, effectiveMove, hitsOf, isCoastal, unitDisplayName, type City, type PlayerView, type Unit, type UnitType } from '../engine';
 import { describeOrders } from './actions';
 
+/** "arrives turn 153 · fuel 4" as "Arrives Turn 153 · Fuel 4": the first letter of every word, for the labels on the map. */
+export function titleCase(text: string): string {
+  return text.replace(/(^|\s)(\p{L})/gu, (_, gap: string, c: string) => gap + c.toUpperCase());
+}
+
 export function pathLabel(turn: number, arrival: number | null, fuelLeft: number | null): string {
   if (arrival === null) return 'no known path';
   let label = arrival === turn ? 'this turn' : `arrives turn ${arrival}`;

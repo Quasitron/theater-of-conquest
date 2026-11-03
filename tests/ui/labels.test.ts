@@ -1,11 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import { buildTime } from '../../src/engine';
 import {
-  badgeMode, cargoLoad, cargoSummary, cityLabelVisible, cityStackTop, healthText, inProductionCount, pathLabel, pluralUnit,
+  badgeMode, cargoLoad, cargoSummary, cityLabelVisible, cityStackTop, healthText, inProductionCount, pathLabel, pluralUnit, titleCase,
   statusLine, turnsToComplete, withArticle,
 } from '../../src/ui/labels';
 import { cargoAndPatrols, patrolsFrom } from '../../src/ui/labels';
 import { addUnit, makeGame } from '../helpers';
+
+describe('titleCase', () => {
+  it('capitalizes the first letter of each word and leaves the rest alone', () => {
+    expect(titleCase('land here')).toBe('Land Here');
+    expect(titleCase('arrives turn 153 · fuel 4')).toBe('Arrives Turn 153 · Fuel 4');
+    expect(titleCase('no known path')).toBe('No Known Path');
+    expect(titleCase('Attack (62%)')).toBe('Attack (62%)');
+    expect(titleCase('infiltrate · this turn')).toBe('Infiltrate · This Turn');
+  });
+});
 
 describe('pathLabel', () => {
   it('reports a missing path', () => {
