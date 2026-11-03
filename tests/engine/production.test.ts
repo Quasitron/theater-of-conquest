@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { advanceProduction, buildTime, setProduction } from '../../src/engine/production';
+import { advanceProduction, buildTime, setNextProduction, setProduction } from '../../src/engine/production';
 import type { GameEvent } from '../../src/engine/types';
 import { makeGame } from '../helpers';
 
@@ -34,6 +34,34 @@ describe('production', () => {
     expect(setProduction(s, c1, 'destroyer')).toBeNull();
     expect(c1.progress).toBe(0);
     expect(buildTime(c1, 'destroyer')).toBe(24);
+  });
+
+  it('switches to the next production once the unit completes, then keeps building that', () => {
+    const s = makeGame(P, { rules: { fairFirstTurn: true } });
+    const c = s.cities[0];
+    expect(setNextProduction(s, c, 'fighter')).toBeNull();
+    advance(s, 0, 5);
+    expect(c).toMatchObject({ production: 'army', nextProduction: 'fighter' });
+    advance(s, 0, 1);
+    expect(s.units.map((u) => u.type)).toEqual(['army']);
+    expect(c.production).toBe('fighter');
+    expect(c.nextProduction).toBeUndefined();
+    expect(c.progress).toBe(0);
+  });
+
+  it('checks and clears the next production', () => {
+    const s = makeGame(P);
+    expect(setNextProduction(s, s.cities[0], 'transport')).toBe('inland cities cannot build ships');
+    expect(setNextProduction(s, s.cities[0], 'army')).toBeNull(); // the same as the current: nothing to switch to
+    expect(s.cities[0].nextProduction).toBeUndefined();
+    setNextProduction(s, s.cities[0], 'fighter');
+    setNextProduction(s, s.cities[0], null);
+    expect(s.cities[0].nextProduction).toBeUndefined();
+    setNextProduction(s, s.cities[0], 'fighter');
+    setProduction(s, s.cities[0], 'fighter'); // picked as the current one: no longer "next"
+    expect(s.cities[0].nextProduction).toBeUndefined();
+    setProduction(s, s.cities[0], null);
+    expect(setNextProduction(s, s.cities[0], 'army')).toBe('the city is not building anything');
   });
 
   it('only coastal cities build ships', () => {

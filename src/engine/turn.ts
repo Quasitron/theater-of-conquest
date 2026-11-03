@@ -103,6 +103,7 @@ export function resign(s: GameState, events: GameEvent[], rng: RandomSource = ne
     c.production = null;
     c.progress = 0;
     c.lastBuilt = null;
+    delete c.nextProduction;
   }
   s.players[pid].eliminated = true;
   events.push({ type: 'playerEliminated', player: pid });

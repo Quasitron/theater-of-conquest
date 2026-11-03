@@ -4,7 +4,7 @@ import { UNIT_STATS, UNIT_TYPES, buildableTypes, canBecomeAirbase } from './unit
 import { cargoOf, cityAt, destroyUnit, topLevelUnitsAt, unitById } from './query';
 import { moveUnit } from './movement';
 import { terrainAt } from './map';
-import { setProduction } from './production';
+import { setNextProduction, setProduction } from './production';
 import { endTurn, resign } from './turn';
 import { catchSpies, updateFog } from './fog';
 import { hurtGarrison, incitePeople, sabotageCity } from './spy';
@@ -144,6 +144,15 @@ export function apply(state: GameState, cmd: Command): ApplyResult {
       else error = setProduction(s, c, cmd.unitType);
       break;
     }
+    case 'setNextProduction': {
+      const c = s.cities.find((x) => x.id === cmd.cityId);
+      if (!c) error = 'no such city';
+      else if (c.owner !== actor) error = 'not your city';
+      else if (cmd.unitType !== null && !UNIT_TYPES.includes(cmd.unitType)) error = 'unknown unit type';
+      else if (cmd.unitType !== null && !buildableTypes(s.rules).includes(cmd.unitType)) error = 'that unit is not in this game';
+      else error = setNextProduction(s, c, cmd.unitType);
+      break;
+    }
     case 'disband': {
       const u = unitById(s, cmd.unitId);
       if (!u) error = 'no such unit';
@@ -195,7 +204,7 @@ export function apply(state: GameState, cmd: Command): ApplyResult {
   if (error) return { ok: false, error };
   catchSpies(s, events);
   s.rngState = rng.state;
-  const fogCommands = ['buildAirbase', 'sabotage', 'hurtGarrison', 'incite', 'move', 'setProduction', 'disband', 'load', 'unload', 'setOrders', 'goHome'];
+  const fogCommands = ['buildAirbase', 'sabotage', 'hurtGarrison', 'incite', 'move', 'setProduction', 'setNextProduction', 'disband', 'load', 'unload', 'setOrders', 'goHome'];
   if (fogCommands.includes(cmd.type)) {
     updateFog(s, actor);
     for (const mate of teammatesOf(s, actor)) updateFog(s, mate); // allies share what they see

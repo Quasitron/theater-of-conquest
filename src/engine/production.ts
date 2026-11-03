@@ -22,8 +22,22 @@ export function setProduction(s: GameState, city: City, type: UnitType | null): 
     return 'inland cities cannot build ships';
   }
   if (city.production === type) return null;
+  if (type === null || type === city.nextProduction) delete city.nextProduction;
   city.production = type;
   city.progress = 0;
+  return null;
+}
+
+/** Sets (or with null, clears) what the city switches to once its current unit completes. */
+export function setNextProduction(s: GameState, city: City, type: UnitType | null): string | null {
+  if (type === null) {
+    delete city.nextProduction;
+    return null;
+  }
+  if (city.production === null) return 'the city is not building anything';
+  if (UNIT_STATS[type].domain === 'sea' && !isCoastal(s, city.x, city.y)) return 'inland cities cannot build ships';
+  if (type === city.production) delete city.nextProduction;
+  else city.nextProduction = type;
   return null;
 }
 
@@ -45,6 +59,10 @@ export function advanceProduction(s: GameState, pid: PlayerId, events: GameEvent
       const u = spawnUnit(s, city.production, pid, city.x, city.y);
       city.progress = 0;
       city.lastBuilt = city.production;
+      if (city.nextProduction) {
+        city.production = city.nextProduction;
+        delete city.nextProduction;
+      }
       applyRoute(s, city, u);
       events.push({ type: 'unitProduced', unitId: u.id, cityId: city.id, unitType: u.type });
     }

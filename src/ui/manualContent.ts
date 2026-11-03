@@ -83,6 +83,7 @@ export function buildManual(): ManualSection[] {
       paragraphs: [
         'Click one of your cities to open it and choose what it builds. A city finishes its first unit of a kind in the number of turns shown, and each further unit of that kind in fewer. When a unit is finished a report appears so you can give it orders at once.',
         'A neutral city defends with strength 2. An Army (or Armor) wins it by attacking from an adjacent square; ships and aircraft cannot take cities. Aircraft refuel in your cities, and a unit that stays in one of your cities without moving for a turn heals 1 hit.',
+        'A city keeps building the same unit until you change it. To change it after the current unit is finished, pick a unit in the "Then build" menu on the production screen; the city switches then and keeps building the new unit.',
         'A route sends the units a city builds to a destination city automatically: set it on the city screen.',
       ],
     },
