@@ -1,7 +1,39 @@
-import { UNIT_STATS, type PlayerId, type PlayerView, type Pos, type UnitType } from '../engine';
+import { UNIT_STATS, unitDisplayName, type PlayerId, type PlayerView, type Pos, type UnitType } from '../engine';
 import type { LogEntry } from '../app/session';
 import { describeEvent, type DescribeLookup } from './describe';
 import { fightsFromEvents, type Fight } from './fights';
+
+export interface SentryLine {
+  unitId: number;
+  type: UnitType;
+  /** The unit's display name. */
+  name: string;
+  /** The square it is on (its carrier's, when it is aboard one). */
+  at: Pos;
+  /** Where it is, in words: in a city, aboard a ship, or at coordinates. */
+  where: string;
+  /** Whole turns it has been on sentry; 0 for one put on sentry this turn. */
+  turns: number;
+}
+
+/** Your units on sentry, longest-waiting first (then by unit id), so one forgotten long ago comes top of the list. */
+export function sentryLines(view: PlayerView): SentryLine[] {
+  const cityAt = (x: number, y: number) => view.myCities.find((c) => c.x === x && c.y === y);
+  return view.myUnits
+    .filter((u) => u.orders?.kind === 'sentry')
+    .map((u) => {
+      const host = u.carriedBy !== null ? view.myUnits.find((h) => h.id === u.carriedBy) : undefined;
+      const at = host ? { x: host.x, y: host.y } : { x: u.x, y: u.y };
+      const city = cityAt(at.x, at.y);
+      const hostName = host ? unitDisplayName(host) : '';
+      return {
+        unitId: u.id, type: u.type, name: unitDisplayName(u), at,
+        where: host ? `aboard ${hostName}` : city ? `in ${city.name}` : `at ${at.x},${at.y}`,
+        turns: Math.max(0, view.turn - (u.sentrySince ?? view.turn)),
+      };
+    })
+    .sort((a, b) => b.turns - a.turns || a.unitId - b.unitId);
+}
 
 export interface BattleLine {
   turn: number;

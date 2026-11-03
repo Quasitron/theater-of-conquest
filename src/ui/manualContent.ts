@@ -175,6 +175,7 @@ export function buildManual(): ManualSection[] {
       title: 'Saving and settings',
       paragraphs: [
         'The game saves itself as you play ("Continue Last Save" on the title screen). Use Save As to keep a game under its own name, and Export to put it in a file.',
+        'The Sentry tab of the Reports lists every unit of yours on sentry, the longest-waiting first, so a unit you put to sleep long ago is easy to find: click its name to select it, or Show to look at its square.',
         'Settings has sound and music, and how fights are shown: animated on the map, as a report, or not at all.',
       ],
     },

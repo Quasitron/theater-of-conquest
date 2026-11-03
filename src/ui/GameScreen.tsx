@@ -19,7 +19,7 @@ import { UnitList } from './UnitList';
 import { GroupDialog } from './GroupDialog';
 import { eligibleFor, GROUP_ORDERS, unitsInBox, type GroupBox, type GroupOrderId } from './group';
 import { Reports, type ReportTab } from './Reports';
-import { battlesAgainstMe, newEliminations, recentSightings } from './reportLines';
+import { battlesAgainstMe, newEliminations, recentSightings, sentryLines } from './reportLines';
 import { EliminationNotice } from './EliminationNotice';
 import { NewsNotice } from './NewsNotice';
 import { spyHeadlines, type NewsItem } from './spyNews';
@@ -332,6 +332,10 @@ export function GameScreen({ session, onQuit }: Props) {
       if (approach === null) return dirTo(view, selectedUnit, hover) !== null ? { path: [{ x: hover.x, y: hover.y }], ok: true, label: 'infiltrate' } : { path: null, ok: false, label: 'no known path' };
       const r = planPath(view, selectedUnit, approach);
       return { ...r, label: r.ok ? `infiltrate · ${r.label}` : r.label };
+    }
+    // A loaded transport next to open land: a click offers to put a unit ashore there.
+    if (landersFor(view, selectedUnit, hover).length > 0 && dirTo(view, selectedUnit, hover) !== null) {
+      return { path: [{ x: hover.x, y: hover.y }], ok: true, label: 'land here' };
     }
     return planPath(view, selectedUnit, hover);
   }, [selectedUnit?.id, hover, view, frozen, noPath, attack]);
@@ -1165,6 +1169,7 @@ export function GameScreen({ session, onQuit }: Props) {
   // Reports: battles others started since your last turn (from the log), and recent enemy sightings (from fog).
   const battles = useMemo(() => battlesAgainstMe(session.log(view.me), view.me, names, lookup, view.allies), [view]);
   const sightings = useMemo(() => recentSightings(view, names), [view]);
+  const sentries = useMemo(() => sentryLines(view), [view]);
   // Which way each of your units last moved, so a ship or aircraft picture can face the way it is going.
   const headingLeft = useMemo(() => unitsHeadingLeft(session.log(view.me), view.width, view.wrap, view.me), [view]);
   /** Centers the map on a square from a report and flashes it for a few seconds. */
@@ -1409,7 +1414,13 @@ export function GameScreen({ session, onQuit }: Props) {
       )}
       {reportTab !== null && (
         <Reports
-          view={view} colors={colors} tab={reportTab} battles={battles} sightings={sightings} onShow={(p) => { if (session.phase === 'over') setRevealed(true); showAt(p); }}
+          view={view} colors={colors} tab={reportTab} battles={battles} sightings={sightings} sentries={sentries}
+          onSelectUnit={(id) => {
+            const u = view.myUnits.find((x) => x.id === id);
+            setReportTab(null);
+            if (u) selectUnit(u);
+          }}
+          onShow={(p) => { if (session.phase === 'over') setRevealed(true); showAt(p); }}
           onClose={() => setReportTab(null)}
         />
       )}

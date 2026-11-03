@@ -3,7 +3,7 @@ import { getPlayerView, type GameEvent } from '../../src/engine';
 import { soundsForEvents } from '../../src/audio/fromEvents';
 import { fightsFromEvents } from '../../src/ui/fights';
 import type { LogEntry } from '../../src/app/session';
-import { battlesAgainstMe, newEliminations, recentSightings } from '../../src/ui/reportLines';
+import { battlesAgainstMe, newEliminations, recentSightings, sentryLines } from '../../src/ui/reportLines';
 import { addUnit, makeGame } from '../helpers';
 
 const names = ['You', 'Computer'];
@@ -76,6 +76,21 @@ describe('battlesAgainstMe', () => {
   it('is empty when there is nothing (as after a reload)', () => {
     expect(battlesAgainstMe([], 0, names, lookup)).toEqual([]);
     expect(battlesAgainstMe([started(1, 0)], 0, names, lookup)).toEqual([]);
+  });
+});
+
+describe('sentryLines', () => {
+  it('lists units on sentry, longest-waiting first, with where each is', () => {
+    const s = makeGame(['*##.', '##*.'], { players: 2 });
+    s.turn = 20;
+    const young = addUnit(s, 'army', 0, 1, 0, { orders: { kind: 'sentry' }, sentrySince: 18 });
+    const old = addUnit(s, 'army', 0, 0, 0, { orders: { kind: 'sentry' }, sentrySince: 5 });
+    addUnit(s, 'army', 0, 2, 0); // no orders: not listed
+    const fresh = addUnit(s, 'army', 0, 1, 1, { orders: { kind: 'sentry' } }); // put on sentry this turn: no stamp yet
+    const lines = sentryLines(getPlayerView(s, 0));
+    expect(lines.map((l) => [l.unitId, l.turns])).toEqual([[old.id, 15], [young.id, 2], [fresh.id, 0]]);
+    expect(lines[0].where).toBe('in ' + s.cities[0].name);
+    expect(lines[1].where).toBe('at 1,0');
   });
 });
 
