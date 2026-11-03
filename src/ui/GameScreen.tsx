@@ -431,6 +431,8 @@ export function GameScreen({ session, onQuit }: Props) {
   const soundsEnd = useRef(0);
   // Spy stories waiting for the start of my turn.
   const pendingNews = useRef<NewsItem[]>([]);
+  // The stories already printed this turn.
+  const newsPrinted = useRef<{ turn: number; keys: Set<string> }>({ turn: -1, keys: new Set() });
   useEffect(installAudioUnlock, []);
   useEffect(() => {
     const log = session.log(view.me);
@@ -459,8 +461,16 @@ export function GameScreen({ session, onQuit }: Props) {
     if (view.currentPlayer === view.me && pendingNews.current.length > 0) {
       const batch = pendingNews.current;
       pendingNews.current = [];
-      const fresh = batch.filter((s, i) => batch.findIndex((o) => o.headline === s.headline && o.subhead === s.subhead && o.text === s.text) === i);
-      setNews((q) => [...q, ...fresh]);
+      // ...nor twice in one turn, whichever batch it arrives in.
+      if (newsPrinted.current.turn !== view.turn) newsPrinted.current = { turn: view.turn, keys: new Set() };
+      const printed = newsPrinted.current.keys;
+      const fresh = batch.filter((s) => {
+        const key = `${s.headline}|${s.subhead}|${s.text}`;
+        if (printed.has(key)) return false;
+        printed.add(key);
+        return true;
+      });
+      if (fresh.length > 0) setNews((q) => [...q, ...fresh]);
     }
     soundSeen.current = { me: view.me, count: log.length };
     lastSeenEnemies.current = view.enemies.filter((e) => e.visibleNow);
