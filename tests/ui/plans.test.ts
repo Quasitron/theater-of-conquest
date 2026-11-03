@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getPlayerView } from '../../src/engine/view';
 import { updateFog } from '../../src/engine/fog';
-import { approachSquare, attackLabel, cityAttackChance, landingPlan, strikeIsSurprise, strikeLabel, unitAttackChance } from '../../src/ui/plans';
+import { approachSquare, attackLabel, cityAttackChance, landersFor, landingPlan, strikeIsSurprise, strikeLabel, unitAttackChance } from '../../src/ui/plans';
 import { addUnit, makeGame } from '../helpers';
 
 function viewOf(s: ReturnType<typeof makeGame>) {
@@ -20,6 +20,33 @@ function boat(rows: string[], at: { x: number; y: number }, n: number, patch: Pa
 
 const plan = (v: ReturnType<typeof viewOf>, tid: number, ids: number[]) =>
   landingPlan(v, v.myUnits.find((u) => u.id === tid)!, ids);
+
+describe('landersFor', () => {
+  const COAST = ['*#.#*', '.#...', '#....'];
+  const at = (x: number, y: number) => ({ x, y });
+
+  it('lists the armies aboard that could step onto an open land square next to the transport', () => {
+    const { s, t, armies } = boat(COAST, { x: 2, y: 1 }, 2);
+    const v = viewOf(s);
+    const ship = v.myUnits.find((u) => u.id === t.id)!;
+    expect(landersFor(v, ship, at(3, 0)).map((u) => u.id)).toEqual(armies.map((a) => a.id));
+    expect(landersFor(v, ship, at(2, 0))).toEqual([]); // sea
+    expect(landersFor(v, ship, at(4, 0))).toEqual([]); // a city
+  });
+
+  it('offers nothing for a square holding a unit of yours or a seen enemy, or for armies out of moves', () => {
+    const { s, t } = boat(COAST, { x: 2, y: 1 }, 1);
+    addUnit(s, 'army', 0, 1, 1);
+    const v = viewOf(s);
+    const ship = v.myUnits.find((u) => u.id === t.id)!;
+    expect(landersFor(v, ship, at(1, 1))).toEqual([]);
+    v.enemies.push({ markerId: 0, type: 'army', owner: 1, x: 3, y: 0, turnSeen: v.turn, visibleNow: true });
+    expect(landersFor(v, ship, at(3, 0))).toEqual([]);
+    const spent = boat(COAST, { x: 2, y: 1 }, 1, [{ movesLeft: 0 }]);
+    const v2 = viewOf(spent.s);
+    expect(landersFor(v2, v2.myUnits.find((u) => u.id === spent.t.id)!, at(3, 0))).toEqual([]);
+  });
+});
 
 describe('landingPlan', () => {
   // Own city (0,0), player 1's city (4,0). Transport at (2,1): NE (3,0) and W (1,1) and NW (1,0) are land.

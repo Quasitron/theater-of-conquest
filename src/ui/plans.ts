@@ -45,6 +45,22 @@ export function landingPlan(
   return plan;
 }
 
+/**
+ * The armies (and other land units with moves left) aboard `transport` that could step ashore on the adjacent square `p`,
+ * or none when that square is not known open land (a city, an unexplored square, a unit of yours or a seen enemy on it).
+ */
+export function landersFor(view: PlayerView, transport: Unit, p: Pos): Unit[] {
+  if (UNIT_STATS[transport.type].domain !== 'sea') return [];
+  if (view.terrain[p.y * view.width + p.x] !== 'land') return [];
+  if (view.knownCities.some((c) => c.x === p.x && c.y === p.y)) return [];
+  if (view.myUnits.some((u) => u.carriedBy === null && u.x === p.x && u.y === p.y)) return [];
+  if (view.allyUnits.some((u) => u.x === p.x && u.y === p.y)) return [];
+  if (view.enemies.some((e) => e.turnSeen === view.turn && e.x === p.x && e.y === p.y)) return [];
+  return view.myUnits
+    .filter((u) => u.carriedBy === transport.id && UNIT_STATS[u.type].domain === 'land' && u.movesLeft > 0)
+    .sort((a, b) => a.id - b.id);
+}
+
 /** The square next to `city` that `u` reaches soonest (ties: earlier direction); null if adjacent or unreachable. */
 export function approachSquare(view: PlayerView, u: Unit, city: Pos): Pos | null {
   if (chebyshev(geo(view), u, city) <= 1) return null;

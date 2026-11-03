@@ -1,5 +1,19 @@
+import type { Dir } from '../engine';
 import type { GameSession } from './session';
 import { landingPlan } from '../ui/plans';
+
+/** Unloads one unit from a transport at sea and steps it ashore in `dir`. Returns an error message, or null when it landed. */
+export function landOnSquare(session: GameSession, transportId: number, unitId: number, dir: Dir): string | null {
+  const first = session.view().myUnits.find((u) => u.id === transportId);
+  if (!first) return 'no such unit';
+  if (first.orders !== null) {
+    const err = session.act({ type: 'setOrders', unitId: transportId, orders: null });
+    if (err) return err;
+  }
+  const unloadErr = session.act({ type: 'unload', transportId, unitIds: [unitId] });
+  if (unloadErr) return unloadErr;
+  return session.act({ type: 'move', unitId, dir });
+}
 
 /**
  * Unloads `ids` (null = all cargo) from a transport. At sea the armies that can step ashore then
