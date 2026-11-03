@@ -6,7 +6,7 @@ import { TERRAIN_COLORS, UNIT_GLYPH } from './colors';
 import { GROUND_COLORS, drawGround, groundAt } from './ground';
 import { FLAT, drawGroundLayer, surfaceAt } from './terrainTiles';
 import { drawRivers } from './riverArt';
-import { badgeMode, cityLabelVisible, cityStackTop } from './labels';
+import { badgeMode, cityLabelVisible, cityStackTop, titleCase } from './labels';
 import type { GroupBox } from './group';
 import { fightActors, fightFrame, type Fight } from './fights';
 import { ICON_MIN_TILE, cityImage, iconFlipped, iconImage, iconSize } from './unitIcons';
@@ -668,9 +668,9 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         ctx.textBaseline = 'bottom';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
-        ctx.strokeText(o.routeLabel, cx(last) + t * 0.4, cy(last) - t * 0.2);
+        ctx.strokeText(titleCase(o.routeLabel), cx(last) + t * 0.4, cy(last) - t * 0.2);
         ctx.fillStyle = '#7fd4ff';
-        ctx.fillText(o.routeLabel, cx(last) + t * 0.4, cy(last) - t * 0.2);
+        ctx.fillText(titleCase(o.routeLabel), cx(last) + t * 0.4, cy(last) - t * 0.2);
       }
     }
   }
@@ -693,9 +693,9 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         ctx.textBaseline = 'bottom';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
-        ctx.strokeText(o.pathLabel, cx(last) + t * 0.4, cy(last) - t * 0.2);
+        ctx.strokeText(titleCase(o.pathLabel), cx(last) + t * 0.4, cy(last) - t * 0.2);
         ctx.fillStyle = color;
-        ctx.fillText(o.pathLabel, cx(last) + t * 0.4, cy(last) - t * 0.2);
+        ctx.fillText(titleCase(o.pathLabel), cx(last) + t * 0.4, cy(last) - t * 0.2);
       }
     }
   }
@@ -703,7 +703,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Unreachable hover: no path to draw, so mark the hovered square and say why.
   if (!o.attack && !o.path && o.pathLabel && o.pathTarget) {
     const at = o.pathTarget;
-    const label = o.pathLabel;
+    const label = titleCase(o.pathLabel);
     each((mx, my, sx, sy) => {
       if (mx !== at.x || my !== at.y) return;
       const m = t * 0.2;
@@ -731,7 +731,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Attack hover: a red crosshair (circle plus cross) with the label.
   if (o.attack) {
     const at = o.attack.at;
-    const label = o.attack.label;
+    const label = titleCase(o.attack.label);
     each((mx, my, sx, sy) => {
       if (mx !== at.x || my !== at.y) return;
       const hx = sx + t / 2;

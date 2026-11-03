@@ -164,7 +164,7 @@ describe('render', () => {
     expect(calls.strokes).toContain('#7fd4ff');
     expect(calls.dashes).toContainEqual([]);
     expect(calls.dashes).not.toContainEqual([3, 3]);
-    expect(calls.fillText).toContain('Go to');
+    expect(calls.fillText).toContain('Go To');
   });
 
   it('the attack option draws its label', () => {
@@ -178,7 +178,7 @@ describe('render', () => {
     const calls = paint(s, 20, {
       selected: { x: 0, y: 0 }, path: [{ x: 1, y: 0 }, { x: 2, y: 0 }], pathOk: false, pathLabel: 'arrives turn 3',
     });
-    expect(calls.fillText).toContain('arrives turn 3');
+    expect(calls.fillText).toContain('Arrives Turn 3');
     expect(calls.strokes).toEqual(['#ff3b3b']);
   });
 
@@ -196,7 +196,7 @@ describe('render', () => {
   it('an unreachable hover draws a red mark and the label on the hovered square', () => {
     const s = makeGame(M);
     const calls = paint(s, 20, { selected: { x: 0, y: 0 }, path: null, pathLabel: 'no known path', pathTarget: { x: 1, y: 1 } });
-    expect(calls.fillText).toContain('no known path');
+    expect(calls.fillText).toContain('No Known Path');
     expect(calls.strokes).toContain('#ff3b3b');
   });
 
@@ -204,7 +204,7 @@ describe('render', () => {
     const s = makeGame(M);
     const calls = paint(s, 20, { selected: { x: 0, y: 0 }, path: null, pathLabel: null, pathTarget: { x: 1, y: 1 } });
     expect(calls.strokes).toEqual([]);
-    expect(calls.fillText).not.toContain('no known path');
+    expect(calls.fillText).not.toContain('No Known Path');
   });
 
   it('on a wrapped map the path label lands on the on-screen copy near the camera', () => {
@@ -213,7 +213,7 @@ describe('render', () => {
     const calls = paint(s, 20, {
       selected: { x: 0, y: 1 }, path: [{ x: 1, y: 1 }, { x: 2, y: 1 }], pathLabel: 'arrives turn 3',
     }, { x: 6.5, y: 0, tile: 20 });
-    const label = calls.fillAt.find((f) => f.text === 'arrives turn 3');
+    const label = calls.fillAt.find((f) => f.text === 'Arrives Turn 3');
     expect(label).toBeDefined();
     expect(label!.x).toBeGreaterThanOrEqual(0);
     expect(label!.x).toBeLessThanOrEqual(140);
