@@ -390,15 +390,10 @@ export function GameScreen({ session, onQuit }: Props) {
     setSelection({ kind: 'unit', id: u.id });
     focus(u);
   };
-  /** First unit of `fresh` after `id` in the order of `pre`, wrapping round, never `id` itself. */
-  const nextAfter = (id: number, pre: readonly Unit[], fresh: readonly Unit[]): Unit | null => {
-    const i = pre.findIndex((u) => u.id === id);
-    const order = i < 0 ? pre : [...pre.slice(i + 1), ...pre.slice(0, i)];
-    for (const u of order) {
-      const f = fresh.find((x) => x.id === u.id);
-      if (f && f.id !== id) return f;
-    }
-    return null;
+  /** The unit of `fresh` to go to once `id` is dealt with: the closest to where you were working, never `id` itself. */
+  const nextAfter = (id: number, _before: readonly Unit[], fresh: readonly Unit[]): Unit | null => {
+    const n = nextReadyAfter(fresh, id, nearHint());
+    return n && n.id !== id ? n : null;
   };
   /** Runs `fn` now, or after BATTLE_PAUSE_MS if the last command was an attack by this player, so its result can be seen. */
   const afterBattle = (fn: () => void) => {
