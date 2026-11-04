@@ -50,7 +50,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
   const [name, setName] = useState(city.name);
 
   // Route form: unit types the route cannot serve are greyed out, per the chosen destination.
-  const others = view.myCities.filter((c) => c.id !== city.id);
+  const others = view.myCities.filter((c) => c.id !== city.id).sort((a, b) => a.name.localeCompare(b.name));
   const [destId, setDestId] = useState<number | null>(city.route?.destId ?? others[0]?.id ?? null);
   const [routeTypes, setRouteTypes] = useState<UnitType[]>(city.route?.types ?? []);
   const [blockWait, setBlockWait] = useState(city.route?.blockWait ?? 3);
