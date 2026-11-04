@@ -5,7 +5,7 @@ import { ActionBar } from './ActionBar';
 import { ordersText } from './actions';
 import type { ActionId } from './keys';
 import { UNIT_GLYPH } from './colors';
-import { cargoAndPatrols, cargoLoad, cargoSummary, cityIsCoastal, patrolsFrom } from './labels';
+import { cargoAndPatrols, cargoLoad, cargoSummary, cityIsCoastal, groundUnder, patrolsFrom } from './labels';
 import { HealthBar } from './UnitInfo';
 import { blur } from './blur';
 import { UNIT_ICONS } from './unitIcons';
@@ -54,6 +54,7 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
       {view.rules.promotions && st.promotes && <p>Rank: {RANK_NAMES[rankOf(u.wins)]}{u.wins ? ` (${u.wins} win${u.wins === 1 ? '' : 's'})` : ''}</p>}
       <p>Orders: {ordersText(view, u)}</p>
       <p>Moves {u.movesLeft}/{st.move}</p>
+      {groundUnder(view, u) && <p>Terrain: {groundUnder(view, u)}</p>}
       <HealthBar u={u} />
       {u.fuel !== null && <p>Fuel {u.fuel}/{st.range}</p>}
       {st.carries.length > 0 && cargo.length === 0 && away.length === 0 && <p>{cargoLoad(0, cargoCapacity(u))}</p>}
