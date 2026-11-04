@@ -54,3 +54,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.39 | 2026-11-04 | Clicking your own city now shows its info first (name, units inside, production progress) with a Production... button, instead of jumping straight to the production list. The list still opens by itself where a choice is needed: the first turn, a captured city, and a finished unit. Saves also load 3-4 times faster. |
 | 0.9.40 | 2026-11-04 | The Route destination list is in alphabetical order. |
 | 0.9.41 | 2026-11-04 | Giving orders now moves on to the closest unit that needs orders (not the next by number), so you finish a local fight before the view jumps across the map. Skipped units still come last. |
+| 0.9.42 | 2026-11-04 | Loading a saved game (and importing a file) now runs in a background worker, so a big game no longer makes the browser say the page is unresponsive. |
