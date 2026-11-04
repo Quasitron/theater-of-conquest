@@ -30,9 +30,39 @@ export function builtThisTurn(entries: readonly LogEntry[], turn: number): Set<n
   return built;
 }
 
-/** The unit after `id` in `ready`, wrapping; for an id that is no longer ready, the first greater id (else the first). */
-export function nextReadyAfter(ready: readonly Unit[], id: number | null): Unit | null {
+/** Where the cycle was last working, so the next unit can be the closest one (local fights stay together). */
+export interface NearHint {
+  from: { x: number; y: number };
+  width: number;
+  wrap: boolean;
+  /** Skipped units: they only come up once nothing else is left. */
+  skipped: readonly number[];
+}
+
+function distance(a: { x: number; y: number }, b: { x: number; y: number }, width: number, wrap: boolean): number {
+  let dx = Math.abs(a.x - b.x);
+  if (wrap) dx = Math.min(dx, width - dx);
+  return Math.max(dx, Math.abs(a.y - b.y));
+}
+
+/**
+ * The unit after `id` in `ready`, wrapping; for an id that is no longer ready, the first greater id (else the first).
+ * With `near`, the closest ready unit to where the cycle was working instead (ties go to the earlier one in `ready`).
+ */
+export function nextReadyAfter(ready: readonly Unit[], id: number | null, near?: NearHint): Unit | null {
   if (ready.length === 0) return null;
+  if (near && id !== null) {
+    const others = ready.filter((u) => u.id !== id);
+    const fresh = others.filter((u) => !near.skipped.includes(u.id));
+    const pool = fresh.length > 0 ? fresh : others;
+    let best: Unit | null = null;
+    let bestD = Infinity;
+    for (const u of pool) {
+      const d = distance(near.from, u, near.width, near.wrap);
+      if (d < bestD) { best = u; bestD = d; }
+    }
+    if (best) return best;
+  }
   if (id === null) return ready[0];
   const at = ready.findIndex((u) => u.id === id);
   if (at >= 0) return ready[(at + 1) % ready.length];
