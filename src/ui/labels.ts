@@ -6,6 +6,14 @@ export function titleCase(text: string): string {
   return text.replace(/(^|\s)(\p{L})/gu, (_, gap: string, c: string) => gap + c.toUpperCase());
 }
 
+/** The ground a land unit stands on for the status panel ("Forest"); null at sea, in a city, in the air or on a map without terrain. */
+export function groundUnder(view: PlayerView, u: Pick<Unit, 'type' | 'x' | 'y' | 'carriedBy'>): string | null {
+  if (!view.relief || u.carriedBy !== null || UNIT_STATS[u.type].domain !== 'land') return null;
+  if (view.knownCities.some((c) => c.x === u.x && c.y === u.y)) return null;
+  const r = view.relief[u.y * view.width + u.x];
+  return r ? r.charAt(0).toUpperCase() + r.slice(1) : null;
+}
+
 export function pathLabel(turn: number, arrival: number | null, fuelLeft: number | null): string {
   if (arrival === null) return 'no known path';
   let label = arrival === turn ? 'this turn' : `arrives turn ${arrival}`;

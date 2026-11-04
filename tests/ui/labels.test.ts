@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildTime } from '../../src/engine';
 import {
-  badgeMode, cargoLoad, cargoSummary, cityLabelVisible, cityStackTop, healthText, inProductionCount, pathLabel, pluralUnit, titleCase,
+  badgeMode, cargoLoad, cargoSummary, cityLabelVisible, cityStackTop, groundUnder, healthText, inProductionCount, pathLabel, pluralUnit, titleCase,
   statusLine, turnsToComplete, withArticle,
 } from '../../src/ui/labels';
 import { cargoAndPatrols, patrolsFrom } from '../../src/ui/labels';
@@ -14,6 +14,20 @@ describe('titleCase', () => {
     expect(titleCase('no known path')).toBe('No Known Path');
     expect(titleCase('Attack (62%)')).toBe('Attack (62%)');
     expect(titleCase('infiltrate · this turn')).toBe('Infiltrate · This Turn');
+  });
+});
+
+describe('groundUnder', () => {
+  it('names the ground under a land unit, and nothing at sea, in a city or on a map without terrain', () => {
+    const view = (relief: unknown, cities: { x: number; y: number }[] = []) =>
+      ({ width: 3, relief, knownCities: cities }) as unknown as Parameters<typeof groundUnder>[0];
+    const army = { type: 'army' as const, x: 1, y: 0, carriedBy: null };
+    const relief = ['clear', 'forest', 'mountain'];
+    expect(groundUnder(view(relief), army)).toBe('Forest');
+    expect(groundUnder(view(undefined), army)).toBeNull();
+    expect(groundUnder(view(relief, [{ x: 1, y: 0 }]), army)).toBeNull();
+    expect(groundUnder(view(relief), { ...army, type: 'destroyer' })).toBeNull();
+    expect(groundUnder(view(relief), { ...army, carriedBy: 4 })).toBeNull();
   });
 });
 
