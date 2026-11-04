@@ -435,6 +435,23 @@ export function GameScreen({ session, onQuit }: Props) {
   const pendingNews = useRef<NewsItem[]>([]);
   // The stories already printed this turn.
   const newsPrinted = useRef<{ turn: number; keys: Set<string> }>({ turn: -1, keys: new Set() });
+  // True from the start of my turn until the turn proper begins (the battle replay is still playing).
+  const holdNews = useRef(false);
+  /** Puts the waiting stories on screen (my turn only, not while held), each at most once a turn. */
+  const flushNews = () => {
+    if (holdNews.current || view.currentPlayer !== view.me || pendingNews.current.length === 0) return;
+    const batch = pendingNews.current;
+    pendingNews.current = [];
+    if (newsPrinted.current.turn !== view.turn) newsPrinted.current = { turn: view.turn, keys: new Set() };
+    const printed = newsPrinted.current.keys;
+    const fresh = batch.filter((s) => {
+      const key = `${s.headline}|${s.subhead}|${s.text}`;
+      if (printed.has(key)) return false;
+      printed.add(key);
+      return true;
+    });
+    if (fresh.length > 0) setNews((q) => [...q, ...fresh]);
+  };
   useEffect(installAudioUnlock, []);
   useEffect(() => {
     const log = session.log(view.me);
@@ -453,6 +470,7 @@ export function GameScreen({ session, onQuit }: Props) {
         // They are shown (camera, flash, alert sound) as the turn begins, before the replay and any production report.
         if (fresh.length > 0) pendingSights.current = fresh.map((e) => ({ x: e.x, y: e.y }));
       }
+      if (log.slice(seen.count).some((l) => l.event.type === 'turnStarted' && l.event.player === view.me)) holdNews.current = true;
       const stories = spyHeadlines(log.slice(seen.count).map((l) => l.event), view.me, lookup.city);
       pendingNews.current.push(...stories);
       playAll(sounds);
@@ -460,20 +478,9 @@ export function GameScreen({ session, onQuit }: Props) {
     }
     // The papers come out at the start of my turn (or right away when it is my turn and something happens), not
     // while the other players move or the battle replay runs. The same story is never printed twice in a batch.
-    if (view.currentPlayer === view.me && pendingNews.current.length > 0) {
-      const batch = pendingNews.current;
-      pendingNews.current = [];
-      // ...nor twice in one turn, whichever batch it arrives in.
-      if (newsPrinted.current.turn !== view.turn) newsPrinted.current = { turn: view.turn, keys: new Set() };
-      const printed = newsPrinted.current.keys;
-      const fresh = batch.filter((s) => {
-        const key = `${s.headline}|${s.subhead}|${s.text}`;
-        if (printed.has(key)) return false;
-        printed.add(key);
-        return true;
-      });
-      if (fresh.length > 0) setNews((q) => [...q, ...fresh]);
-    }
+    // At the start of my turn they wait for the turn proper (after the battle replay and production reports): startCycle.
+    if (view.currentPlayer !== view.me) holdNews.current = false;
+    flushNews();
     soundSeen.current = { me: view.me, count: log.length };
     lastSeenEnemies.current = view.enemies.filter((e) => e.visibleNow);
   }, [view]);
@@ -614,6 +621,8 @@ export function GameScreen({ session, onQuit }: Props) {
   }, [replay?.index, replay !== null, replayPaused]);
   /** Selects the first ready unit of a fresh turn (built-this-turn first), else looks at a city. */
   const startCycle = () => {
+    holdNews.current = false;
+    flushNews();
     const first = readyNow(new Set(), [])[0];
     if (first) {
       if (fitOf(view.me).auto) {
