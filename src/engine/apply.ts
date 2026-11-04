@@ -18,11 +18,16 @@ function validDir(dir: unknown): boolean {
   return typeof dir === 'number' && Number.isInteger(dir) && dir >= 0 && dir <= 7;
 }
 
-export function apply(state: GameState, cmd: Command): ApplyResult {
+/**
+ * Applies a command to a copy of `state`. With `inPlace` it changes `state` itself instead (no copy, which makes a long
+ * replay many times faster): the caller must own the state and drop it when the command is rejected, as a rejected
+ * command may leave it half changed.
+ */
+export function apply(state: GameState, cmd: Command, inPlace = false): ApplyResult {
   if (state.over) return { ok: false, error: 'the game is over' };
   if (typeof cmd !== 'object' || cmd === null) return { ok: false, error: 'malformed command' };
   if ((cmd as { player?: unknown }).player !== state.currentPlayer) return { ok: false, error: 'not your turn' };
-  const s = structuredClone(state);
+  const s = inPlace ? state : structuredClone(state);
   const rng = new Rng(s.rngState);
   const events: GameEvent[] = [];
   const actor = s.currentPlayer;
