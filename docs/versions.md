@@ -55,3 +55,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.40 | 2026-11-04 | The Route destination list is in alphabetical order. |
 | 0.9.41 | 2026-11-04 | Giving orders now moves on to the closest unit that needs orders (not the next by number), so you finish a local fight before the view jumps across the map. Skipped units still come last. |
 | 0.9.42 | 2026-11-04 | Loading a saved game (and importing a file) now runs in a background worker, so a big game no longer makes the browser say the page is unresponsive. |
+| 0.9.43 | 2026-11-04 | The closest-unit rule now applies everywhere the game moves on to the next unit: after a Sentry/Explore/Go-to order, a move that uses up a unit, Standby, Hold, group orders and a lost attack. Before, only the Next key used it. |
