@@ -19,8 +19,8 @@ describe('titleCase', () => {
 
 describe('groundUnder', () => {
   it('names the ground under a land unit, and nothing at sea, in a city or on a map without terrain', () => {
-    const view = (relief: unknown, cities: { x: number; y: number }[] = []) =>
-      ({ width: 3, relief, knownCities: cities }) as unknown as Parameters<typeof groundUnder>[0];
+    const view = (relief: unknown, cities: { x: number; y: number }[] = [], terrain = ['land', 'land', 'land']) =>
+      ({ width: 3, relief, terrain, knownCities: cities }) as unknown as Parameters<typeof groundUnder>[0];
     const army = { type: 'army' as const, x: 1, y: 0, carriedBy: null };
     const relief = ['clear', 'forest', 'mountain'];
     expect(groundUnder(view(relief), army)).toBe('Forest');
@@ -28,6 +28,9 @@ describe('groundUnder', () => {
     expect(groundUnder(view(relief, [{ x: 1, y: 0 }]), army)).toBeNull();
     expect(groundUnder(view(relief), { ...army, type: 'destroyer' })).toBeNull();
     expect(groundUnder(view(relief), { ...army, carriedBy: 4 })).toBeNull();
+    // A seen enemy has no carriedBy: one on open water (aboard a ship) gets no ground.
+    expect(groundUnder(view(relief, [], ['land', 'water', 'land']), { type: 'army', x: 1, y: 0 })).toBeNull();
+    expect(groundUnder(view(relief), { type: 'army', x: 1, y: 0 })).toBe('Forest');
   });
 });
 

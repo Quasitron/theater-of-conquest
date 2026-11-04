@@ -7,9 +7,10 @@ export function titleCase(text: string): string {
 }
 
 /** The ground a land unit stands on for the status panel ("Forest"); null at sea, in a city, in the air or on a map without terrain. */
-export function groundUnder(view: PlayerView, u: Pick<Unit, 'type' | 'x' | 'y' | 'carriedBy'>): string | null {
-  if (!view.relief || u.carriedBy !== null || UNIT_STATS[u.type].domain !== 'land') return null;
+export function groundUnder(view: PlayerView, u: Pick<Unit, 'type' | 'x' | 'y'> & { carriedBy?: number | null }): string | null {
+  if (!view.relief || (u.carriedBy ?? null) !== null || UNIT_STATS[u.type].domain !== 'land') return null;
   if (view.knownCities.some((c) => c.x === u.x && c.y === u.y)) return null;
+  if (view.terrain[u.y * view.width + u.x] !== 'land') return null; // e.g. an enemy Army seen aboard a ship
   const r = view.relief[u.y * view.width + u.x];
   return r ? r.charAt(0).toUpperCase() + r.slice(1) : null;
 }
