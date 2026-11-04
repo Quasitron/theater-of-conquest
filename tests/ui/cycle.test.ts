@@ -86,6 +86,18 @@ describe('nextReadyAfter', () => {
     expect(nextReadyAfter([], 3)).toBeNull();
     expect(nextReadyAfter([], null)).toBeNull();
   });
+
+  it('with a hint, gives the closest unit, leaving skipped ones until last', () => {
+    const s = makeGame(['*#########*']);
+    const far = addUnit(s, 'army', 0, 9, 0, { id: 2 });
+    const near = addUnit(s, 'army', 0, 2, 0, { id: 7 });
+    const skipped = addUnit(s, 'army', 0, 1, 0, { id: 9 });
+    const hint = { from: { x: 0, y: 0 }, width: 11, wrap: false, skipped: [9] };
+    expect(nextReadyAfter([far, near, skipped], 5, hint)?.id).toBe(7);
+    expect(nextReadyAfter([far, skipped], 5, hint)?.id).toBe(2);
+    expect(nextReadyAfter([skipped], 5, hint)?.id).toBe(9);
+    expect(nextReadyAfter([far, near], 5, { ...hint, wrap: true, from: { x: 10, y: 0 } })?.id).toBe(2);
+  });
 });
 
 describe('reportQueue', () => {
