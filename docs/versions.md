@@ -57,3 +57,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.42 | 2026-11-04 | Loading a saved game (and importing a file) now runs in a background worker, so a big game no longer makes the browser say the page is unresponsive. |
 | 0.9.43 | 2026-11-04 | The closest-unit rule now applies everywhere the game moves on to the next unit: after a Sentry/Explore/Go-to order, a move that uses up a unit, Standby, Hold, group orders and a lost attack. Before, only the Next key used it. |
 | 0.9.44 | 2026-11-04 | The Go-to / Move To hover label for an Armor now counts the turn it loses in rough, river and forest ground, so it no longer says "This Turn" for a trip that takes two. |
+| 0.9.45 | 2026-11-04 | The panel for a spotted enemy land unit shows the terrain it stands on (forest, river, mountain and so on), when the map has terrain. |

@@ -159,6 +159,7 @@ function SidePanelView({ view, selection, onSelectUnit, onProduction, onAction, 
         <h3><span class="glyph owned" style={{ background: enemyColor }}>{UNIT_GLYPH[e.type]}</span> {UNIT_STATS[e.type].name}<Chevrons rank={e.rank ?? 0} /></h3>
         <p><Flag name={view.players[e.owner].name} /> {view.players[e.owner].name}</p>
         <p>{seen}</p>
+        {groundUnder(view, e) && <p>Terrain: {groundUnder(view, e)}</p>}
         <NextBar readyCount={readyCount} onAction={onAction} />
       </aside>
     );
