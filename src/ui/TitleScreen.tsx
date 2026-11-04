@@ -6,7 +6,7 @@ import { ManualDialog } from './ManualDialog';
 import { GameSession } from '../app/session';
 import { CLASSIC_RULES, MAX_PLAYERS, validateMapSize, type HouseRules } from '../engine';
 import { DEFAULT_WORLD, SIZE_PRESETS, type CityDensity, type Climate, type Landmass, type SizePreset, type WorldOptions } from '../mapgen';
-import { parseSave, serializeSave, type SaveStore, type SaveSummary, type SeatConfig } from '../storage';
+import { parseSaveAsync, type SaveStore, type SaveSummary, type SeatConfig } from '../storage';
 import { defaultSeats, loadNewGameSettings, saveNewGameSettings } from './newGameSettings';
 import { pickFileText } from './exportFile';
 import { VERSION_LABEL } from './version';
@@ -140,7 +140,7 @@ export function TitleScreen({ store, onStart }: Props) {
       const save = await store.get(name);
       if (!save) return setError(`No save named "${name}".`);
       // Re-validate the stored record as if it were an imported file.
-      const r = parseSave(serializeSave(save));
+      const r = await parseSaveAsync(save);
       if (!r.ok) return setError(r.error);
       onStart(GameSession.fromSave(r.save, store, r.note));
     } catch (e) {
@@ -162,7 +162,7 @@ export function TitleScreen({ store, onStart }: Props) {
     try {
       const text = await pickFileText();
       if (text === null) return;
-      const r = parseSave(text);
+      const r = await parseSaveAsync(text);
       if (!r.ok) return setError(r.error);
       onStart(GameSession.fromSave(r.save, store, r.note));
     } catch (e) {
