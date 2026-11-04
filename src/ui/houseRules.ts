@@ -43,6 +43,11 @@ export const HOUSE_RULE_OPTIONS: { key: keyof HouseRules; label: string; hint: s
     hint: "A submarine the enemy cannot see opens its attack on a Transport, Carrier or Battleship with a torpedo salvo that hits 7 times in 10. It sinks a Transport outright; a Carrier or Battleship is damaged and the sub slips one square away unharmed. A miss is a normal fight. A Destroyer, Cruiser, submarine or city next to the sub sees it, and then there is no surprise.",
   },
   {
+    key: 'armorNoRiverCover',
+    label: 'No river cover for Armor',
+    hint: 'With Advanced units, an Armor defending in a river no longer gets double defence against Armor attackers (it is slowed there as well). An Army in a river keeps its bonus.',
+  },
+  {
     key: 'cityStrength',
     label: 'City strength',
     hint: "A player's city takes 3 hits to fall and keeps its damage between attacks, healing 1 hit a turn, so groups can wear it down. Cruisers and Battleships can also bombard a player's city, down to its last hit, but cannot take it. Neutral cities stay easy.",

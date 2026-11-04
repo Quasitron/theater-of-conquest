@@ -31,6 +31,14 @@ describe('terrain (Advanced rules, Appendix III of the manual)', () => {
     expect(fightRatings({ advancedUnits: false }, 'armor', 'army', 'forest')).toEqual({ attack: 2, defense: 2 });
   });
 
+  it('with the no-river-cover house rule, an Armor in a river keeps its defence but an Army still doubles', () => {
+    const rule = { advancedUnits: true, armorNoRiverCover: true };
+    expect(fightRatings(ON, 'armor', 'armor', 'river')).toEqual({ attack: 2, defense: 4 });
+    expect(fightRatings(rule, 'armor', 'armor', 'river')).toEqual({ attack: 2, defense: 2 });
+    expect(fightRatings(rule, 'armor', 'army', 'river')).toEqual({ attack: 2, defense: 4 });
+    expect(fightRatings(rule, 'armor', 'armor', 'forest')).toEqual({ attack: 2, defense: 4 }); // forests are untouched
+  });
+
   it('keeps Armor out of mountains but lets it attack units in them, and does not advance after a win', () => {
     const s = makeGame(['*#m#*'], { rules: ON });
     const tank = addUnit(s, 'armor', 0, 1, 0, { movesLeft: 2 });

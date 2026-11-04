@@ -115,7 +115,7 @@ export function cityBombardChance(view: PlayerView, u: Unit, cityDamage = 0, gar
  * none; ships bombarding land units fight at half the defence, as in the engine.
  */
 export function unitAttackChance(
-  u: Unit, type: UnitType, foeRank = 0, rules: { advancedUnits: boolean; submarineStrike?: boolean } = { advancedUnits: false }, ground: Relief = 'clear',
+  u: Unit, type: UnitType, foeRank = 0, rules: { advancedUnits: boolean; submarineStrike?: boolean; armorNoRiverCover?: boolean } = { advancedUnits: false }, ground: Relief = 'clear',
 ): number {
   const a = UNIT_STATS[u.type];
   const d = UNIT_STATS[type];
