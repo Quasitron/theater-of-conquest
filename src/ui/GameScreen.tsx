@@ -181,6 +181,8 @@ export function GameScreen({ session, onQuit }: Props) {
   const [, setResizes] = useState(0);
   // The city screen (by city id) and the turn-start production reports still to be acknowledged.
   const [cityOpen, setCityOpen] = useState<number | null>(null);
+  /** The city dialog opens on its Production list (a prompt to choose) instead of the city's info (a plain click). */
+  const [cityProduction, setCityProduction] = useState(false);
   const [reports, setReports] = useState<ProductionReportItem[]>([]);
   const [reportIdx, setReportIdx] = useState(0);
   // Set when Prod. was pressed on a production report: closing the production dialog then moves on to the next report.
@@ -632,7 +634,7 @@ export function GameScreen({ session, onQuit }: Props) {
     }
     // A player's very first turn (one city, no units): its production screen opens so the default can be changed,
     // as in the original. Last, so the city screen's focus wins over the camera moves above.
-    if (view.turn === 1 && view.myUnits.length === 0 && view.myCities.length === 1) openCity(view.myCities[0].id);
+    if (view.turn === 1 && view.myUnits.length === 0 && view.myCities.length === 1) openCity(view.myCities[0].id, true);
   };
   const nextReport = () => {
     if (reportIdx + 1 < reports.length) {
@@ -647,7 +649,7 @@ export function GameScreen({ session, onQuit }: Props) {
   useEffect(() => {
     if (reportCity) focus(reportCity);
   }, [reportCity?.id, report?.unitId]);
-  const openCity = (id: number) => {
+  const openCity = (id: number, production = false) => {
     // Fresh from the session: a just-captured city is not in this render's view yet.
     const city = session.view().myCities.find((c) => c.id === id);
     if (!city) return;
@@ -658,6 +660,7 @@ export function GameScreen({ session, onQuit }: Props) {
     setPicker(null);
     setTarget(null);
     focus(city);
+    setCityProduction(production);
     setCityOpen(id);
   };
 
@@ -707,7 +710,7 @@ export function GameScreen({ session, onQuit }: Props) {
     const ev = session.lastEvents.find((e) => e.type === 'cityCaptured' && e.by === view.me);
     const captured = ev && ev.type === 'cityCaptured' ? ev : null;
     // Last, so that the city screen's focus wins over any selection or auto-fit camera move.
-    const finish = () => { if (captured) { capturedOpen.current = true; openCity(captured.cityId); } };
+    const finish = () => { if (captured) { capturedOpen.current = true; openCity(captured.cityId, true); } };
     if (session.phase !== 'playing') return finish();
     const v = session.view();
     if (v.me !== view.me) return finish();
@@ -1402,7 +1405,7 @@ export function GameScreen({ session, onQuit }: Props) {
       )}
       {openCityObj && (
         <CityScreen
-          key={openCityObj.id} view={view} city={openCityObj} anchor={anchorFor(openCityObj)} color={colors[view.me]} error={dialogError}
+          key={openCityObj.id} view={view} city={openCityObj} anchor={anchorFor(openCityObj)} color={colors[view.me]} error={dialogError} startOnProduction={cityProduction}
           onPick={(unitType) => { act({ type: 'setProduction', cityId: openCityObj.id, unitType }, true); }}
           onSetNext={(unitType) => { act({ type: 'setNextProduction', cityId: openCityObj.id, unitType }, true); }}
           onRename={(name) => { act({ type: 'renameCity', cityId: openCityObj.id, name }, true); }}
@@ -1456,7 +1459,7 @@ export function GameScreen({ session, onQuit }: Props) {
         <ProductionReport
           key={report.unitId} view={view} report={report} anchor={anchorFor(reportCity)} error={dialogError}
           onRename={(name) => { act({ type: 'renameUnit', unitId: report.unitId, name: name.trim() === '' ? null : name.trim() }, true); }}
-          onProd={() => { reportProd.current = true; openCity(reportCity.id); }}
+          onProd={() => { reportProd.current = true; openCity(reportCity.id, true); }}
           onOk={nextReport}
         />
       )}

@@ -28,6 +28,8 @@ interface Props {
   /** Mouse-only: selects a unit listed in the City view; the screen then closes. */
   onSelectUnit?: (id: number) => void;
   onClose: () => void;
+  /** Opens on the Production list (a prompt to choose) rather than the city's info. */
+  startOnProduction?: boolean;
 }
 
 
@@ -37,14 +39,14 @@ function routeSummary(view: PlayerView, route: CityRoute): string {
   return `${types} → ${dest ? dest.name : 'a lost city'}`;
 }
 
-export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetNext, onSetRoute, onSelectUnit, onClose }: Props) {
+export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetNext, onSetRoute, onSelectUnit, onClose, startOnProduction = false }: Props) {
   const coastal = cityIsCoastal(view, city);
   const ROWS: (UnitType | null)[] = [null, ...buildableTypes(view.rules)];
   const usable = (t: UnitType | null) => t === null || coastal || UNIT_STATS[t].domain !== 'sea';
   // The highlight is a pending choice: OK and Enter apply it, Esc drops it.
   const [cursor, setCursor] = useState<UnitType | null>(city.production);
   const [hover, setHover] = useState<UnitType | null>(null);
-  const [mode, setMode] = useState<'list' | 'city' | 'route'>('list');
+  const [mode, setMode] = useState<'list' | 'city' | 'route'>(startOnProduction ? 'list' : 'city');
   const [name, setName] = useState(city.name);
 
   // Route form: unit types the route cannot serve are greyed out, per the chosen destination.
@@ -217,8 +219,9 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
       {error && <p class="error" role="alert">{error}</p>}
       <div class="picker-actions">
         {mode === 'list' && <button onClick={(e) => { blur(e); setMode('city'); }}>City</button>}
+        {mode === 'city' && <button onClick={(e) => { blur(e); setMode('list'); }}>Production…</button>}
         {mode === 'city' && onSetRoute && <button onClick={(e) => { blur(e); setMode('route'); }}>Route…</button>}
-        {mode !== 'list' && <button onClick={(e) => { blur(e); setMode(mode === 'route' ? 'city' : 'list'); }}>Back</button>}
+        {mode === 'route' && <button onClick={(e) => { blur(e); setMode('city'); }}>Back</button>}
         {mode === 'route'
           ? (
             <>
