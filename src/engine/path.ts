@@ -246,6 +246,29 @@ export function arrivalTurn(u: Pick<Unit, 'type' | 'damage' | 'movesLeft'>, step
   return turn + Math.ceil((steps - u.movesLeft) / effectiveMove(u as Unit));
 }
 
+/**
+ * Turn on which a unit following `path` arrives, step by step: an Armor entering rough, river or forest ground
+ * loses the rest of that turn's moves. `extraSteps` are plain moves past the end of the path (a spy's step into a city).
+ */
+export function pathArrivalTurn(
+  m: Pick<PathMap, 'relief' | 'width'>, u: Pick<Unit, 'type' | 'damage' | 'movesLeft'>, path: readonly Pos[], extraSteps: number, turn: number,
+): number {
+  const perTurn = effectiveMove(u as Unit);
+  let moves = u.movesLeft;
+  let t = turn;
+  const total = path.length + extraSteps;
+  for (let k = 0; k < total; k++) {
+    if (moves <= 0) {
+      t++;
+      moves = perTurn;
+    }
+    moves--;
+    const p = path[k];
+    if (p && u.type === 'armor' && armorSlowedBy(m.relief?.[p.y * m.width + p.x] ?? 'clear')) moves = 0;
+  }
+  return t;
+}
+
 /** Direction from `from` to an adjacent square `to`, or null when not adjacent. */
 export function dirBetween(m: Pick<PathMap, 'width' | 'height' | 'wrap'>, from: Pos, to: Pos): Dir | null {
   for (let d = 0; d < 8; d++) {

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { GameSession, SessionCommand } from '../app/session';
 import { landOnSquare, unloadAndLand } from '../app/unloadAndLand';
 import {
-  UNIT_STATS, step, aircraftCanReach, arrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
+  UNIT_STATS, step, aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
@@ -95,7 +95,7 @@ function planPath(view: PlayerView, u: Unit, to: Pos, extraSteps = 0): { path: P
   const map = pathMapFromView(view);
   const path = findPath(map, u, to);
   // extraSteps: moves past the end of the path (a spy's last step into the city it is walking to).
-  const arrival = path ? arrivalTurn(u, path.length + extraSteps, view.turn) : null;
+  const arrival = path ? pathArrivalTurn(map, u, path, extraSteps, view.turn) : null;
   const fuel = u.fuel;
   // Aircraft keep a unit of fuel in hand unless they end at a refuel point.
   const reach = fuel === null || !path || aircraftCanReach(map, path.length, fuel, to);
