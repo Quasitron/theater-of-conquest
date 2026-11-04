@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { doublesDefense, fightRatings, findPath, parseAscii, pathMapFromState, reliefAt } from '../../src/engine';
+import { doublesDefense, fightRatings, findPath, parseAscii, pathArrivalTurn, pathMapFromState, reliefAt } from '../../src/engine';
 import { moveUnit } from '../../src/engine/movement';
 import { Rng } from '../../src/engine/rng';
 import { DEFAULT_WORLD } from '../../src/mapgen/options';
@@ -76,6 +76,23 @@ describe('terrain (Advanced rules, Appendix III of the manual)', () => {
     expect(tank.movesLeft).toBe(1);
     const army = addUnit(makeGame(['*#f#*'], { rules: ON }), 'army', 0, 1, 0);
     expect(army.movesLeft).toBe(1);
+  });
+
+  it('counts the turn an Armor loses in slow ground when it works out the arrival turn', () => {
+    const s = makeGame(['*#r#*'], { rules: ON });
+    const tank = addUnit(s, 'armor', 0, 0, 0, { movesLeft: 2 });
+    s.fog[0].explored.fill(1);
+    const map = pathMapFromState(s, 0);
+    const path = [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }];
+    // Clear, then the river ends the turn: the last square is reached next turn, not this one.
+    expect(pathArrivalTurn(map, tank, path.slice(0, 2), 0, 5)).toBe(5);
+    expect(pathArrivalTurn(map, tank, path, 0, 5)).toBe(6);
+    expect(pathArrivalTurn(map, tank, path.slice(0, 1), 0, 5)).toBe(5);
+    // Over clear ground only, three steps for 2 moves a turn is still two turns.
+    const clear = makeGame(['*###*'], { rules: ON });
+    const t2 = addUnit(clear, 'armor', 0, 0, 0, { movesLeft: 2 });
+    clear.fog[0].explored.fill(1);
+    expect(pathArrivalTurn(pathMapFromState(clear, 0), t2, [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }], 0, 5)).toBe(6);
   });
 
   it('plans Armor round a mountain range, while an Army goes straight through', () => {
