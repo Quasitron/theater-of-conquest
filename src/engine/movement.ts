@@ -69,6 +69,14 @@ export function settleAircraft(s: GameState, u: Unit, events: GameEvent[]): void
   }
 }
 
+/** A transport or carrier on sentry wakes (needs orders again) when a unit boards it. */
+export function wakeSentry(host: Unit): void {
+  if (host.orders?.kind === 'sentry') {
+    host.orders = null;
+    host.blockedTurns = 0;
+  }
+}
+
 export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, events: GameEvent[]): string | null {
   if (u.type === 'airbase') return 'an airbase cannot move';
   if (u.movesLeft <= 0) return 'unit has no moves left';
@@ -112,6 +120,7 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
     spendMove(u);
     u.carriedBy = host.id;
     u.orders = st.domain === 'air' ? null : { kind: 'sentry' };
+    wakeSentry(host);
     relocate(s, u, to, events);
     settleAircraft(s, u, events);
     return null;

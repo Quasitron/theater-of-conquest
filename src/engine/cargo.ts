@@ -24,6 +24,7 @@ export function loadUnits(s: GameState, t: Unit, unitIds: number[]): string | nu
     u.orders = { kind: 'sentry' };
   }
   t.unloadNextTurn = false;
+  if (t.orders?.kind === 'sentry') t.orders = null; // boarding wakes a sentried transport
   return null;
 }
 
