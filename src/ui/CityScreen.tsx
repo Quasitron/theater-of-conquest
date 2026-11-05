@@ -8,6 +8,7 @@ import { cityIsCoastal, inProductionCount, statsText, turnsToComplete } from './
 import { PlacedDialog } from './LeaderLine';
 import type { Pt } from './placement';
 import { blur } from './blur';
+import { ordersText } from './actions';
 import { Chevrons } from './Chevrons';
 import { UnitCard } from './UnitCard';
 
@@ -178,6 +179,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
                 {onSelectUnit
                   ? <button class="linklike" onClick={(e) => { blur(e); onSelectUnit(u.id); onClose(); }}>{unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></button>
                   : <>{unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></>}
+                {' '}<span class="muted">{ordersText(view, u) === 'None' ? '· no orders' : `· ${ordersText(view, u)}`}</span>
               </li>)}</ul>}
           {bar ?? <p class="muted">Not building anything.</p>}
           {city.route && <p class="muted">Route: {routeSummary(view, city.route)}</p>}
