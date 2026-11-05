@@ -92,19 +92,44 @@ export function updateFog(s: GameState, pid: PlayerId): void {
   for (const i of vis) fog.explored[i] = 1;
   for (const c of s.cities) if (vis.has(index(s, c.x, c.y))) fog.knownCityOwner[c.id] = c.owner;
 
+  // Observers by square, so a target is only tested against the few that are within reach (no one sees beyond 2).
+  const observers = observersOf(s, pid);
+  const grid = new Map<number, Observer[]>();
+  for (const o of observers) {
+    const k = index(s, o.x, o.y);
+    const list = grid.get(k);
+    if (list) list.push(o);
+    else grid.set(k, [o]);
+  }
+  const citySquares = new Set<number>();
+  for (const c of s.cities) citySquares.add(index(s, c.x, c.y));
+  const anyObserverSees = (t: { type: UnitType; x: number; y: number }): boolean => {
+    for (let dy = -ADVANCED_SIGHT; dy <= ADVANCED_SIGHT; dy++) {
+      for (let dx = -ADVANCED_SIGHT; dx <= ADVANCED_SIGHT; dx++) {
+        const p = normalize(s, t.x + dx, t.y + dy);
+        const list = p ? grid.get(index(s, p.x, p.y)) : undefined;
+        if (list && list.some((o) => observerSees(s, o, t))) return true;
+      }
+    }
+    return false;
+  };
+
   const seenNow = new Set<number>();
   for (const u of s.units) {
-    if (!areFriendly(s, u.owner, pid) && canPlayerSeeUnit(s, pid, u)) {
+    if (areFriendly(s, u.owner, pid)) continue;
+    // Same rules as canPlayerSeeUnit; ordinary units go through the observer grid instead of every observer.
+    const sees = u.type === 'spy' ? canPlayerSeeUnit(s, pid, u)
+      : u.carriedBy === null && !citySquares.has(index(s, u.x, u.y)) && anyObserverSees(u);
+    if (sees) {
       reveal(s, pid, u);
       seenNow.add(u.id);
     }
   }
 
-  const observers = observersOf(s, pid);
   for (const key of Object.keys(fog.lastSeen)) {
     const e = fog.lastSeen[Number(key)];
     if (seenNow.has(e.unitId)) continue;
-    const couldSeeIt = observers.some((o) => observerSees(s, o, e));
+    const couldSeeIt = anyObserverSees(e);
     if (couldSeeIt || s.turn - e.turnSeen >= MARKER_LIFETIME) delete fog.lastSeen[Number(key)];
   }
 }
