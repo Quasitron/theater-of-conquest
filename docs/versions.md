@@ -60,3 +60,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.45 | 2026-11-04 | The panel for a spotted enemy land unit shows the terrain it stands on (forest, river, mountain and so on), when the map has terrain. |
 | 0.9.46 | 2026-11-04 | The spy newspaper no longer pops up during the turn-start battle replay: its stories wait until the replay and production reports are done, then appear once at the start of your turn. |
 | 0.9.47 | 2026-11-04 | Large games load and play about 5 times faster: working out what each side can see now only looks at units near each observer. On a 5,500-command test game loading went from 49 s to 10 s, with identical results. |
+| 0.9.48 | 2026-11-04 | A unit on Sentry now carries a blue "Zz" tag on the map (in the open and in city stacks), so it is easy to tell from a unit that has no orders. |

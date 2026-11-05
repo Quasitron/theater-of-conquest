@@ -385,6 +385,32 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     ctx.globalAlpha = 1;
   };
 
+  /** A unit on sentry: a small dark tag with a pale "z" at the bottom edge of its frame (cx, cy = centre of the frame). */
+  const sentryTag = (u: Unit, cx: number, cy: number, scale: number, alpha: number) => {
+    if (u.orders?.kind !== 'sentry' || t * scale < ICON_MIN_TILE) return;
+    const size = t * scale;
+    // Sized from the full tile even on the smaller city-stack picture, so it stays readable.
+    const big = t * Math.max(scale, 0.8);
+    const w = big * 0.46;
+    const h = big * 0.3;
+    const x = cx - w / 2;
+    const y = cy + (size * 0.94) / 2 - h * 0.8;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#1f5fae';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = Math.max(1.5, big * 0.035);
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, h * 0.35);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.round(h * 0.8)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Zz', cx, y + h * 0.5 + 1);
+    ctx.globalAlpha = 1;
+  };
+
   // Cargo is not drawn itself, so an active unit aboard shows its own glyph on its carrier's square.
   const activeUnit = view.myUnits.find((u) => u.id === o.activeId);
   const activeCargo = activeUnit && activeUnit.carriedBy !== null ? activeUnit : null;
@@ -461,6 +487,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         return;
       }
       unitMark(sx, sy, colors[view.me], face(shown).type, alpha, 0.6, 0.3, 0.3, left(face(shown)));
+      sentryTag(face(shown), sx + t * 0.3, sy + t * 0.3, 0.6, alpha);
       if (stack.length >= 2) badge(sx, sy, stack.length, alpha);
     });
   }
@@ -471,6 +498,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
       unitMark(sx, sy, colors[view.me], face(u).type, ownAlpha(u), 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins));
+      sentryTag(face(u), sx + t * 0.5, sy + t * 0.5, 1, ownAlpha(u));
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
       if (cargo > 0) badge(sx, sy, cargo, ownAlpha(u));
       if (isCrippled(u)) {
