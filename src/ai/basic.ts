@@ -273,6 +273,11 @@ const CAPITAL_THREAT_RANGE = 6;
 /** ...and an enemy capital is worth this many squares of walking more than another city when choosing what to march on. */
 const CAPITAL_PULL = 5;
 
+/** A neutral city counts as this many squares nearer than it is when an army picks what to march on. */
+const NEUTRAL_PULL = 4;
+/** While there is reachable unexplored ground, every this-many'th army (by id) explores instead of marching on a known city. */
+const EXPLORER_EVERY = 3;
+
 /** A visible enemy land unit close to the city: keep the garrison at home. */
 function threatened(view: PlayerView, city: Pos & { capital?: boolean }): boolean {
   const range = city.capital ? CAPITAL_THREAT_RANGE : THREAT_RANGE;
@@ -320,7 +325,11 @@ function armyTarget(view: PlayerView, u: Unit): { city: { id: number; x: number;
       if (dn !== undefined && dn > 0 && dn < d) { d = dn; sq = n; }
     }
     if (!sq) continue;
-    let cost = d - 2 * (armiesNear(view, c, RALLY_RADIUS) - (chebyshev(geo(view), u, c) <= RALLY_RADIUS ? 1 : 0));
+    // A neutral city falls to one army, so it needs no massing: it is simply worth walking a little farther for. Held
+    // cities draw armies to where others are already massing.
+    let cost = c.owner === null
+      ? d - NEUTRAL_PULL
+      : d - 2 * (armiesNear(view, c, RALLY_RADIUS) - (chebyshev(geo(view), u, c) <= RALLY_RADIUS ? 1 : 0));
     if (c.owner !== null && view.myCities.some((m) => chebyshev(geo(view), m, c) <= HOME_RANGE)) cost -= 4;
     if (c.capital) cost -= CAPITAL_PULL; // a prize: it builds faster, and holding it means more for whoever takes it
     if (best === null || cost < best.cost) best = { city: c, sq, cost };
@@ -356,6 +365,8 @@ function decideArmy(view: PlayerView, u: Unit, port: City | null, t: AiTuning): 
     const dir = dirTo(view, u, foe);
     if (dir !== null) return { type: 'move', unitId: u.id, dir };
   }
+  // Some armies keep uncovering the map, so the neutral cities behind the front are found and taken.
+  if (u.id % EXPLORER_EVERY === 0 && findFrontier(pathMapFromView(view), u) !== null) return setOrders(u, { kind: 'explore' });
   // March on the nearest foreign city we can reach on foot.
   const target = armyTarget(view, u);
   if (target) return setOrders(u, { kind: 'goto', target: target.sq });
