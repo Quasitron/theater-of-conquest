@@ -15,8 +15,15 @@ export const SABOTAGE_CATCH_CHANCE = [0.3, 0.25, 0.2, 0.1] as const;
  * more for every unit of the owner's standing in it, up to a limit.
  */
 export const DISCOVERY = { base: 0.05, perUnit: 0.07, max: 0.6 } as const;
-/** The chance an Elite spy's attempt to incite a revolt succeeds; a failed attempt costs the spy its life. */
+/** A seasoned spy hides better: the share of the usual discovery chance that applies at each promotion rank. */
+export const DISCOVERY_BY_RANK = [1, 0.8, 0.6, 0.4] as const;
+/** The chance an Elite spy's attempt to incite a revolt succeeds. */
 export const REVOLT_CHANCE = 0.25;
+/** The chance a spy whose revolt failed is caught and shot on the spot; otherwise it escapes, but a manhunt is on. */
+export const REVOLT_FAIL_DEATH = 0.5;
+/** While a manhunt is on in its city, a spy's chance of being found is doubled and raised by this, up to MANHUNT_MAX. */
+export const MANHUNT_EXTRA = 0.15;
+export const MANHUNT_MAX = 0.9;
 
 /**
  * A spy at work (Advanced units rule). Inside an enemy city it wrecks the production the city has built up, and uses
@@ -35,7 +42,7 @@ export function sabotageCity(s: GameState, rng: RandomSource, spy: Unit, events:
   spy.movesLeft = 0;
   spy.movedThisTurn = true;
   spy.orders = null;
-  const caught = rng.next() < SABOTAGE_CATCH_CHANCE[rankOf(spy.wins)];
+  const caught = rng.next() < SABOTAGE_CATCH_CHANCE[rankOf(spy.wins, spy.type)];
   events.push({ type: 'citySabotaged', cityId: city.id, by: spy.owner, owner: city.owner, caught, production });
   if (caught) destroyUnit(s, spy, 'caught', events, city.owner);
   else recordWin(s, spy, events); // a clean job counts towards promotion
@@ -60,7 +67,7 @@ export function hurtGarrison(s: GameState, rng: RandomSource, spy: Unit, events:
   spy.movesLeft = 0;
   spy.movedThisTurn = true;
   spy.orders = null;
-  const caught = rng.next() < SABOTAGE_CATCH_CHANCE[rankOf(spy.wins)];
+  const caught = rng.next() < SABOTAGE_CATCH_CHANCE[rankOf(spy.wins, spy.type)];
   events.push({ type: 'garrisonHurt', cityId: city.id, by: spy.owner, owner: city.owner, unitType: victim.type, caught });
   if (caught) destroyUnit(s, spy, 'caught', events, city.owner);
   else recordWin(s, spy, events);
@@ -73,7 +80,7 @@ export function hurtGarrison(s: GameState, rng: RandomSource, spy: Unit, events:
  */
 export function incitePeople(s: GameState, rng: RandomSource, spy: Unit, events: GameEvent[]): string | null {
   if (spy.type !== 'spy') return 'only a spy can incite a revolt';
-  if (rankOf(spy.wins) < 3) return 'only an Elite spy can incite a revolt';
+  if (rankOf(spy.wins, spy.type) < 3) return 'only an Elite spy can incite a revolt';
   if (spy.movesLeft <= 0) return 'unit has no moves left';
   const city = cityAt(s, spy.x, spy.y);
   if (spy.carriedBy !== null || !city || city.owner === null || areFriendly(s, city.owner, spy.owner)) {
@@ -81,11 +88,21 @@ export function incitePeople(s: GameState, rng: RandomSource, spy: Unit, events:
   }
   const from = city.owner;
   const success = rng.next() < REVOLT_CHANCE;
-  events.push({ type: 'cityIncited', cityId: city.id, by: spy.owner, owner: from, success });
   if (!success) {
-    destroyUnit(s, spy, 'caught', events, from);
+    // A failed revolt may cost the spy its life; if it gets away it is still in the city, and the hunt for it is on.
+    const shot = rng.next() < REVOLT_FAIL_DEATH;
+    events.push({ type: 'cityIncited', cityId: city.id, by: spy.owner, owner: from, success, ...(shot ? {} : { escaped: true }) });
+    if (shot) {
+      destroyUnit(s, spy, 'caught', events, from);
+    } else {
+      spy.hunted = city.id;
+      spy.movesLeft = 0;
+      spy.movedThisTurn = true;
+      spy.orders = null;
+    }
     return null;
   }
+  events.push({ type: 'cityIncited', cityId: city.id, by: spy.owner, owner: from, success });
   for (const u of s.units.filter((x) => x.x === city.x && x.y === city.y && x !== spy)) {
     if (!areFriendly(s, u.owner, spy.owner)) destroyUnit(s, u, 'cityCaptured', events);
   }
@@ -112,9 +129,18 @@ export function garrisonOf(s: GameState, city: { x: number; y: number; owner: Pl
   return s.units.filter((u) => u.x === city.x && u.y === city.y && u.carriedBy === null && u.type !== 'spy' && city.owner !== null && areFriendly(s, u.owner, city.owner));
 }
 
-/** The chance a spy hiding in this city is discovered at the start of its owner's turn. */
-export function discoveryChance(s: GameState, city: { x: number; y: number; owner: PlayerId | null }): number {
-  return Math.min(DISCOVERY.max, DISCOVERY.base + DISCOVERY.perUnit * garrisonOf(s, city).length);
+/**
+ * The chance a spy hiding in this city is discovered at the start of its owner's turn. With `spy`: a seasoned spy is
+ * harder to find, and one that stays in the city where its revolt failed is hunted (a manhunt is on).
+ */
+export function discoveryChance(
+  s: GameState, city: { id?: number; x: number; y: number; owner: PlayerId | null }, spy?: Pick<Unit, 'wins' | 'type' | 'hunted'>,
+): number {
+  const usual = Math.min(DISCOVERY.max, DISCOVERY.base + DISCOVERY.perUnit * garrisonOf(s, city).length);
+  if (!spy) return usual;
+  const hidden = usual * DISCOVERY_BY_RANK[rankOf(spy.wins, spy.type)];
+  if (spy.hunted !== undefined && spy.hunted === city.id) return Math.min(MANHUNT_MAX, hidden * 2 + MANHUNT_EXTRA);
+  return hidden;
 }
 
 /** At the start of `pid`'s turn, enemy spies hiding in their cities may be found and shot. */
@@ -123,7 +149,7 @@ export function discoverSpies(s: GameState, rng: RandomSource, pid: PlayerId, ev
     if (spy.type !== 'spy' || spy.carriedBy !== null) continue;
     const city = cityAt(s, spy.x, spy.y);
     if (!city || city.owner !== pid || areFriendly(s, city.owner, spy.owner)) continue;
-    if (rng.next() >= discoveryChance(s, city)) continue;
+    if (rng.next() >= discoveryChance(s, city, spy)) continue;
     events.push({ type: 'spyFound', cityId: city.id, owner: pid, by: spy.owner });
     destroyUnit(s, spy, 'caught', events, pid);
   }

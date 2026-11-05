@@ -55,7 +55,7 @@ export function UnitInfo({ view, unit, onRename, onOrders, onClose }: Props) {
         }
       }}
     >
-      <h2><span class="glyph">{UNIT_GLYPH[unit.type]}</span> {unitDisplayName(unit)}<Chevrons rank={rankOf(unit.wins)} /></h2>
+      <h2><span class="glyph">{UNIT_GLYPH[unit.type]}</span> {unitDisplayName(unit)}<Chevrons rank={rankOf(unit.wins, unit.type)} /></h2>
       <form class="rename" onSubmit={(e) => { e.preventDefault(); onRename(name); }}>
         <input
           value={name} maxLength={24} placeholder={st.name} aria-label="Unit name"

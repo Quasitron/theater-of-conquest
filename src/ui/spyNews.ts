@@ -54,9 +54,13 @@ export function spyHeadlines(events: readonly GameEvent[], me: PlayerId, cityNam
           ? { headline: `${place} RISES UP!`, subhead: 'The people have had enough', text: `Our agent has turned ${city} against its masters. The city is ours!` }
           : { headline: `REVOLT IN ${place}!`, subhead: 'Agitators win over the people', text: `${city} has risen against us and been lost.` });
       } else if (e.by === me) {
-        out.push({ headline: `REVOLT FAILS IN ${place}!`, subhead: 'The people stayed home', text: `Our agent failed to stir up ${city} and was caught.` });
+        out.push(e.escaped
+          ? { headline: `REVOLT FAILS IN ${place}!`, subhead: 'Manhunt is on for the suspect who started it', text: `Our agent failed to stir up ${city} but was not caught. The hunt for the suspect is on, and the longer he stays in ${city}, the likelier he is found. Move him out at once.` }
+          : { headline: `REVOLT FAILS IN ${place}!`, subhead: 'The people stayed home', text: `Our agent failed to stir up ${city} and was caught.` });
       } else if (e.owner === me) {
-        out.push({ headline: `REVOLT PUT DOWN IN ${place}!`, subhead: 'An agitator is taken', text: `A foreign agent tried to stir up ${city} and was caught.` });
+        out.push(e.escaped
+          ? { headline: `REVOLT PUT DOWN IN ${place}!`, subhead: 'Manhunt is on for the agitator', text: `A foreign agent tried to stir up ${city} but slipped away. He is still in hiding, and the search is on.` }
+          : { headline: `REVOLT PUT DOWN IN ${place}!`, subhead: 'An agitator is taken', text: `A foreign agent tried to stir up ${city} and was caught.` });
       }
     }
   }

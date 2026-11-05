@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { apply, getPlayerView, UNIT_STATS, type GameEvent } from '../../src/engine';
 import { canPlayerSeeUnit, catchSpies, updateFog } from '../../src/engine/fog';
 import { moveUnit } from '../../src/engine/movement';
-import { DISCOVERY, discoverSpies, discoveryChance, hurtGarrison, incitePeople, sabotageCity } from '../../src/engine/spy';
+import { rankOf } from '../../src/engine/units';
+import { DISCOVERY, MANHUNT_EXTRA, MANHUNT_MAX, discoverSpies, discoveryChance, hurtGarrison, incitePeople, sabotageCity } from '../../src/engine/spy';
 import { addUnit, fixedRng, makeGame } from '../helpers';
 
 const M = ['*.........', '..........', '..........', '.........*'];
@@ -153,18 +154,56 @@ describe('Spy (Advanced units)', () => {
     expect(sabotageCity(s, fixedRng(0.99), out, [])).toMatch(/enemy city/);
   });
 
-  it('only an Elite spy can incite a revolt, with a modest chance; failing costs the spy', () => {
+  it('a spy is promoted after 1, 2 and 3 wins (an army needs 1, 3 and 5)', () => {
+    expect([0, 1, 2, 3, 4].map((w) => rankOf(w, 'spy'))).toEqual([0, 1, 2, 3, 3]);
+    expect([0, 1, 2, 3, 4, 5].map((w) => rankOf(w, 'army'))).toEqual([0, 1, 1, 2, 2, 3]);
+  });
+
+  it('a seasoned spy hides better, and one still in the city of a failed revolt is hunted', () => {
+    const { s, enemyCity } = setup();
+    addUnit(s, 'army', 1, enemyCity.x, enemyCity.y);
+    addUnit(s, 'army', 1, enemyCity.x, enemyCity.y); // usual chance: 0.05 + 2 x 0.07
+    const usual = discoveryChance(s, enemyCity);
+    const at = (wins: number, hunted?: number) => discoveryChance(s, enemyCity, { type: 'spy', wins, ...(hunted !== undefined ? { hunted } : {}) });
+    expect([0, 1, 2, 3].map((w) => at(w))).toEqual([usual, usual * 0.8, usual * 0.6, usual * 0.4]);
+    // Hunted in this city: doubled and raised, whatever the rank; hunted in another city counts for nothing here.
+    expect(at(3, enemyCity.id)).toBeCloseTo(usual * 0.4 * 2 + MANHUNT_EXTRA);
+    expect(at(3, enemyCity.id + 50)).toBeCloseTo(usual * 0.4);
+    for (let i = 0; i < 20; i++) addUnit(s, 'army', 1, enemyCity.x, enemyCity.y);
+    expect(at(0, enemyCity.id)).toBe(MANHUNT_MAX);
+  });
+
+  it('only an Elite spy can incite a revolt, with a modest chance; failing may cost the spy, or leave it hunted', () => {
     const { s, enemyCity } = setup();
     const green = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y);
     expect(incitePeople(s, fixedRng(0), green, [])).toMatch(/Elite/);
+    const veteran = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y, { wins: 2 });
+    expect(incitePeople(s, fixedRng(0), veteran, [])).toMatch(/Elite/);
 
-    const elite = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y, { wins: 5 });
+    // The revolt fails and the spy is shot (the second roll falls under the chance of death).
+    const elite = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y, { wins: 3 });
     const ev: GameEvent[] = [];
-    expect(incitePeople(s, fixedRng(0.9), elite, ev)).toBeNull();
+    expect(incitePeople(s, fixedRng(0.9, 0.1), elite, ev)).toBeNull();
     expect(enemyCity.owner).toBe(1);
     expect(s.units.some((u) => u.id === elite.id)).toBe(false);
+    expect(ev.find((e) => e.type === 'cityIncited')).toMatchObject({ success: false });
+    expect(ev.find((e) => e.type === 'cityIncited')).not.toHaveProperty('escaped');
 
-    const again = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y, { wins: 5 });
+    // The revolt fails but the spy gets away: it stays in the city, hunted, with its move spent.
+    const slipped = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y, { wins: 3 });
+    const esc: GameEvent[] = [];
+    expect(incitePeople(s, fixedRng(0.9, 0.9), slipped, esc)).toBeNull();
+    expect(s.units.some((u) => u.id === slipped.id)).toBe(true);
+    expect(slipped.hunted).toBe(enemyCity.id);
+    expect(slipped.movesLeft).toBe(0);
+    expect(esc.find((e) => e.type === 'cityIncited')).toMatchObject({ success: false, escaped: true });
+    // Moving out of the city ends the manhunt.
+    const land = makeGame(['*########*'], { rules: RULES });
+    const runner = addUnit(land, 'spy', 0, 9, 0, { hunted: 1 });
+    expect(moveUnit(land, fixedRng(0), runner, 6, [])).toBeNull();
+    expect(runner.hunted).toBeUndefined();
+
+    const again = addUnit(s, 'spy', 0, enemyCity.x, enemyCity.y, { wins: 3 });
     const win: GameEvent[] = [];
     expect(incitePeople(s, fixedRng(0), again, win)).toBeNull();
     expect(enemyCity.owner).toBe(0);

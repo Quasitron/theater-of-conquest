@@ -23,6 +23,7 @@ export function relocate(s: GameState, u: Unit, to: Pos, events: GameEvent[]): v
   u.x = to.x;
   u.y = to.y;
   u.unloadNextTurn = false;
+  delete u.hunted; // a spy that moves has got away from the manhunt
   for (const c of cargoOf(s, u)) {
     c.x = to.x;
     c.y = to.y;

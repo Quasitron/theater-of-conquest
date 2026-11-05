@@ -59,7 +59,7 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     sabotage: view.rules.advancedUnits && inEnemyCity,
     // Nothing to damage in an empty city (its spy-eyed garrison list is empty).
     hurt: view.rules.advancedUnits && inEnemyCity && !emptyGarrison(view, u),
-    incite: view.rules.advancedUnits && inEnemyCity && rankOf(u.wins) === 3,
+    incite: view.rules.advancedUnits && inEnemyCity && rankOf(u.wins, u.type) === 3,
     clearOrders: u.orders !== null,
     // Damaged: in a city of ours it sits there until repaired, elsewhere it first goes to the nearest suitable city.
     repair: !fixed && u.damage > 0 && u.carriedBy === null && u.orders?.kind !== 'repair' && (inCity || view.myCities.length > 0),

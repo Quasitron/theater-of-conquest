@@ -53,7 +53,7 @@ export function UnitList({ view, onSelect, onClose }: Props) {
             {shown.map((u) => (
               <li key={u.id}>
                 <button class="linklike" onClick={(e) => { blur(e); onSelect(u.id); }}>
-                  <span class="glyph">{UNIT_GLYPH[u.type]}</span> {unitDisplayName(u)}<Chevrons rank={rankOf(u.wins)} />
+                  <span class="glyph">{UNIT_GLYPH[u.type]}</span> {unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} />
                 </button>
                 <span class="muted">
                   {whereIs(view, u)} · {ordersText(view, u)}
