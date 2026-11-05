@@ -48,6 +48,11 @@ export const HOUSE_RULE_OPTIONS: { key: keyof HouseRules; label: string; hint: s
     hint: 'With Advanced units, an Armor defending in a river no longer gets double defence against Armor attackers (it is slowed there as well). An Army in a river keeps its bonus.',
   },
   {
+    key: 'capitalCities',
+    label: 'Capital cities',
+    hint: "Each player's starting city is a capital, marked with a gold star. It builds 25% faster (never less than 1 turn faster), also when it is war-torn. A captured capital keeps its star and its boost for the new owner.",
+  },
+  {
     key: 'cityStrength',
     label: 'City strength',
     hint: "A player's city takes 3 hits to fall and keeps its damage between attacks, healing 1 hit a turn, so groups can wear it down. Cruisers and Battleships can also bombard a player's city, down to its last hit, but cannot take it. Neutral cities stay easy.",

@@ -57,6 +57,7 @@ export function createGame(o: NewGameOptions): GameState {
   o.startCityIndices.forEach((ci, pid) => {
     s.cities[ci].owner = pid;
     s.cities[ci].production = 'army';
+    if (s.rules.capitalCities) s.cities[ci].capital = true;
   });
   for (const p of s.players) updateFog(s, p.id);
   if (!s.rules.fairFirstTurn) advanceProduction(s, 0, []);

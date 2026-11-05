@@ -8,8 +8,13 @@ export function buildTime(city: City, type: UnitType): number {
   const st = UNIT_STATS[type];
   const base = city.lastBuilt === type ? st.buildRepeat : st.build;
   // War-torn cities (house rule; the count is only ever set when it is on) build slower.
-  return Math.ceil(base * (1 + WAR_TORN_SLOWDOWN * (city.warTorn ?? 0)));
+  const slowed = Math.ceil(base * (1 + WAR_TORN_SLOWDOWN * (city.warTorn ?? 0)));
+  // A capital (house rule; the flag is only ever set when it is on) then takes a quarter off, always at least 1 turn.
+  return city.capital ? Math.max(1, Math.min(slowed - 1, Math.ceil(slowed * (1 - CAPITAL_SPEEDUP)))) : slowed;
 }
+
+/** A capital builds this much faster than the same city would otherwise (but never saves less than 1 turn). */
+export const CAPITAL_SPEEDUP = 0.25;
 
 /** A war-torn city takes this much longer to build per capture it has suffered (so +25% each, up to 4 captures). */
 export const WAR_TORN_SLOWDOWN = 0.25;

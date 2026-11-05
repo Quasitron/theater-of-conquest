@@ -105,6 +105,8 @@ export interface City {
   warTorn?: number;
   /** Turns of its owner's time since it last recovered a step. */
   warTornClock?: number;
+  /** A capital (capital cities rule; only ever set when it is on): builds faster, and stays a capital when captured. */
+  capital?: boolean;
   route?: CityRoute;
 }
 
