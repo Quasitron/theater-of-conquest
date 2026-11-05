@@ -72,3 +72,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.57 | 2026-11-05 | The spy theme (the sound a new Spy plays when it is built) now also plays when a spy slips into an enemy city. |
 | 0.9.58 | 2026-11-05 | The city screen's Units inside list now shows each unit's current orders (Sentry, Go-to, Explore, and so on, or no orders) beside its name. |
 | 0.9.59 | 2026-11-05 | A crippled unit's marker on the map is now a small red cross on a white square instead of a plain red square. |
+| 0.9.60 | 2026-11-05 | A crippled unit that is in one of your cities with no orders now goes under repair by itself (as you move it in, and at the start of your turn) instead of waiting to be asked. Wake it or give it other orders if you want it back in action sooner. |

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { GameSession, SessionCommand } from '../app/session';
 import { landOnSquare, unloadAndLand } from '../app/unloadAndLand';
 import {
-  UNIT_STATS, step, aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
+  UNIT_STATS, isCrippled, step, aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
@@ -418,8 +418,22 @@ export function GameScreen({ session, onQuit }: Props) {
       fn();
     }, STEP_PAUSE_MS);
   };
+  /**
+   * A crippled unit without orders that sits in one of our cities goes under repair by itself instead of waiting to be
+   * asked: `only` limits this to one unit (the one just moved), otherwise every such unit gets it (start of the turn).
+   */
+  const autoRepair = (only?: number) => {
+    const v = session.view();
+    for (const u of v.myUnits) {
+      if (only !== undefined && u.id !== only) continue;
+      if (u.orders !== null || u.carriedBy !== null || !isCrippled(u)) continue;
+      if (!v.myCities.some((c) => c.x === u.x && c.y === u.y)) continue;
+      session.act({ type: 'setOrders', unitId: u.id, orders: { kind: 'repair' } });
+    }
+  };
   /** After a command on `id`: stay if it is still ready, otherwise move on to the next ready unit. */
   const settle = (id: number, pre: readonly Unit[]) => {
+    autoRepair(id);
     const fresh = readyNow();
     if (fresh.some((u) => u.id === id)) return;
     // A spy that has just slipped into an enemy city shows that city (what it builds, who is inside) instead of the
@@ -635,6 +649,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const startCycle = () => {
     holdNews.current = false;
     flushNews();
+    autoRepair();
     const first = readyNow(new Set(), [])[0];
     if (first) {
       if (fitOf(view.me).auto) {
