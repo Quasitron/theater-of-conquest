@@ -19,6 +19,18 @@ export function HealthBar({ u }: { u: Unit }) {
   );
 }
 
+/** A labelled bar like the health bar: moves are blue, fuel is gold (red when the unit must think of going home). */
+export function StatBar({ label, value, max, kind, low }: { label: string; value: number; max: number; kind: 'moves' | 'fuel'; low?: boolean }) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+  const text = `${label} ${value}/${max}`;
+  return (
+    <div class="health" title={text}>
+      <div class="health-bar"><div class={`health-fill ${kind}${low ? ' low' : ''}`} style={{ width: `${pct}%` }} /></div>
+      <span>{text}</span>
+    </div>
+  );
+}
+
 function whereText(view: PlayerView, u: Unit): string {
   const t = view.terrain[u.y * view.width + u.x];
   const ground = groundAt(view, u.x, u.y);
