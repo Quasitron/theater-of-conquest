@@ -107,6 +107,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
   if (view.rules.garrisonsDefend) {
     defence.push(`Garrison defence +${garrisonBonus(landHere)} (${landHere} land unit${landHere === 1 ? '' : 's'} inside)`);
   }
+  if (city.capital) defence.push('Capital: builds 25% faster');
   if (city.warTorn) defence.push(`War-torn: builds ${city.warTorn * 25}% slower`);
   const defenceBlock = defence.length > 0 && <div class="city-defence">{defence.map((d) => <p key={d}>{d}</p>)}</div>;
   const bar = progress && (
@@ -164,7 +165,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
       ) : mode === 'city' ? (
         <>
           <div class="unit-pic" style={{ borderColor: color ?? '#888' }}><img src="/art/units/city.webp" alt="" /></div>
-          <h2>{city.name}</h2>
+          <h2>{city.capital && <span class="capital-star" title="Capital">★ </span>}{city.name}</h2>
           <form class="rename" onSubmit={(e) => { e.preventDefault(); onRename(name); }}>
             <input value={name} maxLength={24} aria-label="City name" onInput={(e) => setName((e.target as HTMLInputElement).value)} />
             <button type="submit" onClick={blur}>Rename</button>

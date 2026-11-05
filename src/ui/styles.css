@@ -105,6 +105,7 @@ canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-ra
 .health-fill { height: 100%; background: #4caf50; }
 .health-fill.crippled { background: #ff9800; }
 .crippled-tag { color: #ff9800; font-weight: 600; }
+.capital-star { color: #ffd23f; }
 .orders-wrap { position: relative; display: inline-block; }
 .orders-menu { position: absolute; top: 100%; left: 0; z-index: 20; display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-width: 180px; margin-top: 4px; padding: 4px; background: var(--panel); border: 1px solid #333c48; border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
 .orders-menu button { text-align: left; }

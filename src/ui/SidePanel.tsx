@@ -88,7 +88,8 @@ function CityDetails({ city, view, onProduction, onSelectUnit, onOpenCity, myCol
   return (
     <div>
       <Picture src="/art/units/city.webp" color={myColor} />
-      <h3>{city.name}</h3>
+      <h3>{city.capital && <span class="capital-star" title="Capital: builds 25% faster">★ </span>}{city.name}</h3>
+      {city.capital && <p>Capital: builds 25% faster</p>}
       {view.rules.cityStrength && <p>Strength {CITY_STRENGTH_HITS - (city.damage ?? 0)}/{CITY_STRENGTH_HITS}</p>}
       {city.warTorn ? <p>War-torn: builds {city.warTorn * 25}% slower</p> : null}
       {view.rules.garrisonsDefend && <p>Garrison defence +{garrisonBonus(here.filter((u) => UNIT_STATS[u.type].domain === 'land').length)}</p>}
@@ -186,7 +187,8 @@ function SidePanelView({ view, selection, onSelectUnit, onProduction, onAction, 
   const owner = known?.owner;
   return (
     <aside class="panel">
-      <h3>{known?.name ?? `City #${selection.id}`}</h3>
+      <h3>{known?.capital && <span class="capital-star" title="Capital: builds 25% faster">★ </span>}{known?.name ?? `City #${selection.id}`}</h3>
+      {known?.capital && <p>Capital: builds 25% faster</p>}
       <p>{owner === null || owner === undefined ? 'Neutral (last known)' : <><Flag name={view.players[owner].name} /> {view.players[owner].name}{view.allies.includes(owner) ? ' (ally)' : ' (last known)'}</>}</p>
       {view.rules.cityStrength && known && known.owner !== null && <p>Strength {CITY_STRENGTH_HITS - known.damage}/{CITY_STRENGTH_HITS}</p>}
       {known?.intel && <p>Spy report on who is inside: {known.intel.garrison.length === 0 ? 'nobody' : known.intel.garrison.map((g) => `${g.count} ${UNIT_STATS[g.type].name}`).join(', ')}.</p>}

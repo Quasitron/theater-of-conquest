@@ -50,7 +50,7 @@ export interface PlayerView {
   myUnits: Unit[];
   myCities: City[];
   /** `damage` is the city's hits taken (city strength rule only; 0 otherwise). */
-  knownCities: { id: number; name: string; x: number; y: number; owner: PlayerId | null; damage: number; /** An own spy is in or beside this enemy city: what it is building and the turns left. */ intel?: { production: UnitType | null; turnsLeft: number | null; garrison: { type: UnitType; count: number }[] } }[];
+  knownCities: { id: number; name: string; x: number; y: number; owner: PlayerId | null; damage: number; /** A capital (capital cities rule): shown with a star. */ capital?: boolean; /** An own spy is in or beside this enemy city: what it is building and the turns left. */ intel?: { production: UnitType | null; turnsLeft: number | null; garrison: { type: UnitType; count: number }[] } }[];
   enemies: EnemyMarker[];
   /** This player's own kill and loss totals. */
   stats: PlayerStats;
@@ -106,7 +106,7 @@ export function getPlayerView(s: GameState, me: PlayerId): PlayerView {
     myCities: structuredClone(s.cities.filter((c) => c.owner === me)),
     knownCities: s.cities
       .filter((c) => fog.explored[index(s, c.x, c.y)])
-      .map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y, owner: areFriendly(s, c.owner, me) ? c.owner : (fog.knownCityOwner[c.id] ?? null), damage: c.damage ?? 0, ...spyReport(s, me, c) })),
+      .map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y, owner: areFriendly(s, c.owner, me) ? c.owner : (fog.knownCityOwner[c.id] ?? null), damage: c.damage ?? 0, ...(c.capital ? { capital: true } : {}), ...spyReport(s, me, c) })),
     enemies: Object.values(fog.lastSeen)
       .sort((a, b) => a.y - b.y || a.x - b.x || a.turnSeen - b.turnSeen || a.type.localeCompare(b.type))
       .map((e, markerId) => {

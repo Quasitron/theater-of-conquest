@@ -539,6 +539,16 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         ctx.strokeText(city.name, sx + t / 2, sy + t);
         ctx.fillStyle = '#fff';
         ctx.fillText(city.name, sx + t / 2, sy + t);
+        if (city.capital) {
+          // A gold star just left of the name marks a capital.
+          const half = ctx.measureText(city.name).width / 2;
+          ctx.textAlign = 'right';
+          ctx.strokeStyle = '#000';
+          ctx.strokeText('★', sx + t / 2 - half - t * 0.04, sy + t);
+          ctx.fillStyle = '#ffd23f';
+          ctx.fillText('★', sx + t / 2 - half - t * 0.04, sy + t);
+          ctx.textAlign = 'center';
+        }
       });
     }
   }
