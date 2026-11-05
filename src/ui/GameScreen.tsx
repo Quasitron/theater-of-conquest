@@ -422,6 +422,17 @@ export function GameScreen({ session, onQuit }: Props) {
   const settle = (id: number, pre: readonly Unit[]) => {
     const fresh = readyNow();
     if (fresh.some((u) => u.id === id)) return;
+    // A spy that has just slipped into an enemy city shows that city (what it builds, who is inside) instead of the
+    // next unit; Next carries on from there.
+    const v = session.view();
+    const spy = v.myUnits.find((u) => u.id === id && u.type === 'spy');
+    const target = spy
+      ? v.knownCities.find((c) => c.x === spy.x && c.y === spy.y && c.owner !== null && c.owner !== v.me && !v.allies.includes(c.owner))
+      : undefined;
+    if (target) {
+      setSelection({ kind: 'city', id: target.id });
+      return;
+    }
     const next = nextAfter(id, pre, fresh) ?? fresh[0];
     if (next) selectUnit(next);
     else setSelection(null);
