@@ -61,6 +61,45 @@ describe('AI armies', () => {
     expect(next(s)).toMatchObject({ type: 'move', unitId: a.id, dir: 2 });
   });
 
+  it('capital cities rule: marches on a farther enemy capital rather than a nearer ordinary city', () => {
+    // The army stands in its own city at x=4: a city at x=0 (3 steps to reach) and another at x=9 (4 steps).
+    const layout = () => {
+      const s = game(['*###*####*'], { players: 2, starts: [0, 1] });
+      s.cities[0].owner = null; // the nearer city is neutral
+      s.cities[0].production = null;
+      s.cities[2].owner = null;
+      s.cities[2].production = null;
+      s.cities[1].owner = 1;
+      return s;
+    };
+    const target = (capital: boolean) => {
+      const s = layout();
+      if (capital) s.cities[2].capital = true;
+      addUnit(s, 'army', 1, 4, 0);
+      const cmd = next(s);
+      expect(cmd).toMatchObject({ type: 'setOrders', orders: { kind: 'goto' } });
+      return (cmd as { orders: { target: { x: number } } }).orders.target.x;
+    };
+    expect(target(false)).toBe(1); // beside the nearer city
+    expect(target(true)).toBe(8); // beside the capital
+  });
+
+  it('capital cities rule: a capital keeps a garrison against an enemy farther off than other cities', () => {
+    const s = game(['*#####*']);
+    s.cities[0].owner = 0;
+    s.cities[1].owner = 1;
+    const spotter = addUnit(s, 'army', 1, 2, 0, { orders: { kind: 'sentry' } });
+    const e = addUnit(s, 'army', 0, 1, 0);
+    s.fog[1].lastSeen[e.id] = { unitId: e.id, type: 'army', owner: 0, x: 1, y: 0, turnSeen: s.turn };
+    const lone = addUnit(s, 'army', 1, 6, 0);
+    expect(spotter.id).toBeLessThan(lone.id);
+    // The enemy is 5 squares off: beyond the usual 4, so an ordinary city's army sets out.
+    expect(next(s)).toMatchObject({ unitId: lone.id });
+    s.cities[1].capital = true;
+    // A capital's garrison stays home (and the sentried army has nothing to do).
+    expect(next(s)).toBeNull();
+  });
+
   it('explores when there is unknown ground to reach', () => {
     const s = game(['*####*']);
     s.cities[0].owner = 1;

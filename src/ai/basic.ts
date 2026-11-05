@@ -268,10 +268,16 @@ function armiesNear(view: PlayerView, p: Pos, radius: number): number {
   return landArmies(view).filter((a) => chebyshev(geo(view), a, p) <= radius).length;
 }
 
+/** Capital cities rule: a capital is guarded from farther off, and by one more army, than other cities. */
+const CAPITAL_THREAT_RANGE = 6;
+/** ...and an enemy capital is worth this many squares of walking more than another city when choosing what to march on. */
+const CAPITAL_PULL = 5;
+
 /** A visible enemy land unit close to the city: keep the garrison at home. */
-function threatened(view: PlayerView, city: Pos): boolean {
+function threatened(view: PlayerView, city: Pos & { capital?: boolean }): boolean {
+  const range = city.capital ? CAPITAL_THREAT_RANGE : THREAT_RANGE;
   return view.enemies.some(
-    (e) => e.visibleNow && UNIT_STATS[e.type].domain === 'land' && chebyshev(geo(view), city, e) <= THREAT_RANGE,
+    (e) => e.visibleNow && UNIT_STATS[e.type].domain === 'land' && chebyshev(geo(view), city, e) <= range,
   );
 }
 
@@ -316,6 +322,7 @@ function armyTarget(view: PlayerView, u: Unit): { city: { id: number; x: number;
     if (!sq) continue;
     let cost = d - 2 * (armiesNear(view, c, RALLY_RADIUS) - (chebyshev(geo(view), u, c) <= RALLY_RADIUS ? 1 : 0));
     if (c.owner !== null && view.myCities.some((m) => chebyshev(geo(view), m, c) <= HOME_RANGE)) cost -= 4;
+    if (c.capital) cost -= CAPITAL_PULL; // a prize: it builds faster, and holding it means more for whoever takes it
     if (best === null || cost < best.cost) best = { city: c, sq, cost };
   }
   return best;
@@ -332,7 +339,7 @@ function decideArmy(view: PlayerView, u: Unit, port: City | null, t: AiTuning): 
   const here = view.myCities.find((c) => at(c, u));
   if (here && threatened(view, here)) {
     const inside = landArmies(view).filter((a) => at(a, here)).map((a) => a.id).sort((a, b) => a - b);
-    if (inside.indexOf(u.id) < t.garrison) return null;
+    if (inside.indexOf(u.id) < t.garrison + (here.capital ? 1 : 0)) return null;
   }
   // A foreign city next door: attack it, a held one only once enough armies stand ready (a lone army has poor odds).
   const next = view.knownCities.find((c) => isFoe(view, c.owner) && chebyshev(geo(view), u, c) === 1);
