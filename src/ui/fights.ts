@@ -94,7 +94,16 @@ export function replayFights(
   const all = fightsFromEvents(
     entries.slice(from).map((e) => e.event), (e) => describeEvent(e, me, names, lookup),
   ).filter((f) => f.attackerOwner !== me);
-  return { steps: all.slice(0, cap), more: Math.max(0, all.length - cap) };
+  return { steps: pickForReplay(all, cap), more: Math.max(0, all.length - cap) };
+}
+
+/** Up to `cap` fights, in the order they happened; when there are too many, city captures are kept first. */
+export function pickForReplay(all: readonly Fight[], cap: number): Fight[] {
+  if (all.length <= cap) return [...all];
+  const chosen = new Set<Fight>();
+  for (const f of all) if (f.captured && chosen.size < cap) chosen.add(f);
+  for (const f of all) if (chosen.size < cap) chosen.add(f);
+  return all.filter((f) => chosen.has(f));
 }
 
 /** How long a fight takes to play: your own attack, and one step of the turn-start replay. */
