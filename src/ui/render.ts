@@ -502,8 +502,13 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
       if (cargo > 0) badge(sx, sy, cargo, ownAlpha(u));
       if (isCrippled(u)) {
-        ctx.fillStyle = '#ff3b3b';
-        ctx.fillRect(sx + t * 0.72, sy + t * 0.72, t * 0.18, t * 0.18); // bottom-right: the top-left holds the rank chevrons
+        // bottom-right: the top-left holds the rank chevrons. A red cross on a white square.
+        const cs = t * 0.24, cx0 = sx + t * 0.68, cy0 = sy + t * 0.68, arm = cs * 0.34;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(cx0, cy0, cs, cs);
+        ctx.fillStyle = '#e02020';
+        ctx.fillRect(cx0 + (cs - arm) / 2, cy0 + cs * 0.12, arm, cs * 0.76);
+        ctx.fillRect(cx0 + cs * 0.12, cy0 + (cs - arm) / 2, cs * 0.76, arm);
       }
       const range = UNIT_STATS[u.type].range;
       if (range !== null && u.fuel !== null && u.fuel <= Math.ceil(range / 4)) {
