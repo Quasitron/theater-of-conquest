@@ -105,6 +105,21 @@ describe('replayFights', () => {
     expect(r.more).toBe(5);
   });
 
+  it('keeps city captures in a capped replay, still in the order they happened', () => {
+    const log: LogEntry[] = [started(0, 1), started(1, 1)];
+    for (let i = 0; i < REPLAY_CAP + 5; i++) log.push(entry(combat(1, true, i, 0)));
+    // Two captures, near the end, that would fall past the cap.
+    log.push(entry(cityFight(1, true, 2, 50, 0)), entry(captured), entry(cityFight(1, true, 3, 60, 0)), entry({ ...captured, cityId: 3 }));
+    log.push(started(0, 2));
+    const r = replayFights(log, 0, names, lookup);
+    expect(r.steps).toHaveLength(REPLAY_CAP);
+    expect(r.more).toBe(7);
+    const xs = r.steps.map((s) => s.at.x);
+    expect(xs.slice(-2)).toEqual([50, 60]);
+    expect(xs.slice(0, -2)).toEqual([...Array(REPLAY_CAP - 2).keys()]);
+    expect(r.steps.filter((s) => s.captured)).toHaveLength(2);
+  });
+
   it('is empty when there is nothing, as after a reload', () => {
     expect(replayFights([], 0, names, lookup)).toEqual({ steps: [], more: 0 });
   });
