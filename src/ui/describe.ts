@@ -86,6 +86,11 @@ export function describeEvent(
     case 'cityIncited': {
       if (e.success) return null; // the city's capture is reported on its own
       const city = lookup?.city(e.cityId) ?? 'a city';
+      if (e.escaped) {
+        return e.by === me
+          ? `Your spy failed to turn ${city} but got away. A manhunt is on: move him out.`
+          : `A spy tried to stir up a revolt in ${city} and slipped away. A search is on.`;
+      }
       return e.by === me ? `Your spy failed to turn ${city} and was caught.` : `A spy tried to stir up a revolt in ${city} and was caught.`;
     }
     case 'cityBombed': {

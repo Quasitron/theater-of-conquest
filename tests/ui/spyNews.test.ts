@@ -41,6 +41,15 @@ describe('spyHeadlines', () => {
     expect(spyHeadlines([won], 2, name)).toEqual([]);
   });
 
+  it('says there is a manhunt when the spy of a failed revolt got away, so the player moves him', () => {
+    const slipped: GameEvent = { type: 'cityIncited', cityId: 7, by: 1, owner: 0, success: false, escaped: true };
+    const mine = spyHeadlines([slipped], 1, name)[0];
+    expect(mine.headline).toBe('REVOLT FAILS IN PORTLAND!');
+    expect(mine.subhead).toMatch(/Manhunt/);
+    expect(mine.text).toMatch(/Move him out/);
+    expect(spyHeadlines([slipped], 0, name)[0].subhead).toMatch(/Manhunt/);
+  });
+
   it('ignores other events and copes with an unknown city', () => {
     expect(spyHeadlines([{ type: 'turnStarted', player: 0, turn: 3 }], 0, name)).toEqual([]);
     expect(spyHeadlines([{ ...(sabotaged(false) as object), cityId: 99 } as GameEvent], 0, name)[0].headline).toBe('BOMBER FACTORY SABOTAGED IN THE CITY!');

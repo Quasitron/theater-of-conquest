@@ -141,7 +141,7 @@ export function buildManual(): ManualSection[] {
       id: 'spies',
       title: 'Spies',
       paragraphs: [
-        'A Spy (Advanced units rule) slips into an enemy city unseen. There it can read what the city is building, sabotage its production, damage one unit of its garrison, or (when Elite) incite a revolt. Each act risks the spy being caught and shot.',
+        'A Spy (Advanced units rule) slips into an enemy city unseen. There it can read what the city is building, sabotage its production, damage one unit of its garrison, or (when Elite) incite a revolt. Each act risks the spy being caught and shot. A Spy is promoted after 1, 2 and 3 clean jobs (other units need 1, 3 and 5), and the higher its rank the harder it is to catch or find. If an Elite spy\'s revolt fails it may be shot, or it may get away; but then a manhunt is on in that city, so the spy is much likelier to be found if it stays. Move it out.',
         'The newspaper reports the big events: sabotage, a revolt, an operative found. A spy in your own city uncovers enemy spies in and beside it.',
       ],
     },

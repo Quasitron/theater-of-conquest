@@ -176,8 +176,8 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
             ? <p class="muted">None.</p>
             : <ul class="plain-list">{here.map((u) => <li key={u.id}>
                 {onSelectUnit
-                  ? <button class="linklike" onClick={(e) => { blur(e); onSelectUnit(u.id); onClose(); }}>{unitDisplayName(u)}<Chevrons rank={rankOf(u.wins)} /></button>
-                  : <>{unitDisplayName(u)}<Chevrons rank={rankOf(u.wins)} /></>}
+                  ? <button class="linklike" onClick={(e) => { blur(e); onSelectUnit(u.id); onClose(); }}>{unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></button>
+                  : <>{unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></>}
               </li>)}</ul>}
           {bar ?? <p class="muted">Not building anything.</p>}
           {city.route && <p class="muted">Route: {routeSummary(view, city.route)}</p>}

@@ -30,7 +30,7 @@ export const HOUSE_RULE_OPTIONS: { key: keyof HouseRules; label: string; hint: s
   {
     key: 'promotions',
     label: 'Promotions',
-    hint: 'Ships (and Armor and Spies, with Advanced units) that win fights are promoted: Experienced (1 win), Veteran (3), Elite (5). Each promotion heals one hit, and Elite units take one more; an Elite Spy can incite a revolt. Shown as gold chevrons on the unit.',
+    hint: 'Ships (and Armor and Spies, with Advanced units) that win fights are promoted: Experienced (1 win), Veteran (3), Elite (5); a Spy needs only 1, 2 and 3 clean jobs. Each promotion heals one hit, and Elite units take one more; an Elite Spy can incite a revolt. Shown as gold chevrons on the unit.',
   },
   {
     key: 'advancedUnits',

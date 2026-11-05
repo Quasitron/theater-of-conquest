@@ -74,7 +74,7 @@ export function canPlayerSeeUnit(s: GameState, pid: PlayerId, target: Unit): boo
 
 export function reveal(s: GameState, pid: PlayerId, u: Unit): void {
   if (areFriendly(s, pid, u.owner)) return;
-  s.fog[pid].lastSeen[u.id] = { unitId: u.id, type: u.type, owner: u.owner, x: u.x, y: u.y, turnSeen: s.turn, ...(rankOf(u.wins) > 0 ? { rank: rankOf(u.wins) } : {}) };
+  s.fog[pid].lastSeen[u.id] = { unitId: u.id, type: u.type, owner: u.owner, x: u.x, y: u.y, turnSeen: s.turn, ...(rankOf(u.wins, u.type) > 0 ? { rank: rankOf(u.wins, u.type) } : {}) };
 }
 
 /**

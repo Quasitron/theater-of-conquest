@@ -43,6 +43,8 @@ export interface Unit {
   name: string | null;
   /** Consecutive turns an order has been blocked (used by explore/goto retry logic). */
   blockedTurns: number;
+  /** A spy whose revolt failed but got away: the id of the city where the manhunt is on (cleared when it moves). */
+  hunted?: number;
 }
 
 export type Orders =
@@ -236,7 +238,7 @@ export type GameEvent =
   /** A spy damaged a unit in a city by a hit. */
   | { type: 'garrisonHurt'; cityId: number; by: PlayerId; owner: PlayerId; unitType: UnitType; caught: boolean }
   | { type: 'spyFound'; cityId: number; owner: PlayerId; by: PlayerId }
-  | { type: 'cityIncited'; cityId: number; by: PlayerId; owner: PlayerId; success: boolean }
+  | { type: 'cityIncited'; cityId: number; by: PlayerId; owner: PlayerId; success: boolean; /** A failed revolt: the spy got away (a manhunt is on). */ escaped?: boolean }
   | { type: 'cargoUnloaded'; transportId: number; owner: PlayerId; unitIds: number[] }
   | { type: 'ordersEnded'; unitId: number; owner: PlayerId; reason: OrdersEndReason }
   | { type: 'turnStarted'; player: PlayerId; turn: number }

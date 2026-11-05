@@ -169,13 +169,15 @@ export function cargoCapacity(u: Unit): number {
 
 /** Wins needed for Experienced, Veteran and Elite (the promotions house rule). */
 export const RANK_WINS = [1, 3, 5] as const;
+/** A Spy's wins are rare (a clean job in an enemy city), so it is promoted sooner: Elite after 3. */
+export const SPY_RANK_WINS = [1, 2, 3] as const;
 export const RANK_NAMES = ['Green', 'Experienced', 'Veteran', 'Elite'] as const;
-/** 0 (none) to 3 (Elite) for a unit's number of wins. */
-export function rankOf(wins: number | undefined): number {
+/** 0 (none) to 3 (Elite) for a unit's number of wins (pass the unit's type: a Spy needs fewer). */
+export function rankOf(wins: number | undefined, type?: UnitType): number {
   const w = wins ?? 0;
-  return RANK_WINS.filter((n) => w >= n).length;
+  return (type === 'spy' ? SPY_RANK_WINS : RANK_WINS).filter((n) => w >= n).length;
 }
 /** The hits a unit can take in combat: Elite units take one more. */
 export function hitsOf(u: Unit): number {
-  return UNIT_STATS[u.type].hits + (rankOf(u.wins) === 3 ? 1 : 0);
+  return UNIT_STATS[u.type].hits + (rankOf(u.wins, u.type) === 3 ? 1 : 0);
 }

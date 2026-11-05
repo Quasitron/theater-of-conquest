@@ -101,7 +101,7 @@ export function getPlayerView(s: GameState, me: PlayerId): PlayerView {
     allies: teammatesOf(s, me),
     allyUnits: s.units
       .filter((u) => u.owner !== me && u.carriedBy === null && areFriendly(s, u.owner, me) && !s.cities.some((c) => c.x === u.x && c.y === u.y))
-      .map((u) => ({ id: u.id, type: u.type, owner: u.owner, x: u.x, y: u.y, ...(rankOf(u.wins) > 0 ? { rank: rankOf(u.wins) } : {}) })),
+      .map((u) => ({ id: u.id, type: u.type, owner: u.owner, x: u.x, y: u.y, ...(rankOf(u.wins, u.type) > 0 ? { rank: rankOf(u.wins, u.type) } : {}) })),
     myUnits: structuredClone(s.units.filter((u) => u.owner === me)),
     myCities: structuredClone(s.cities.filter((c) => c.owner === me)),
     knownCities: s.cities

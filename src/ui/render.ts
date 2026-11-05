@@ -481,7 +481,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
           // Plain ground under it, so the city's picture does not show through and blur the unit's.
           ctx.fillStyle = FLAT[surfaceAt(view, mx, my) ?? 'clear'];
           ctx.fillRect(sx, sy, t, t);
-          unitMark(sx, sy, colors[view.me], face(shown).type, face(shown).movesLeft > 0 ? 1 : 0.6, 1, 0.5, 0.5, left(face(shown)), rankOf(face(shown).wins));
+          unitMark(sx, sy, colors[view.me], face(shown).type, face(shown).movesLeft > 0 ? 1 : 0.6, 1, 0.5, 0.5, left(face(shown)), rankOf(face(shown).wins, face(shown).type));
           if (stack.length >= 2) badge(sx, sy, stack.length, 1);
         }
         return;
@@ -497,7 +497,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
-      unitMark(sx, sy, colors[view.me], face(u).type, ownAlpha(u), 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins));
+      unitMark(sx, sy, colors[view.me], face(u).type, ownAlpha(u), 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins, face(u).type));
       sentryTag(face(u), sx + t * 0.5, sy + t * 0.5, 1, ownAlpha(u));
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
       if (cargo > 0) badge(sx, sy, cargo, ownAlpha(u));

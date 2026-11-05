@@ -50,10 +50,11 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
   return (
     <div>
       <Picture src={UNIT_ICONS[u.type]?.src} color={myColor} />
-      <h3><span class="glyph owned" style={{ background: myColor }}>{UNIT_GLYPH[u.type]}</span> {unitDisplayName(u)}<Chevrons rank={rankOf(u.wins)} /></h3>
-      {view.rules.promotions && st.promotes && <p>Rank: {RANK_NAMES[rankOf(u.wins)]}{u.wins ? ` (${u.wins} win${u.wins === 1 ? '' : 's'})` : ''}</p>}
+      <h3><span class="glyph owned" style={{ background: myColor }}>{UNIT_GLYPH[u.type]}</span> {unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></h3>
+      {view.rules.promotions && st.promotes && <p>Rank: {RANK_NAMES[rankOf(u.wins, u.type)]}{u.wins ? ` (${u.wins} win${u.wins === 1 ? '' : 's'})` : ''}</p>}
       <p>Orders: {ordersText(view, u)}</p>
       <p>Moves {u.movesLeft}/{st.move}</p>
+      {u.hunted !== undefined && <p class="crippled-tag">Manhunt on in this city: move out!</p>}
       {groundUnder(view, u) && <p>Terrain: {groundUnder(view, u)}</p>}
       <HealthBar u={u} />
       {u.fuel !== null && <p>Fuel {u.fuel}/{st.range}</p>}

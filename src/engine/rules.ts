@@ -43,5 +43,7 @@ differently; older saves load from their saved position). 19: units on sentry ar
 (the saved state differs, so an older save's history no longer matches its snapshot; older saves load from their saved
 position). 20: a sentried transport or carrier wakes when a unit boards it (older games replay differently; older saves
 load from their saved position). 21: an Elite unit is crippled by half of its raised hits, not of its base hits (with the
-promotions rule on, older games replay differently; older saves load from their saved position). */
-export const RULES_VERSION = 21;
+promotions rule on, older games replay differently; older saves load from their saved position). 22: Spies are promoted
+after 1, 2 and 3 wins, hide better as they rise, and a failed revolt may leave the spy alive but hunted (with the Advanced
+units rule on, older games replay differently; older saves load from their saved position). */
+export const RULES_VERSION = 22;

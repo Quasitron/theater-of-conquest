@@ -12,9 +12,9 @@ import { WAR_TORN_MAX } from './production';
 /** Promotions rule: a sea unit that wins a fight gains a win; a new rank heals one hit and is announced. */
 export function recordWin(s: GameState, u: Unit, events: GameEvent[]): void {
   if (!s.rules.promotions || !UNIT_STATS[u.type].promotes) return;
-  const before = rankOf(u.wins);
+  const before = rankOf(u.wins, u.type);
   u.wins = (u.wins ?? 0) + 1;
-  const after = rankOf(u.wins);
+  const after = rankOf(u.wins, u.type);
   if (after > before) {
     u.damage = Math.max(0, u.damage - 1);
     events.push({ type: 'unitPromoted', unitId: u.id, owner: u.owner, unitType: u.type, rank: after });
@@ -88,7 +88,7 @@ export function attackUnit(s: GameState, rng: RandomSource, att: Unit, def: Unit
     type: 'combat', attackerId: att.id, attackerOwner: att.owner, attackerType: att.type, from: { x: att.x, y: att.y },
     defender: { kind: 'unit', unitId: def.id, owner: def.owner, unitType: def.type },
     x: target.x, y: target.y, attackerWon: r.attackerWon || struck, ...(struck ? { strike: true as const } : {}),
-    ...(rankOf(att.wins) > 0 ? { attackerRank: rankOf(att.wins) } : {}), ...(rankOf(def.wins) > 0 ? { defenderRank: rankOf(def.wins) } : {}),
+    ...(rankOf(att.wins, att.type) > 0 ? { attackerRank: rankOf(att.wins, att.type) } : {}), ...(rankOf(def.wins, def.type) > 0 ? { defenderRank: rankOf(def.wins, def.type) } : {}),
     attackerDamage: r.attackerDamage, defenderDamage: r.defenderDamage,
   });
 
