@@ -431,6 +431,7 @@ export function GameScreen({ session, onQuit }: Props) {
       : undefined;
     if (target) {
       setSelection({ kind: 'city', id: target.id });
+      play('produce-spy'); // the spy's theme, as when one is built
       return;
     }
     const next = nextAfter(id, pre, fresh) ?? fresh[0];
