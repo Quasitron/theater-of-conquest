@@ -65,7 +65,7 @@ export function garrisonBonus(landUnits: number): number {
 }
 
 export function isCrippled(u: Unit): boolean {
-  return u.damage > 0 && u.damage * 2 >= UNIT_STATS[u.type].hits;
+  return u.damage > 0 && u.damage * 2 >= hitsOf(u); // an Elite unit's extra hit counts: Elite Armor at 2/3 is not yet crippled
 }
 
 /** With the Advanced units rule a crippled unit attacks at half strength ("any unit that is crippled attacks poorly"). */

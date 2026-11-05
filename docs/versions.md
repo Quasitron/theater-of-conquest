@@ -62,3 +62,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.47 | 2026-11-04 | Large games load and play about 5 times faster: working out what each side can see now only looks at units near each observer. On a 5,500-command test game loading went from 49 s to 10 s, with identical results. |
 | 0.9.48 | 2026-11-04 | A unit on Sentry now carries a blue "Zz" tag on the map (in the open and in city stacks), so it is easy to tell from a unit that has no orders. |
 | 0.9.49 | 2026-11-04 | A transport or carrier on Sentry wakes up when a unit boards it, so it shows up for orders. Saves from before this version load from their saved position (no replayable history). |
+| 0.9.51 | 2026-11-04 | With the promotions rule, an Elite unit counts its extra hit when working out if it is crippled: Elite Armor is crippled at 1/3, not 2/3. Saves from before this version load from their saved position. |

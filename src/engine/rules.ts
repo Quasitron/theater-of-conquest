@@ -39,5 +39,6 @@ export const CLASSIC_RULES: HouseRules = {
 differently; older saves load from their saved position). 19: units on sentry are stamped with the turn they went on it
 (the saved state differs, so an older save's history no longer matches its snapshot; older saves load from their saved
 position). 20: a sentried transport or carrier wakes when a unit boards it (older games replay differently; older saves
-load from their saved position). */
-export const RULES_VERSION = 20;
+load from their saved position). 21: an Elite unit is crippled by half of its raised hits, not of its base hits (with the
+promotions rule on, older games replay differently; older saves load from their saved position). */
+export const RULES_VERSION = 21;

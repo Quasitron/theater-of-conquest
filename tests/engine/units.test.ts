@@ -26,6 +26,14 @@ describe('unit stats', () => {
     expect(isCrippled(unit('cruiser', 0))).toBe(false);
   });
 
+  it('an Elite unit counts its extra hit: Elite Armor is crippled at 1/3, not 2/3', () => {
+    const elite = (damage: number): Unit => ({ ...unit('armor', damage), wins: 5 });
+    expect(UNIT_STATS.armor.hits).toBe(2);
+    expect(isCrippled(unit('armor', 1))).toBe(true); // an ordinary Armor is crippled at 1/2
+    expect(isCrippled(elite(1))).toBe(false); // 2/3 left
+    expect(isCrippled(elite(2))).toBe(true); // 1/3 left
+  });
+
   it('a crippled unit attacks at half strength, only with the Advanced units rule', () => {
     const adv = { advancedUnits: true };
     expect(attackRating(adv, unit('battleship', 6), 4)).toBe(2);
