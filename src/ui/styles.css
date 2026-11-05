@@ -104,6 +104,9 @@ canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-ra
 .health-bar { flex: 1 1 80px; min-width: 0; height: 8px; background: #0f1318; border-radius: 4px; overflow: hidden; }
 .health-fill { height: 100%; background: #4caf50; }
 .health-fill.crippled { background: #ff9800; }
+.health-fill.moves { background: #4a9eff; }
+.health-fill.fuel { background: #e6c229; }
+.health-fill.fuel.low { background: #ff5a3c; }
 .crippled-tag { color: #ff9800; font-weight: 600; }
 .capital-star { color: #ffd23f; }
 .orders-wrap { position: relative; display: inline-block; }

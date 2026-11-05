@@ -6,7 +6,7 @@ import { ordersText } from './actions';
 import type { ActionId } from './keys';
 import { UNIT_GLYPH } from './colors';
 import { cargoAndPatrols, cargoLoad, cargoSummary, cityIsCoastal, groundUnder, patrolsFrom } from './labels';
-import { HealthBar } from './UnitInfo';
+import { HealthBar, StatBar } from './UnitInfo';
 import { blur } from './blur';
 import { UNIT_ICONS } from './unitIcons';
 import { Chevrons } from './Chevrons';
@@ -53,11 +53,11 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
       <h3><span class="glyph owned" style={{ background: myColor }}>{UNIT_GLYPH[u.type]}</span> {unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></h3>
       {view.rules.promotions && st.promotes && <p>Rank: {RANK_NAMES[rankOf(u.wins, u.type)]}{u.wins ? ` (${u.wins} win${u.wins === 1 ? '' : 's'})` : ''}</p>}
       <p>Orders: {ordersText(view, u)}</p>
-      <p>Moves {u.movesLeft}/{st.move}</p>
       {u.hunted !== undefined && <p class="crippled-tag">Manhunt on in this city: move out!</p>}
       {groundUnder(view, u) && <p>Terrain: {groundUnder(view, u)}</p>}
       <HealthBar u={u} />
-      {u.fuel !== null && <p>Fuel {u.fuel}/{st.range}</p>}
+      <StatBar label="Moves" value={u.movesLeft} max={st.move} kind="moves" />
+      {u.fuel !== null && st.range !== null && <StatBar label="Fuel" value={u.fuel} max={st.range} kind="fuel" low={u.fuel <= Math.ceil(st.range / 4)} />}
       {st.carries.length > 0 && cargo.length === 0 && away.length === 0 && <p>{cargoLoad(0, cargoCapacity(u))}</p>}
       {(cargo.length > 0 || away.length > 0) && (
         <div>
