@@ -26,6 +26,31 @@ describe('auto-sentry and auto-load', () => {
     expect(a.orders).toEqual({ kind: 'sentry' });
   });
 
+  it('a sentried transport or carrier wakes when a unit boards it, but one with other orders keeps them', () => {
+    const s = makeGame(M);
+    const t = addUnit(s, 'transport', 0, 3, 1, { orders: { kind: 'sentry' } });
+    const a = addUnit(s, 'army', 0, 2, 1);
+    expect(moveUnit(s, rng, a, 2, [])).toBeNull();
+    expect(t.orders).toBeNull();
+    const c = addUnit(s, 'carrier', 0, 3, 0, { orders: { kind: 'sentry' } });
+    const f = addUnit(s, 'fighter', 0, 2, 0);
+    expect(moveUnit(s, rng, f, 2, [])).toBeNull();
+    expect(c.orders).toBeNull();
+    const busy = addUnit(s, 'transport', 0, 5, 1, { orders: { kind: 'explore' } });
+    const b = addUnit(s, 'army', 0, 4, 1);
+    expect(moveUnit(s, rng, b, 2, [])).toBeNull();
+    expect(busy.orders).toEqual({ kind: 'explore' });
+  });
+
+  it('loading a sentried transport in a city wakes it too', () => {
+    const s = makeGame(M);
+    s.cities[2].owner = 0;
+    const t = addUnit(s, 'transport', 0, 2, 2, { orders: { kind: 'sentry' } });
+    const a = addUnit(s, 'army', 0, 2, 2);
+    expect(loadUnits(s, t, [a.id])).toBeNull();
+    expect(t.orders).toBeNull();
+  });
+
   it('a fighter landing on a carrier awaits orders instead of sleeping', () => {
     const s = makeGame(M);
     addUnit(s, 'carrier', 0, 3, 1);
