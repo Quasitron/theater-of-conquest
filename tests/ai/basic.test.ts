@@ -84,6 +84,38 @@ describe('AI armies', () => {
     expect(target(true)).toBe(8); // beside the capital
   });
 
+  it('goes for a neutral city rather than joining armies massing at a held city', () => {
+    // Own army in the city at x=8. The enemy city at x=0 has three of our armies massing beside it (7 steps for this
+    // one); a neutral city at x=11 is 2 steps away. A neutral city falls to one army, so it wins.
+    const s = game(['*#######*##*']);
+    s.cities[0].owner = 0;
+    s.cities[1].owner = 1;
+    s.cities[2].owner = null;
+    s.cities[2].production = null;
+    s.fog[1].knownCityOwner[s.cities[0].id] = 0;
+    s.fog[1].knownCityOwner[s.cities[1].id] = 1;
+    for (const x of [1, 2, 3]) addUnit(s, 'army', 1, x, 0, { orders: { kind: 'sentry' } });
+    addUnit(s, 'army', 1, 8, 0, { id: 40 });
+    const cmd = next(s);
+    expect(cmd).toMatchObject({ type: 'setOrders', unitId: 40, orders: { kind: 'goto', target: { x: 10, y: 0 } } });
+  });
+
+  it('every third army keeps exploring while there is unexplored ground to reach, the rest march on a known city', () => {
+    const build = (id: number) => {
+      const s = game(['*####*', '######']);
+      s.cities[0].owner = 1;
+      s.cities[1].owner = 0;
+      s.fog[1].knownCityOwner[s.cities[0].id] = 1;
+      s.fog[1].knownCityOwner[s.cities[1].id] = 0;
+      s.fog[1].explored[2] = 0; // (2,0) and (3,0) are not yet seen
+      s.fog[1].explored[3] = 0;
+      addUnit(s, 'army', 1, 0, 0, { id });
+      return next(s);
+    };
+    expect(build(3)).toMatchObject({ type: 'setOrders', orders: { kind: 'explore' } });
+    expect(build(4)).toMatchObject({ type: 'setOrders', orders: { kind: 'goto' } });
+  });
+
   it('capital cities rule: a capital keeps a garrison against an enemy farther off than other cities', () => {
     const s = game(['*#####*']);
     s.cities[0].owner = 0;
