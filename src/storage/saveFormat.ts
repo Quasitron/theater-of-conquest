@@ -34,6 +34,11 @@ export function serializeSave(save: SaveFile): string {
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/** Brown replaced Orange as the third player colour (0.9.38): older saves still hold the old orange, which is shown as brown now. */
+function recolored(seats: SeatConfig[]): SeatConfig[] {
+  return seats.map((s) => (s.color.toLowerCase() === '#f4a259' ? { ...s, color: '#a0622d' } : s));
+}
+
 function isSeat(v: unknown): v is SeatConfig {
   return isObj(v) && typeof v.name === 'string' && (v.kind === 'human' || v.kind === 'idle' || v.kind === 'ai') && typeof v.color === 'string'
     && (v.difficulty === undefined || DIFFICULTIES.includes(v.difficulty as Difficulty))
@@ -95,7 +100,7 @@ export function parseSave(text: string): { ok: true; save: SaveFile; note?: stri
     try {
       const snap = snapshot as unknown as GameState;
       for (let p = 0; p < snap.players.length; p++) getPlayerView(snap, p);
-      const save: SaveFile = { ...(raw as unknown as SaveFile), initial: snap, commands: [], rulesVersion: RULES_VERSION };
+      const save: SaveFile = { ...(raw as unknown as SaveFile), seats: recolored(seats), initial: snap, commands: [], rulesVersion: RULES_VERSION };
       return { ok: true, save, note: OLDER_VERSION_NOTE };
     } catch {
       return { ok: false, error: 'save file is damaged (its game state could not be read)' };
@@ -108,7 +113,7 @@ export function parseSave(text: string): { ok: true; save: SaveFile; note?: stri
     }
     // Smoke test: every player's view must build, so a malformed state is rejected here rather than at render time.
     for (let p = 0; p < replayed.players.length; p++) getPlayerView(replayed, p);
-    return { ok: true, save: { ...(raw as unknown as SaveFile), snapshot: replayed } };
+    return { ok: true, save: { ...(raw as unknown as SaveFile), seats: recolored(seats), snapshot: replayed } };
   } catch {
     return { ok: false, error: 'save file is damaged (history could not be replayed)' };
   }

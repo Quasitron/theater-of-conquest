@@ -71,6 +71,13 @@ describe('GameSession', () => {
     expect(GameSession.fromSave(parsed.save, store).phase).toBe('handoff');
   });
 
+  it('a save that still has the old orange seat colour loads with brown', () => {
+    const s = GameSession.create({ world: { ...world, players: 2 }, seed: 5, seats: [human('Ann'), { ...human('Ben'), color: '#f4a259' }] }, null);
+    const parsed = parseSave(serializeSave(s.toSave('slot')));
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(parsed.save.seats.map((x) => x.color)).toEqual([human('Ann').color, '#a0622d']);
+  });
+
   it('a computer seat plays at its own difficulty, and the difficulty is kept in a save', () => {
     const ai = (difficulty: 'easy' | 'hard'): SeatConfig => ({ name: 'Bot', kind: 'ai', color: '#1b98e0', difficulty });
     const play = (difficulty: 'easy' | 'hard') => {
