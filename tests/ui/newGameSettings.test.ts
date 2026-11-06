@@ -25,6 +25,12 @@ describe('parseNewGameSettings', () => {
     expect(parseNewGameSettings(JSON.parse(JSON.stringify(s)), fallback())).toEqual(s);
   });
 
+  it('turns the old orange of a remembered form into brown', () => {
+    const s = custom();
+    s.seats[2] = { ...s.seats[2], color: '#F4A259' };
+    expect(parseNewGameSettings(JSON.parse(JSON.stringify(s)), fallback()).seats[2].color).toBe('#a0622d');
+  });
+
   it('falls back to the defaults for anything that is not an object', () => {
     for (const junk of [null, 5, 'x', [], undefined]) expect(parseNewGameSettings(junk, fallback())).toEqual(fallback());
   });
