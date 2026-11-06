@@ -13,6 +13,7 @@ export interface NewGameSettings {
 
 export const NEW_GAME_KEY = 'conquest.newGame';
 
+const OLD_ORANGE = '#f4a259';
 const LANDMASS: readonly Landmass[] = ['islands', 'mixed', 'continents'];
 const DENSITY: readonly CityDensity[] = ['low', 'normal', 'high'];
 const CLIMATES: readonly Climate[] = ['temperate', 'arid', 'wet'];
@@ -59,7 +60,9 @@ export function parseNewGameSettings(raw: unknown, fallback: NewGameSettings): N
   if (STARTS.includes(w.starts as WorldOptions['starts'])) world.starts = w.starts as WorldOptions['starts'];
   if (REGIONS.includes(w.nameRegion as WorldOptions['nameRegion'])) world.nameRegion = w.nameRegion as WorldOptions['nameRegion'];
 
-  const stored = Array.isArray(raw.seats) ? raw.seats.filter(validSeat) : [];
+  // Brown replaced Orange as the third colour (0.9.38): a form remembered from before still holds the old orange.
+  const stored = (Array.isArray(raw.seats) ? raw.seats.filter(validSeat) : [])
+    .map((s) => (s.color.toLowerCase() === OLD_ORANGE ? { ...s, color: PLAYER_COLORS[2] } : s));
   const seats = defaultSeats(world.players, stored.length > 0 ? stored : fallback.seats);
   // A game needs at least one human seat.
   if (!seats.some((s) => s.kind === 'human')) seats[0] = { ...seats[0], kind: 'human' };

@@ -74,3 +74,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.59 | 2026-11-05 | A crippled unit's marker on the map is now a small red cross on a white square instead of a plain red square. |
 | 0.9.60 | 2026-11-05 | A crippled unit that is in one of your cities with no orders now goes under repair by itself (as you move it in, and at the start of your turn) instead of waiting to be asked. Wake it or give it other orders if you want it back in action sooner. |
 | 0.9.61 | 2026-11-05 | The unit panel shows moves (blue) and fuel (gold, red when low) as bars like the health bar, still with the numbers beside them. |
+| 0.9.62 | 2026-11-06 | Fix: a New Game form remembered from before Brown replaced Orange still showed the old orange for the third player (close to Yellow); it now turns into Brown. Games already saved keep their colours. |
