@@ -76,3 +76,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.61 | 2026-11-05 | The unit panel shows moves (blue) and fuel (gold, red when low) as bars like the health bar, still with the numbers beside them. |
 | 0.9.62 | 2026-11-06 | Fix: a New Game form remembered from before Brown replaced Orange still showed the old orange for the third player (close to Yellow); it now turns into Brown. Games already saved keep their colours. |
 | 0.9.63 | 2026-11-06 | Saved games (and imported save files) that still hold the old orange for a player now load with Brown, so it no longer looks like Yellow. Only the colour changes; the game itself is untouched. |
+| 0.9.64 | 2026-11-06 | Clicking an ally's city where you have units now selects those units, one click each, and the click after the last shows the city. Before, the click only ever showed the city, so a ship parked in an ally's port could be reached only when its turn came up. |

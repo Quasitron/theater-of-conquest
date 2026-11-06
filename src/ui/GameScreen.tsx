@@ -1061,6 +1061,15 @@ export function GameScreen({ session, onQuit }: Props) {
       return openCity(own.id);
     }
     const city = view.knownCities.find((c) => c.x === p.x && c.y === p.y);
+    // Units of ours inside an ally's city: clicking the square selects them one by one, then the city itself.
+    if (city && city.owner !== null && view.allies.includes(city.owner)) {
+      const inside = view.myUnits.filter((u) => u.x === p.x && u.y === p.y && u.carriedBy === null).sort((a, b) => a.id - b.id);
+      const at = selectedUnit ? inside.findIndex((u) => u.id === selectedUnit.id) : -1;
+      if (inside.length > 0 && (!selectedUnit || at >= 0)) {
+        if (at + 1 < inside.length) return setSelection({ kind: 'unit', id: inside[at + 1].id });
+        return setSelection({ kind: 'city', id: city.id });
+      }
+    }
     if (city && !selectedUnit) return setSelection({ kind: 'city', id: city.id });
     if (city && selectedUnit) {
       // A city click with a unit selected is an order: go into an own city, or move up to a hostile one.
