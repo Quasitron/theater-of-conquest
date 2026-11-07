@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { apply } from '../../src/engine/apply';
 import { eventsFor } from '../../src/engine/events';
-import { chooseHome, executeOrders, patrolBase, wakeSentries } from '../../src/engine/orders';
+import { chooseHome, executeOrders, patrolBase, wakeRepaired, wakeSentries } from '../../src/engine/orders';
 import { findPath, pathMapFromState } from '../../src/engine/path';
 import { unitById } from '../../src/engine/query';
 import type { Command, GameEvent, GameState, Orders, OrdersEndReason } from '../../src/engine/types';
@@ -448,6 +448,21 @@ describe('repair', () => {
     const fit = addUnit(s, 'destroyer', 0, 0, 0);
     expect(unitById(run(s, { type: 'goHome', player: 0, unitId: hurt.id, repair: true }).state, hurt.id)!.orders).toEqual({ kind: 'repair' });
     expect(apply(s, { type: 'goHome', player: 0, unitId: fit.id, repair: true })).toEqual({ ok: false, error: 'nothing to repair' });
+  });
+
+  it('wakes when an enemy that could take the city comes near, but not for one that could not', () => {
+    const wakes = (enemy: Parameters<typeof addUnit>[1], advanced = false) => {
+      const s = game(['*..*', '....'], advanced ? { rules: { advancedUnits: true } } : undefined);
+      const d = addUnit(s, 'destroyer', 0, 0, 0, { damage: 2, orders: { kind: 'repair' } });
+      addUnit(s, enemy, 1, 1, 1);
+      const events: GameEvent[] = [];
+      wakeRepaired(s, 0, events);
+      return d.orders === null && ended(events).map((e) => e.reason).join() === 'enemySighted';
+    };
+    expect(wakes('army')).toBe(true);
+    expect(wakes('fighter')).toBe(false);
+    expect(wakes('bomber', true)).toBe(false);
+    expect(wakes('destroyer')).toBe(false);
   });
 
   it('stops when the city is lost', () => {

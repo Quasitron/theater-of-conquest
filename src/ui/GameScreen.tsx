@@ -22,6 +22,7 @@ import { Reports, type ReportTab } from './Reports';
 import { battlesAgainstMe, newEliminations, recentSightings, sentryLines } from './reportLines';
 import { EliminationNotice } from './EliminationNotice';
 import { NewsNotice } from './NewsNotice';
+import { cityThreatened } from '../engine/orders';
 import { spyHeadlines, type NewsItem } from './spyNews';
 import { unitsHeadingLeft } from './unitIcons';
 import { builtThisTurn, nextReadyAfter, readyUnits, reportQueue, type NearHint, type ProductionReportItem } from './cycle';
@@ -426,6 +427,7 @@ export function GameScreen({ session, onQuit }: Props) {
       if (only !== undefined && u.id !== only) continue;
       if (u.orders !== null || u.carriedBy !== null || !isCrippled(u)) continue;
       if (!v.myCities.some((c) => c.x === u.x && c.y === u.y)) continue;
+      if (cityThreatened(session.state, session.state.units.find((x) => x.id === u.id) ?? u)) continue; // stay awake: the city may fall
       session.act({ type: 'setOrders', unitId: u.id, orders: { kind: 'repair' } });
     }
   };

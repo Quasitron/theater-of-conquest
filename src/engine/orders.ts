@@ -331,12 +331,28 @@ export function wakeSentries(s: GameState, pid: PlayerId, events: GameEvent[]): 
   }
 }
 
-/** Wakes units under repair orders once they are fully repaired, or when their city is gone. */
+/**
+ * True when a visible enemy could take the city `u` is in on its next turn: an Army next to it, an Armor within 2
+ * squares, or a Transport within 2 (it may carry them). Aircraft and warships cannot take a city, so they do not count.
+ */
+export function cityThreatened(s: GameState, u: Unit): boolean {
+  return s.units.some((e) => {
+    if (areFriendly(s, e.owner, u.owner)) return false;
+    const reach = e.type === 'army' ? 1 : e.type === 'armor' || e.type === 'transport' ? 2 : 0;
+    return reach > 0 && chebyshev(s, e, u) <= reach && canPlayerSeeUnit(s, u.owner, e);
+  });
+}
+
+/**
+ * Wakes units under repair orders once they are fully repaired, when their city is gone, or when an enemy that could take
+ * the city comes near (so the player can act before it falls with the unit inside).
+ */
 export function wakeRepaired(s: GameState, pid: PlayerId, events: GameEvent[]): void {
   for (const u of [...s.units]) {
     if (u.owner !== pid || u.orders?.kind !== 'repair') continue;
     if (!inFriendlyCity(s, u)) endOrders(u, 'cityLost', events);
     else if (u.damage === 0) endOrders(u, 'repaired', events);
+    else if (cityThreatened(s, u)) endOrders(u, 'enemySighted', events);
   }
 }
 
