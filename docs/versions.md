@@ -1,6 +1,6 @@
-﻿# Versions
+# Versions
 
-The title screen shows `Version X.Y.Z Â· build <hash> Â· <date>` (`src/ui/version.ts`). The build hash changes with every build; **the version number is bumped by hand when a feature ships**, and each bump gets a line here.
+The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/version.ts`). The build hash changes with every build; **the version number is bumped by hand when a feature ships**, and each bump gets a line here.
 
 - Until 1.0 the number has three parts and only the last one moves: 0.9.1, 0.9.2, ... for each feature, rule, unit or screen that ships (small fixes ride along). Two-part numbers 0.4 to 0.9 were used for the first versions; a `0.10` was tried and dropped because it reads as 0.1.
 - 1.0: when the game is complete enough to call it finished (the roadmap in the project memory).
