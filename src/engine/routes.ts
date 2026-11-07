@@ -32,10 +32,24 @@ export function validateRoute(s: GameState, pid: PlayerId, city: City, route: Om
   return bad ? `${UNIT_STATS[bad].name} cannot make that trip` : null;
 }
 
-/** Gives a freshly built unit its city's route orders, when its type is on the route and the way is open. */
+/** Returns an error message, or null when `routes` is a valid set of routes for `city`: each valid, no unit type on two of them. */
+export function validateRoutes(s: GameState, pid: PlayerId, city: City, routes: Omit<CityRoute, 'by'>[]): string | null {
+  const seen = new Set<UnitType>();
+  for (const route of routes) {
+    const err = validateRoute(s, pid, city, route);
+    if (err) return err;
+    for (const t of route.types) {
+      if (seen.has(t)) return `${UNIT_STATS[t].name} is on two routes`;
+      seen.add(t);
+    }
+  }
+  return null;
+}
+
+/** Gives a freshly built unit its city's route orders, when its type is on one of the routes and the way is open. */
 export function applyRoute(s: GameState, city: City, u: Unit): void {
-  const route = city.route;
-  if (!route || !route.types.includes(u.type)) return;
+  const route = city.routes?.find((r) => r.types.includes(u.type));
+  if (!route) return;
   const dest = s.cities.find((c) => c.id === route.destId);
   if (!dest || dest.owner !== u.owner) return;
   const orders: Orders = {
@@ -60,10 +74,13 @@ export function pickUpRoute(s: GameState, u: Unit): void {
   applyRoute(s, city, u);
 }
 
-/** Drops a city's route once it no longer holds: the setter lost the city, or the destination is no longer theirs. */
+/** Drops the city's routes that no longer hold: the setter lost the city, or the destination is no longer theirs. */
 export function dropStaleRoute(s: GameState, city: City): void {
-  const route = city.route;
-  if (!route) return;
-  const dest = s.cities.find((c) => c.id === route.destId);
-  if (city.owner !== route.by || !dest || dest.owner !== route.by) delete city.route;
+  if (!city.routes) return;
+  const keep = city.routes.filter((route) => {
+    const dest = s.cities.find((c) => c.id === route.destId);
+    return city.owner === route.by && !!dest && dest.owner === route.by;
+  });
+  if (keep.length === 0) delete city.routes;
+  else if (keep.length !== city.routes.length) city.routes = keep;
 }

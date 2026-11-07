@@ -109,7 +109,8 @@ export interface City {
   warTornClock?: number;
   /** A capital (capital cities rule; only ever set when it is on): builds faster, and stays a capital when captured. */
   capital?: boolean;
-  route?: CityRoute;
+  /** The city's standing routes (each unit type is on at most one). Saves from before 0.9.65 had a single `route`. */
+  routes?: CityRoute[];
 }
 
 export interface Player {
@@ -181,7 +182,10 @@ export type Command =
   | { type: 'setOrders'; player: PlayerId; unitId: number; orders: Orders | null }
   /** `repair`: a damaged unit goes to the nearest suitable own city (or is already in one) and repairs there. */
   | { type: 'goHome'; player: PlayerId; unitId: number; repair?: boolean }
+  /** Replaces all of the city's routes with this one (or clears them with null). The only route command before 0.9.65. */
   | { type: 'setRoute'; player: PlayerId; cityId: number; route: Omit<CityRoute, 'by'> | null }
+  /** Replaces all of the city's routes with this list (empty clears them). */
+  | { type: 'setRoutes'; player: PlayerId; cityId: number; routes: Omit<CityRoute, 'by'>[] }
   /** Turns an Army or Armor into an Airbase where it stands (Advanced units rule); it cannot change back. */
   | { type: 'buildAirbase'; player: PlayerId; unitId: number }
   /** A Spy inside an enemy city wrecks its production (Advanced units rule); it may be caught doing it. */

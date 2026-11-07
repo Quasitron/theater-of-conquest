@@ -355,12 +355,10 @@ export function GameScreen({ session, onQuit }: Props) {
   // The Routes view: one arrow per city route, from the city to its destination city.
   const cityRoutes = useMemo(() => {
     if (!routesMap) return undefined;
-    return view.myCities.flatMap((c) => {
-      const dest = c.route ? view.myCities.find((d) => d.id === c.route!.destId) : undefined;
-      return c.route && dest
-        ? [{ from: { x: c.x, y: c.y }, to: { x: dest.x, y: dest.y }, types: c.route.types }]
-        : [];
-    });
+    return view.myCities.flatMap((c) => (c.routes ?? []).flatMap((r) => {
+      const dest = view.myCities.find((d) => d.id === r.destId);
+      return dest ? [{ from: { x: c.x, y: c.y }, to: { x: dest.x, y: dest.y }, types: r.types }] : [];
+    }));
   }, [routesMap, view]);
 
   // While choosing a patrol destination, the player's other patrols, so covered stretches are visible.
@@ -1454,7 +1452,7 @@ export function GameScreen({ session, onQuit }: Props) {
           onPick={(unitType) => { act({ type: 'setProduction', cityId: openCityObj.id, unitType }, true); }}
           onSetNext={(unitType) => { act({ type: 'setNextProduction', cityId: openCityObj.id, unitType }, true); }}
           onRename={(name) => { act({ type: 'renameCity', cityId: openCityObj.id, name }, true); }}
-          onSetRoute={(route) => act({ type: 'setRoute', cityId: openCityObj.id, route }, true)}
+          onSetRoutes={(routes) => act({ type: 'setRoutes', cityId: openCityObj.id, routes }, true)}
           onSelectUnit={(id) => { const u = view.myUnits.find((x) => x.id === id); if (u) selectUnit(u); }}
           onClose={() => {
             setCityOpen(null);
