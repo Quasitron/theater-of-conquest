@@ -106,7 +106,7 @@ export function getPlayerView(s: GameState, me: PlayerId): PlayerView {
     myCities: structuredClone(s.cities.filter((c) => c.owner === me)),
     knownCities: s.cities
       .filter((c) => fog.explored[index(s, c.x, c.y)])
-      .map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y, owner: areFriendly(s, c.owner, me) ? c.owner : (fog.knownCityOwner[c.id] ?? null), damage: c.damage ?? 0, ...(c.capital ? { capital: true } : {}), ...spyReport(s, me, c) })),
+      .map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y, owner: areFriendly(s, c.owner, me) ? c.owner : (fog.knownCityOwner[c.id] ?? null), damage: areFriendly(s, c.owner, me) ? c.damage ?? 0 : (fog.knownCityDamage?.[c.id] ?? 0), ...(c.capital ? { capital: true } : {}), ...spyReport(s, me, c) })),
     enemies: Object.values(fog.lastSeen)
       .sort((a, b) => a.y - b.y || a.x - b.x || a.turnSeen - b.turnSeen || a.type.localeCompare(b.type))
       .map((e, markerId) => {

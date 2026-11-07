@@ -138,6 +138,8 @@ export interface PlayerFog {
   explored: number[];
   lastSeen: Record<number, LastSeen>;
   knownCityOwner: Record<number, PlayerId | null>;
+  /** City strength rule: the hits each city had taken when last in sight of this player or a teammate. */
+  knownCityDamage?: Record<number, number>;
 }
 
 /** One player's running totals of units destroyed, by unit type. */

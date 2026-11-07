@@ -90,7 +90,12 @@ export function updateFog(s: GameState, pid: PlayerId): void {
   const fog = s.fog[pid];
   const vis = visibleSquares(s, pid);
   for (const i of vis) fog.explored[i] = 1;
-  for (const c of s.cities) if (vis.has(index(s, c.x, c.y))) fog.knownCityOwner[c.id] = c.owner;
+  for (const c of s.cities) {
+    if (!vis.has(index(s, c.x, c.y))) continue;
+    fog.knownCityOwner[c.id] = c.owner;
+    // Strength is known only from sight (yours or a teammate's); out of sight a city shows what was last seen.
+    if (s.rules.cityStrength && ((c.damage ?? 0) > 0 || fog.knownCityDamage?.[c.id])) (fog.knownCityDamage ??= {})[c.id] = c.damage ?? 0;
+  }
 
   // Observers by square, so a target is only tested against the few that are within reach (no one sees beyond 2).
   const observers = observersOf(s, pid);

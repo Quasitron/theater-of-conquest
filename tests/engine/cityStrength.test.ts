@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CITY_STRENGTH_HITS, UNIT_STATS, getPlayerView, hitsOf, rankOf, type GameEvent } from '../../src/engine';
+import { updateFog } from '../../src/engine/fog';
 import { attackCity, attackUnit, bombardCity } from '../../src/engine/attack';
 import { advanceProduction, buildTime } from '../../src/engine/production';
 import { addUnit, attackerAlwaysHits, defenderAlwaysHits, makeGame } from '../helpers';
@@ -71,6 +72,39 @@ describe('city strength (house rule)', () => {
     const u = addUnit(s, 'army', 0, 1, 0);
     const v = getPlayerView(s, 0);
     expect(cityAttackChance(v, u, 1, 2)).toBeGreaterThan(cityAttackChance(v, u, 1, 0));
+  });
+});
+
+describe('city strength is known from sight', () => {
+  const damageSeenBy = (s: ReturnType<typeof makeGame>, p: number) => getPlayerView(s, p).knownCities.find((c) => c.id === 1)?.damage ?? 0;
+
+  it('shows what was last seen while the city is out of sight, and updates when it is seen again', () => {
+    const s = makeGame(M, { rules: { cityStrength: true } });
+    s.cities[1].damage = 2;
+    s.cities[1].owner = 1;
+    updateFog(s, 0);
+    expect(damageSeenBy(s, 0)).toBe(0); // never seen: nothing known
+    const scout = addUnit(s, 'army', 0, 1, 0);
+    updateFog(s, 0);
+    expect(damageSeenBy(s, 0)).toBe(2);
+    s.units = s.units.filter((u) => u.id !== scout.id);
+    s.cities[1].damage = 0;
+    updateFog(s, 0);
+    expect(damageSeenBy(s, 0)).toBe(2); // out of sight: the old figure
+    addUnit(s, 'army', 0, 1, 0);
+    updateFog(s, 0);
+    expect(damageSeenBy(s, 0)).toBe(0);
+  });
+
+  it('a teammate seeing the city tells the whole team', () => {
+    const s = makeGame(['*.*.*'], { players: 3, starts: [0, 1, 2], rules: { cityStrength: true } });
+    s.players[0].team = 1;
+    s.players[2].team = 1;
+    s.cities[1].damage = 1; // the middle city (player 1's)
+    addUnit(s, 'army', 2, 3, 0); // player 2 stands beside it; player 0 is two squares away
+    updateFog(s, 2);
+    updateFog(s, 0);
+    expect(getPlayerView(s, 0).knownCities.find((c) => c.id === 1)?.damage).toBe(1);
   });
 });
 
