@@ -422,6 +422,7 @@ describe('AI bombardment (city strength rule)', () => {
       const enemyCity = s.cities.find((c) => c.owner === 0)!;
       enemyCity.damage = damage;
       s.fog[1].knownCityOwner[enemyCity.id] = 0; // the AI has seen whose city it is
+      s.fog[1].knownCityDamage = { [enemyCity.id]: damage }; // and how worn it is
       const ship = addUnit(s, 'battleship', 1, enemyCity.x + 1, enemyCity.y);
       return { cmd: next(s), ship };
     };
@@ -448,6 +449,7 @@ describe('AI hunting cities (city strength rule)', () => {
       const enemyCity = s.cities.find((c) => c.owner === 0)!;
       enemyCity.damage = damage;
       s.fog[1].knownCityOwner[enemyCity.id] = 0;
+      s.fog[1].knownCityDamage = { [enemyCity.id]: damage };
       addUnit(s, 'cruiser', 1, 4, 0);
       return next(s);
     };
