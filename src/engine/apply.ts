@@ -12,7 +12,7 @@ import { inOwnCity, loadUnits, unloadCargo } from './cargo';
 import { chooseHome, giveOrders, runEscorts } from './orders';
 import { cleanName } from './names';
 import { teammatesOf } from './relations';
-import { pickUpRoute, validateRoute } from './routes';
+import { pickUpRoute, validateRoute, validateRoutes } from './routes';
 
 function validDir(dir: unknown): boolean {
   return typeof dir === 'number' && Number.isInteger(dir) && dir >= 0 && dir <= 7;
@@ -130,12 +130,26 @@ export function apply(state: GameState, cmd: Command, inPlace = false): ApplyRes
       const c = s.cities.find((x) => x.id === cmd.cityId);
       if (!c) error = 'no such city';
       else if (c.owner !== actor) error = 'not your city';
-      else if (cmd.route === null) delete c.route;
+      else if (cmd.route === null) delete c.routes;
       else {
         error = validateRoute(s, actor, c, cmd.route);
         if (!error) {
           const { destId, types, blockWait, arrival } = cmd.route;
-          c.route = { destId, types: [...types], blockWait, arrival, by: actor };
+          c.routes = [{ destId, types: [...types], blockWait, arrival, by: actor }];
+        }
+      }
+      break;
+    }
+    case 'setRoutes': {
+      const c = s.cities.find((x) => x.id === cmd.cityId);
+      if (!c) error = 'no such city';
+      else if (c.owner !== actor) error = 'not your city';
+      else if (!Array.isArray(cmd.routes)) error = 'invalid routes';
+      else if (cmd.routes.length === 0) delete c.routes;
+      else {
+        error = validateRoutes(s, actor, c, cmd.routes);
+        if (!error) {
+          c.routes = cmd.routes.map(({ destId, types, blockWait, arrival }) => ({ destId, types: [...types], blockWait, arrival, by: actor }));
         }
       }
       break;

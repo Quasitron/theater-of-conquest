@@ -89,6 +89,30 @@ describe('migrations', () => {
     expect(migrateSave({ format: 4 })).toEqual({ ok: false, error: 'unsupported save format' });
   });
 
+  it('a save with a city\'s old single route loads as a list of one, and its history still matches', () => {
+    const initial = makeGame(['*#*#*'], { starts: [0, 2] });
+    initial.cities[1].owner = 0;
+    initial.fog[0].explored.fill(1);
+    const route = { destId: 1, types: ['army' as const], blockWait: 3, arrival: 'wait' as const };
+    const cmds: Command[] = [{ type: 'setRoute', player: 0, cityId: 0, route }, { type: 'endTurn', player: 0 }];
+    let s: GameState = structuredClone(initial);
+    for (const c of cmds) {
+      const r = apply(s, c);
+      if (!r.ok) throw new Error(r.error);
+      s = r.state;
+    }
+    // The snapshot as an older build wrote it: `route` where there is now `routes`, in the same place among the keys.
+    const snapshot = JSON.parse(JSON.stringify(s)) as { cities: Record<string, unknown>[] };
+    snapshot.cities[0] = Object.fromEntries(Object.entries(snapshot.cities[0]).map(([k, v]) => (k === 'routes' ? ['route', (v as unknown[])[0]] : [k, v])));
+    expect('route' in snapshot.cities[0]).toBe(true);
+    const old = { format: 3, name: 'old', savedAt: '2026-11-01T00:00:00.000Z', seats, initial, commands: cmds, snapshot, rulesVersion: RULES_VERSION };
+    const r = parseSave(JSON.stringify(old));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.save.snapshot.cities[0].routes).toEqual([{ ...route, by: 0 }]);
+    expect('route' in r.save.snapshot.cities[0]).toBe(false);
+  });
+
   it('a format-1 save loads from its snapshot with the note and an empty history', () => {
     const old = format1Save();
     const r = parseSave(JSON.stringify(old));

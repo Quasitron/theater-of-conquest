@@ -114,7 +114,7 @@ export function incitePeople(s: GameState, rng: RandomSource, spy: Unit, events:
   city.production = null;
   city.progress = 0;
   city.lastBuilt = null;
-  delete city.route;
+  delete city.routes;
   delete city.nextProduction;
   noteCityTaken(s, city.id, from, spy.owner);
   spy.movesLeft = 0;

@@ -34,6 +34,18 @@ export function serializeSave(save: SaveFile): string {
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/**
+ * Before 0.9.65 a city held one `route`; now it holds a list, `routes`. A saved state's cities are converted in place,
+ * the key keeping its position so the state still hashes the same as a replay of the saved commands.
+ */
+function singleRoutesToLists(state: unknown): void {
+  if (!isObj(state) || !Array.isArray(state.cities)) return;
+  state.cities = state.cities.map((c: unknown) => {
+    if (!isObj(c) || !('route' in c)) return c;
+    return Object.fromEntries(Object.entries(c).map(([k, v]) => (k === 'route' ? ['routes', [v]] : [k, v])));
+  });
+}
+
 /** Brown replaced Orange as the third player colour (0.9.38): older saves still hold the old orange, which is shown as brown now. */
 function recolored(seats: SeatConfig[]): SeatConfig[] {
   return seats.map((s) => (s.color.toLowerCase() === '#f4a259' ? { ...s, color: '#a0622d' } : s));
@@ -86,6 +98,8 @@ export function parseSave(text: string): { ok: true; save: SaveFile; note?: stri
   const migrated = migrateSave(parsed);
   if (!migrated.ok) return migrated;
   const raw = migrated.save;
+  singleRoutesToLists(raw.initial);
+  singleRoutesToLists(raw.snapshot);
   const { name, savedAt, seats, initial, commands, snapshot, rulesVersion } = raw;
   if (typeof name !== 'string' || typeof savedAt !== 'string') return { ok: false, error: 'save file is missing its name or date' };
   if (!isInt(rulesVersion)) return { ok: false, error: 'save file is missing its rules version' };

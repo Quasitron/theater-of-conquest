@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { apply } from '../../src/engine/apply';
 import { buildTime } from '../../src/engine/production';
 import { pathMapFromState } from '../../src/engine/path';
@@ -46,9 +46,9 @@ describe('setRoute', () => {
     const r = setRoute(s, route());
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.state.cities[0].route).toEqual({ destId: 1, types: ['army'], blockWait: 3, arrival: 'wait', by: 0 });
+    expect(r.state.cities[0].routes).toEqual([{ destId: 1, types: ['army'], blockWait: 3, arrival: 'wait', by: 0 }]);
     const cleared = run(r.state, { type: 'setRoute', player: 0, cityId: 0, route: null });
-    expect(cleared.state.cities[0].route).toBeUndefined();
+    expect(cleared.state.cities[0].routes).toBeUndefined();
   });
 
   it('rejects bad routes', () => {
@@ -121,7 +121,7 @@ describe('route following', () => {
     const r = round(s);
     expect(r.events).toContainEqual({ type: 'ordersEnded', unitId: u.id, owner: 0, reason: 'destinationLost' });
     expect(r.state.units.find((x) => x.id === u.id)!.orders).toBeNull();
-    expect(r.state.cities[0].route).toBeUndefined();
+    expect(r.state.cities[0].routes).toBeUndefined();
   });
 
   it('lapses when the route city changes hands', () => {
@@ -131,7 +131,7 @@ describe('route following', () => {
     s.cities[0].production = 'army';
     s.cities[0].progress = 0;
     s = round(s).state;
-    expect(s.cities[0].route).toBeUndefined();
+    expect(s.cities[0].routes).toBeUndefined();
   });
 
   it('waits the chosen number of turns when blocked, then asks for orders', () => {
@@ -185,5 +185,46 @@ describe('route pick-up on arrival', () => {
       type: 'setOrders', player: 0, unitId: a.id, orders: { kind: 'goto', target: { x: 0, y: 0 }, arrival: 'sentry' },
     });
     expect(r.state.units.find((x) => x.id === a.id)!.orders).toEqual({ kind: 'sentry' });
+  });
+});
+
+describe('several routes per city', () => {
+  // Cities 0, 1 and 2 are ours (x = 0, 2, 4); player 1 keeps city 3, so the game goes on.
+  const two = () => {
+    const s = makeGame(['*#*#*#*'], { starts: [0, 3] });
+    s.cities[1].owner = 0;
+    s.cities[2].owner = 0;
+    for (const c of s.cities) c.production = null;
+    s.fog[0].explored.fill(1);
+    return s;
+  };
+  const both = [route(), route({ destId: 2, types: ['fighter'] })];
+
+  it('sends each unit type to its own destination', () => {
+    let s = two();
+    s = run(s, { type: 'setRoutes', player: 0, cityId: 0, routes: both }).state;
+    expect(s.cities[0].routes).toHaveLength(2);
+    readyToBuild(s, 'army');
+    s = round(s).state;
+    expect(s.units.find((x) => x.type === 'army' && x.owner === 0)!.orders).toMatchObject({ kind: 'goto', routeCity: 1 });
+    readyToBuild(s, 'fighter');
+    s = round(s).state;
+    expect(s.units.find((x) => x.type === 'fighter' && x.owner === 0)!.orders).toMatchObject({ kind: 'goto', routeCity: 2 });
+  });
+
+  it('refuses a unit type that is on two routes, and clears with an empty list', () => {
+    const s = two();
+    expect(apply(s, { type: 'setRoutes', player: 0, cityId: 0, routes: [route(), route({ destId: 2 })] })).toMatchObject({ ok: false, error: 'Army is on two routes' });
+    const set = run(s, { type: 'setRoutes', player: 0, cityId: 0, routes: [route()] });
+    const cleared = run(set.state, { type: 'setRoutes', player: 0, cityId: 0, routes: [] });
+    expect(cleared.state.cities[0].routes).toBeUndefined();
+  });
+
+  it('drops only the route whose destination was lost', () => {
+    let s = two();
+    s = run(s, { type: 'setRoutes', player: 0, cityId: 0, routes: both }).state;
+    s.cities[2].owner = 1;
+    s = round(s).state;
+    expect(s.cities[0].routes).toEqual([{ destId: 1, types: ['army'], blockWait: 3, arrival: 'wait', by: 0 }]);
   });
 });

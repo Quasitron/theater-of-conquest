@@ -24,8 +24,8 @@ interface Props {
   onRename: (name: string) => void;
   /** Sets (or with null, clears) what the city builds after the current unit completes. */
   onSetNext?: (t: UnitType | null) => void;
-  /** Sets (or with null, clears) the city's route. Returns true when it was accepted. */
-  onSetRoute?: (route: Omit<CityRoute, 'by'> | null) => boolean;
+  /** Replaces the city's routes with this list (empty clears them). Returns true when it was accepted. */
+  onSetRoutes?: (routes: Omit<CityRoute, 'by'>[]) => boolean;
   /** Mouse-only: selects a unit listed in the City view; the screen then closes. */
   onSelectUnit?: (id: number) => void;
   onClose: () => void;
@@ -40,7 +40,7 @@ function routeSummary(view: PlayerView, route: CityRoute): string {
   return `${types} → ${dest ? dest.name : 'a lost city'}`;
 }
 
-export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetNext, onSetRoute, onSelectUnit, onClose, startOnProduction = false }: Props) {
+export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetNext, onSetRoutes, onSelectUnit, onClose, startOnProduction = false }: Props) {
   const coastal = cityIsCoastal(view, city);
   const ROWS: (UnitType | null)[] = [null, ...buildableTypes(view.rules)];
   const usable = (t: UnitType | null) => t === null || coastal || UNIT_STATS[t].domain !== 'sea';
@@ -52,18 +52,46 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
 
   // Route form: unit types the route cannot serve are greyed out, per the chosen destination.
   const others = view.myCities.filter((c) => c.id !== city.id).sort((a, b) => a.name.localeCompare(b.name));
-  const [destId, setDestId] = useState<number | null>(city.route?.destId ?? others[0]?.id ?? null);
-  const [routeTypes, setRouteTypes] = useState<UnitType[]>(city.route?.types ?? []);
-  const [blockWait, setBlockWait] = useState(city.route?.blockWait ?? 3);
-  const [arrival, setArrival] = useState<'wait' | 'sentry'>(city.route?.arrival ?? 'wait');
+  // A city can have several routes, each unit type on at most one. The form edits one of them (or a new one).
+  const routes = city.routes ?? [];
+  const first = routes[0];
+  const [editing, setEditing] = useState<number | null>(first ? 0 : null); // index in `routes`; null = a new route
+  const [destId, setDestId] = useState<number | null>(first?.destId ?? others[0]?.id ?? null);
+  const [routeTypes, setRouteTypes] = useState<UnitType[]>(first?.types ?? []);
+  const [blockWait, setBlockWait] = useState(first?.blockWait ?? 3);
+  const [arrival, setArrival] = useState<'wait' | 'sentry'>(first?.arrival ?? 'wait');
   const dest = others.find((c) => c.id === destId) ?? null;
   const canGo = dest ? routeUnitTypes(pathMapFromView(view), city, dest) : null;
   const chosen = canGo ? routeTypes.filter((t) => canGo[t]) : [];
   const toggleType = (t: UnitType) =>
     setRouteTypes(routeTypes.includes(t) ? routeTypes.filter((x) => x !== t) : [...routeTypes, t]);
+  /** Loads route `i` (or a blank new one) into the form. */
+  const edit = (i: number | null) => {
+    const r = i === null ? undefined : routes[i];
+    setEditing(i);
+    setDestId(r?.destId ?? others[0]?.id ?? null);
+    setRouteTypes(r?.types ?? []);
+    setBlockWait(r?.blockWait ?? 3);
+    setArrival(r?.arrival ?? 'wait');
+  };
+  const plain = (r: CityRoute): Omit<CityRoute, 'by'> => ({ destId: r.destId, types: r.types, blockWait: r.blockWait, arrival: r.arrival });
+  // The route the form describes replaces route `editing` (or is added); its types are taken from the other routes.
   const saveRoute = () => {
     if (destId === null || chosen.length === 0) return;
-    if (onSetRoute?.({ destId, types: chosen, blockWait, arrival })) setMode('city');
+    const rest = routes
+      .map((r, i) => (i === editing ? null : { ...plain(r), types: r.types.filter((t) => !chosen.includes(t)) }))
+      .filter((r): r is Omit<CityRoute, 'by'> => r !== null && r.types.length > 0);
+    const mine = { destId, types: chosen, blockWait, arrival };
+    const next = editing !== null && editing < routes.length ? [...rest.slice(0, editing), mine, ...rest.slice(editing)] : [...rest, mine];
+    if (onSetRoutes?.(next)) edit(null);
+  };
+  const removeRoute = (i: number) => {
+    if (onSetRoutes?.(routes.filter((_, j) => j !== i).map(plain))) edit(null);
+  };
+  /** Where a type already goes on one of the city's other routes, for the checkbox hint. */
+  const takenBy = (t: UnitType): string | null => {
+    const r = routes.find((x, i) => i !== editing && x.types.includes(t));
+    return r ? view.myCities.find((c) => c.id === r.destId)?.name ?? 'another city' : null;
   };
 
   const commit = () => {
@@ -182,12 +210,26 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
                 {' '}<span class="muted">{ordersText(view, u) === 'None' ? '· no orders' : `· ${ordersText(view, u)}`}</span>
               </li>)}</ul>}
           {bar ?? <p class="muted">Not building anything.</p>}
-          {city.route && <p class="muted">Route: {routeSummary(view, city.route)}</p>}
+          {routes.map((r) => <p class="muted" key={`${r.destId}-${r.types.join()}`}>Route: {routeSummary(view, r)}</p>)}
         </>
       ) : (
         <>
           <h2>{city.name} <span class="muted">Route</span></h2>
-          <p class="muted">New units built here that match the types below head for the destination.</p>
+          <p class="muted">New units built here that match the types below head for the destination. A city can have several routes, each unit type on one of them.</p>
+          {routes.length > 0 && (
+            <ul class="plain-list route-list">
+              {routes.map((r, i) => (
+                <li key={`${r.destId}-${r.types.join()}`}>
+                  <span class={i === editing ? 'route-current' : ''}>{routeSummary(view, r)}</span>
+                  {' '}<button class="linklike" onClick={(e) => { blur(e); edit(i); }}>Edit</button>
+                  {' '}<button class="linklike" onClick={(e) => { blur(e); removeRoute(i); }}>Remove</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p><strong>{editing === null ? 'New route' : 'Editing route'}</strong>
+            {editing !== null && <>{' '}<button class="linklike" onClick={(e) => { blur(e); edit(null); }}>Add another instead</button></>}
+          </p>
           <label>Destination{' '}
             <select value={destId ?? ''} onChange={(e) => setDestId(Number((e.target as HTMLSelectElement).value))}>
               {others.map((c) => <option value={c.id}>{c.name}</option>)}
@@ -197,10 +239,11 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
             <legend>Unit types</legend>
             {buildableTypes(view.rules).map((t) => {
               const ok = canGo ? canGo[t] : false;
+              const taken = takenBy(t);
               return (
-                <label class={ok ? '' : 'disabled'} title={ok ? undefined : 'Cannot make this trip'}>
+                <label class={ok ? '' : 'disabled'} title={ok ? (taken ? `Now goes to ${taken}; ticking it moves it here` : undefined) : 'Cannot make this trip'}>
                   <input type="checkbox" disabled={!ok} checked={ok && routeTypes.includes(t)} onChange={() => toggleType(t)} />
-                  {' '}{UNIT_STATS[t].name}
+                  {' '}{UNIT_STATS[t].name}{taken && ok ? ` (→ ${taken})` : ''}
                 </label>
               );
             })}
@@ -223,13 +266,13 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
       <div class="picker-actions">
         {mode === 'list' && <button onClick={(e) => { blur(e); setMode('city'); }}>City</button>}
         {mode === 'city' && <button onClick={(e) => { blur(e); setMode('list'); }}>Production…</button>}
-        {mode === 'city' && onSetRoute && <button onClick={(e) => { blur(e); setMode('route'); }}>Route…</button>}
+        {mode === 'city' && onSetRoutes && <button onClick={(e) => { blur(e); setMode('route'); }}>Route…</button>}
         {mode === 'route' && <button onClick={(e) => { blur(e); setMode('city'); }}>Back</button>}
         {mode === 'route'
           ? (
             <>
-              {city.route && <button onClick={(e) => { blur(e); if (onSetRoute?.(null)) setMode('city'); }}>Clear Route</button>}
-              <button class="primary" disabled={chosen.length === 0} onClick={(e) => { blur(e); saveRoute(); }}>Set Route</button>
+              {routes.length > 0 && <button onClick={(e) => { blur(e); if (onSetRoutes?.([])) { edit(null); setMode('city'); } }}>Clear All</button>}
+              <button class="primary" disabled={chosen.length === 0} onClick={(e) => { blur(e); saveRoute(); }}>{editing === null ? 'Add Route' : 'Set Route'}</button>
             </>
           )
           : <button class="primary" onClick={(e) => { blur(e); commit(); }}>OK</button>}
