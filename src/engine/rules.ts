@@ -45,5 +45,5 @@ position). 20: a sentried transport or carrier wakes when a unit boards it (olde
 load from their saved position). 21: an Elite unit is crippled by half of its raised hits, not of its base hits (with the
 promotions rule on, older games replay differently; older saves load from their saved position). 22: Spies are promoted
 after 1, 2 and 3 wins, hide better as they rise, and a failed revolt may leave the spy alive but hunted (with the Advanced
-units rule on, older games replay differently; older saves load from their saved position). 23: a city's strength (city strength rule) is known only from sight, yours or a teammate's; out of sight it shows what was last seen (older games replay differently; older saves load from their saved position). */
-export const RULES_VERSION = 23;
+units rule on, older games replay differently; older saves load from their saved position). 23: a city's strength (city strength rule) is known only from sight, yours or a teammate's; out of sight it shows what was last seen (older games replay differently; older saves load from their saved position). 24: a unit repairing in a city wakes when an enemy that could take the city comes near (older games replay differently; older saves load from their saved position). */
+export const RULES_VERSION = 24;

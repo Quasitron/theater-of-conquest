@@ -1,6 +1,6 @@
-# Versions
+﻿# Versions
 
-The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/version.ts`). The build hash changes with every build; **the version number is bumped by hand when a feature ships**, and each bump gets a line here.
+The title screen shows `Version X.Y.Z Â· build <hash> Â· <date>` (`src/ui/version.ts`). The build hash changes with every build; **the version number is bumped by hand when a feature ships**, and each bump gets a line here.
 
 - Until 1.0 the number has three parts and only the last one moves: 0.9.1, 0.9.2, ... for each feature, rule, unit or screen that ships (small fixes ride along). Two-part numbers 0.4 to 0.9 were used for the first versions; a `0.10` was tried and dropped because it reads as 0.1.
 - 1.0: when the game is complete enough to call it finished (the roadmap in the project memory).
@@ -79,3 +79,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.64 | 2026-11-06 | Clicking an ally's city where you have units now selects those units, one click each, and the click after the last shows the city. Before, the click only ever showed the city, so a ship parked in an ally's port could be reached only when its turn came up. |
 | 0.9.65 | 2026-11-07 | A city can have several routes: Army to one city, Armor to another, and so on, each unit type on one route. The Route dialog lists the city's routes with Edit and Remove, and adds new ones. A route made for a type already on another route takes it over. Older saves load with their single route as the first. |
 | 0.9.66 | 2026-11-07 | With the City strength rule, you now see an enemy city's damage only while you or a teammate can see the city. Out of sight it shows the strength it had when last seen, instead of updating live. A teammate's attack on a city you can see shows at once. Older saves load from their saved position. |
+| 0.9.67 | 2026-11-07 | A unit repairing in a city now wakes when an enemy that could take the city comes near: an Army next to it, or an Armor or Transport within 2 squares. Aircraft and warships do not wake it, and a woken unit is not sent back to repair at the start of your turn while the threat is there. This stops ships being lost when a city falls under them without a chance to act. Older saves load from their saved position. |
