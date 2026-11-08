@@ -1061,8 +1061,8 @@ export function GameScreen({ session, onQuit }: Props) {
       return openCity(own.id);
     }
     const city = view.knownCities.find((c) => c.x === p.x && c.y === p.y);
-    // Units of ours inside an ally's city: clicking the square selects them one by one, then the city itself.
-    if (city && city.owner !== null && view.allies.includes(city.owner)) {
+    // Units of ours inside an ally's city, or a spy inside an enemy's: clicking the square selects them one by one, then the city itself.
+    if (city && city.owner !== view.me) {
       const inside = view.myUnits.filter((u) => u.x === p.x && u.y === p.y && u.carriedBy === null).sort((a, b) => a.id - b.id);
       const at = selectedUnit ? inside.findIndex((u) => u.id === selectedUnit.id) : -1;
       if (inside.length > 0 && (!selectedUnit || at >= 0)) {
