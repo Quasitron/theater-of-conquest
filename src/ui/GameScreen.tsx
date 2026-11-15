@@ -9,6 +9,7 @@ import {
 } from '../engine';
 import type { SaveStore } from '../storage';
 import { availableActions, escortable, loadCandidates } from './actions';
+import { FerryDialog } from './FerryDialog';
 import { autoFit, centerOn, clampCamera, exploredBox, keepInViewWrap, pan, type Camera } from './camera';
 import { CityScreen } from './CityScreen';
 import { installAudioUnlock, play, playAll } from '../audio/engine';
@@ -53,7 +54,7 @@ interface Props {
   onQuit: () => void;
 }
 
-type TargetMode = null | 'moveTo' | 'patrol' | 'escort';
+type TargetMode = null | 'moveTo' | 'patrol' | 'escort' | 'ferryPickup' | 'ferryDrop';
 
 // Rough size of the context menu, used to keep it on screen.
 const MENU_W = 220;
@@ -161,7 +162,9 @@ export function GameScreen({ session, onQuit }: Props) {
   const lastSeenEnemies = useRef<{ owner: number; type: string; x: number; y: number }[]>([]);
   const [hover, setHover] = useState<Pos | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
-  const [picker, setPicker] = useState<null | 'load' | 'unload'>(null);
+  const [picker, setPicker] = useState<null | 'load' | 'unload' | 'ferry'>(null);
+  /** A ferry route being set up on the map: the pickup city once chosen, the route being changed (if any), and the wait-until-full choice. */
+  const [ferryPlan, setFerryPlan] = useState<null | { edit?: number; pickup?: number; waitFull: boolean }>(null);
   // A loaded transport sent onto a land square: which unit to put ashore there.
   const [landAt, setLandAt] = useState<null | { transportId: number; dir: Dir }>(null);
   const [infoId, setInfoId] = useState<number | null>(null);
@@ -366,6 +369,15 @@ export function GameScreen({ session, onQuit }: Props) {
     return view.myCities.flatMap((c) => (c.routes ?? []).flatMap((r) => {
       const dest = view.myCities.find((d) => d.id === r.destId);
       return dest ? [{ from: { x: c.x, y: c.y }, to: { x: dest.x, y: dest.y }, types: r.types }] : [];
+    }));
+  }, [routesMap, view]);
+
+  // The Routes view also shows the ferry routes (greyed out while none of their carriers is running them).
+  const ferryRoutes = useMemo(() => {
+    if (!routesMap) return undefined;
+    return view.ferryRoutes.map((r) => ({
+      from: { x: r.pickup.x, y: r.pickup.y }, to: { ...r.drop },
+      paused: !view.myUnits.some((u) => u.ferry === r.id && u.orders?.kind === 'goto'),
     }));
   }, [routesMap, view]);
 
@@ -1019,6 +1031,10 @@ export function GameScreen({ session, onQuit }: Props) {
         setTarget(id);
         setMessage(null);
         return;
+      case 'ferry':
+        setPicker('ferry');
+        return;
+      case 'resumeFerry': return order(u, { type: 'resumeFerry', unitId: u.id });
       case 'load':
       case 'unload':
         setPicker(id);
@@ -1045,6 +1061,27 @@ export function GameScreen({ session, onQuit }: Props) {
         return;
       }
       const mode = target;
+      if (mode === 'ferryPickup') {
+        const city = view.myCities.find((c) => c.x === p.x && c.y === p.y);
+        if (!city) {
+          setMessage('Click one of your cities for the pickup (Esc cancels).');
+          return;
+        }
+        setFerryPlan((plan) => ({ ...(plan ?? { waitFull: false }), pickup: city.id }));
+        setTarget('ferryDrop');
+        setMessage(null);
+        return;
+      }
+      if (mode === 'ferryDrop') {
+        const plan = ferryPlan;
+        const unit = selectedUnit;
+        if (!plan || plan.pickup === undefined) return setTarget(null);
+        setTarget(null);
+        setFerryPlan(null);
+        if (plan.edit !== undefined) act({ type: 'editFerry', routeId: plan.edit, pickup: plan.pickup, drop: p, waitFull: plan.waitFull });
+        else order(unit, { type: 'setFerry', unitId: unit.id, ferry: { pickup: plan.pickup, drop: p, ...(plan.waitFull ? { waitFull: true } : {}) } });
+        return;
+      }
       if (mode === 'escort') {
         // The click must land on one of your transports (at sea or in a city); anything else keeps waiting.
         const tr = view.myUnits.find((t) => t.type === 'transport' && t.carriedBy === null && t.x === p.x && t.y === p.y);
@@ -1318,7 +1355,7 @@ export function GameScreen({ session, onQuit }: Props) {
         >Resign</button>
         <button onClick={(e) => { blur(e); onQuit(); }}>Quit</button>
         <span class="topbar-right">
-          {target && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
@@ -1343,7 +1380,7 @@ export function GameScreen({ session, onQuit }: Props) {
           onSquare={onSquare} onDouble={onDouble} onHover={onHover} onContext={onContext}
           activeId={playing ? selectedUnit?.id ?? null : null} blinkActive={playing}
           path={preview?.path ?? null} pathOk={preview?.ok ?? true} pathLabel={preview?.label ?? null} pathTarget={preview ? hover : null}
-          route={route?.path ?? null} routeLabel={route?.label ?? null} patrols={patrols} productionMap={prodMap} flash={flash} sightings={newSightings} fx={fx} pending={pendingFights} headingLeft={headingLeft} cityRoutes={cityRoutes} attack={attack}
+          route={route?.path ?? null} routeLabel={route?.label ?? null} patrols={patrols} productionMap={prodMap} flash={flash} sightings={newSightings} fx={fx} pending={pendingFights} headingLeft={headingLeft} cityRoutes={cityRoutes} ferryRoutes={ferryRoutes} attack={attack}
           onZoom={() => { fitOf(view.me).auto = false; }}
           boxMode={playing && group?.step === 'box'} groupBox={groupBox} onBox={setGroupBox} onBoxDone={onBoxDone}
         />
@@ -1416,6 +1453,35 @@ export function GameScreen({ session, onQuit }: Props) {
               if (ids.length === 0) return;
               setPicker(null);
               act({ type: 'load', transportId: pickerUnit.id, unitIds: ids });
+            }}
+          />
+        </div>
+      )}
+      {pickerUnit && picker === 'ferry' && (
+        <div class="overlay">
+          <FerryDialog
+            view={view}
+            unit={pickerUnit}
+            onCancel={() => setPicker(null)}
+            onJoin={(routeId) => { setPicker(null); order(pickerUnit, { type: 'setFerry', unitId: pickerUnit.id, ferry: { routeId } }); }}
+            onLeave={() => { setPicker(null); order(pickerUnit, { type: 'setFerry', unitId: pickerUnit.id, ferry: null }); }}
+            onToggleWait={(routeId) => {
+              const r = view.ferryRoutes.find((x) => x.id === routeId);
+              setPicker(null);
+              if (r) act({ type: 'editFerry', routeId, pickup: r.pickup.id, drop: r.drop, waitFull: !r.waitFull });
+            }}
+            onNew={(waitFull) => {
+              setPicker(null);
+              const here = view.myCities.find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
+              setFerryPlan({ waitFull, ...(here ? { pickup: here.id } : {}) });
+              setTarget(here ? 'ferryDrop' : 'ferryPickup');
+              setMessage(null);
+            }}
+            onChange={(routeId, waitFull) => {
+              setPicker(null);
+              setFerryPlan({ edit: routeId, waitFull });
+              setTarget('ferryPickup');
+              setMessage(null);
             }}
           />
         </div>

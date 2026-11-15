@@ -13,6 +13,7 @@ import { chooseHome, giveOrders, runEscorts } from './orders';
 import { cleanName } from './names';
 import { teammatesOf } from './relations';
 import { pickUpRoute, validateRoute, validateRoutes } from './routes';
+import { editFerry, resumeFerry, setFerry } from './ferry';
 
 function validDir(dir: unknown): boolean {
   return typeof dir === 'number' && Number.isInteger(dir) && dir >= 0 && dir <= 7;
@@ -109,6 +110,19 @@ export function apply(state: GameState, cmd: Command, inPlace = false): ApplyRes
       } else error = giveOrders(s, rng, u, cmd.orders, events);
       break;
     }
+    case 'setFerry': {
+      const u = unitById(s, cmd.unitId);
+      error = !u ? 'no such unit' : setFerry(s, rng, actor, u, cmd.ferry, events);
+      break;
+    }
+    case 'resumeFerry': {
+      const u = unitById(s, cmd.unitId);
+      error = !u ? 'no such unit' : resumeFerry(s, rng, actor, u, events);
+      break;
+    }
+    case 'editFerry':
+      error = editFerry(s, actor, cmd.routeId, cmd.pickup, cmd.drop, cmd.waitFull);
+      break;
     case 'goHome': {
       const u = unitById(s, cmd.unitId);
       if (!u) error = 'no such unit';
@@ -223,7 +237,7 @@ export function apply(state: GameState, cmd: Command, inPlace = false): ApplyRes
   if (error) return { ok: false, error };
   catchSpies(s, events);
   s.rngState = rng.state;
-  const fogCommands = ['buildAirbase', 'sabotage', 'hurtGarrison', 'incite', 'move', 'setProduction', 'setNextProduction', 'disband', 'load', 'unload', 'setOrders', 'goHome'];
+  const fogCommands = ['buildAirbase', 'sabotage', 'hurtGarrison', 'incite', 'move', 'setProduction', 'setNextProduction', 'disband', 'load', 'unload', 'setOrders', 'goHome', 'setFerry', 'resumeFerry'];
   if (fogCommands.includes(cmd.type)) {
     updateFog(s, actor);
     for (const mate of teammatesOf(s, actor)) updateFog(s, mate); // allies share what they see

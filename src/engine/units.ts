@@ -82,6 +82,11 @@ export function canCarry(carrier: UnitType, cargo: UnitType): boolean {
   return UNIT_STATS[carrier].carries.includes(cargo);
 }
 
+/** Whether a unit of this type can run a ferry route: any mobile unit that carries others, except a Carrier (which carries aircraft, so there is no ferrying to do). */
+export function canFerry(type: UnitType): boolean {
+  return UNIT_STATS[type].carries.length > 0 && UNIT_STATS[type].move > 0 && type !== 'carrier';
+}
+
 /** The cargo space these units take up (Armor takes two). */
 export function cargoUsed(cargo: readonly Pick<Unit, 'type'>[]): number {
   return cargo.reduce((n, c) => n + UNIT_STATS[c.type].slots, 0);
