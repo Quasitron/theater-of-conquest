@@ -76,10 +76,15 @@ input, select { font: inherit; background: #0f1318; color: var(--text); border: 
 canvas.map { width: 100%; flex: 1 1 0; min-height: 0; display: block; touch-action: none; cursor: pointer; }
 .side { display: flex; flex-direction: column; gap: 8px; padding: 8px; background: var(--panel); overflow: hidden; }
 canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-radius: 6px; cursor: pointer; }
-.panel { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+.panel { flex: 0 1 auto; min-height: 96px; overflow-y: auto; }
 .panel h3 { margin: 4px 0; }
+/* The unit card (name, rank, orders, health, moves) stays put while the commands under it scroll, when the panel has room for both (the panel gets the "pin" class from the script then). */
+.panel.pin .unit-head { position: sticky; top: 0; z-index: 1; background: var(--panel); padding-bottom: 2px; }
+/* A fading "more" arrow at the foot of the panel while there is more to scroll to. */
+.scroll-hint { position: sticky; bottom: 0; height: 0; pointer-events: none; z-index: 2; }
+.scroll-hint span { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 0 2px; text-align: center; font-size: 0.8rem; font-weight: 600; color: #fff; background: linear-gradient(to bottom, transparent, var(--panel) 70%); }
 .panel button { margin: 2px 4px 2px 0; }
-.log { flex: 1 1 80px; min-height: 80px; overflow-y: auto; margin: 0; padding: 0; list-style: none; font-size: 0.85rem; color: var(--muted); }
+.log { flex: 1 1 80px; min-height: 44px; overflow-y: auto; margin: 0; padding: 0; list-style: none; font-size: 0.85rem; color: var(--muted); }
 .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); display: grid; place-items: center; z-index: 10; }
 /* Hotseat hand-off must hide the next player's map completely. */
 .overlay.handoff { background: var(--bg); }
@@ -87,7 +92,7 @@ canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-ra
 
 @media (max-width: 760px) {
   .game { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
-  .side { max-height: 34vh; }
+  .side { max-height: 46vh; }
   canvas.minimap { width: auto; height: 80px; align-self: flex-start; }
 }
 

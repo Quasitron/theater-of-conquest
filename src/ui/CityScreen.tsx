@@ -59,7 +59,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
   const [destId, setDestId] = useState<number | null>(first?.destId ?? others[0]?.id ?? null);
   const [routeTypes, setRouteTypes] = useState<UnitType[]>(first?.types ?? []);
   const [blockWait, setBlockWait] = useState(first?.blockWait ?? 3);
-  const [arrival, setArrival] = useState<'wait' | 'sentry'>(first?.arrival ?? 'wait');
+  const [arrival, setArrival] = useState<'wait' | 'sentry' | 'explore'>(first?.arrival ?? 'wait');
   const dest = others.find((c) => c.id === destId) ?? null;
   const canGo = dest ? routeUnitTypes(pathMapFromView(view), city, dest) : null;
   const chosen = canGo ? routeTypes.filter((t) => canGo[t]) : [];
@@ -254,9 +254,10 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
             </select>
           </label>
           <label>On arrival{' '}
-            <select value={arrival} onChange={(e) => setArrival((e.target as HTMLSelectElement).value as 'wait' | 'sentry')}>
+            <select value={arrival} onChange={(e) => setArrival((e.target as HTMLSelectElement).value as 'wait' | 'sentry' | 'explore')}>
               <option value="wait">Wait for orders</option>
               <option value="sentry">Sentry</option>
+              <option value="explore">Explore</option>
             </select>
           </label>
           {others.length === 0 && <p class="muted">You need another city to route to.</p>}

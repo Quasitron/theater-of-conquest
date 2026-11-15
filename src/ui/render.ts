@@ -493,7 +493,9 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   }
 
   // Own top-level units outside own cities.
-  for (const u of showUnits ? view.myUnits : []) {
+  // The unit that needs orders is drawn last, so it is the one that shows when several share a square (an enemy city).
+  const outside = showUnits ? [...view.myUnits].sort((a, b) => Number(blinking(a)) - Number(blinking(b))) : [];
+  for (const u of outside) {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
