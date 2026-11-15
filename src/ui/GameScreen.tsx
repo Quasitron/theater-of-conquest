@@ -375,12 +375,17 @@ export function GameScreen({ session, onQuit }: Props) {
 
   // The Routes view also shows the ferry routes (greyed out while none of their carriers is running them).
   const ferryRoutes = useMemo(() => {
-    if (!routesMap) return undefined;
-    return view.ferryRoutes.map((r) => ({
-      from: { x: r.pickup.x, y: r.pickup.y }, to: { ...r.drop },
-      paused: !view.myUnits.some((u) => u.ferry === r.id && u.orders?.kind === 'goto'),
-    }));
-  }, [routesMap, view]);
+    const shown = routesMap
+      ? view.ferryRoutes.map((r) => ({
+        from: { x: r.pickup.x, y: r.pickup.y }, to: { ...r.drop },
+        paused: !view.myUnits.some((u) => u.ferry === r.id && u.orders?.kind === 'goto'),
+      }))
+      : [];
+    // While a new route is being designated, a draft line follows the pointer from the pickup city.
+    const pickup = target === 'ferryDrop' && ferryPlan?.pickup !== undefined ? view.myCities.find((c) => c.id === ferryPlan.pickup) : undefined;
+    if (pickup && hover && !(hover.x === pickup.x && hover.y === pickup.y)) shown.push({ from: { x: pickup.x, y: pickup.y }, to: { ...hover }, paused: false });
+    return shown.length > 0 ? shown : undefined;
+  }, [routesMap, view, target, ferryPlan, hover]);
 
   // While choosing a patrol destination, the player's other patrols, so covered stretches are visible.
   const patrols = useMemo(() => {
@@ -1366,7 +1371,22 @@ export function GameScreen({ session, onQuit }: Props) {
           <button class={endTurnBlinks && !endingTurn ? 'primary blink' : 'primary'} onClick={(e) => { blur(e); play('click'); endTurn(); }} disabled={!playing || endingTurn}>End Turn</button>
         </span>
       </header>
-      <div class="mapcol">
+      <div class={target === 'ferryPickup' || target === 'ferryDrop' ? 'mapcol ferry-pick' : 'mapcol'}>
+        {(target === 'ferryPickup' || target === 'ferryDrop') && (() => {
+          const pickupCity = ferryPlan?.pickup !== undefined ? view.myCities.find((c) => c.id === ferryPlan.pickup) : undefined;
+          return (
+            <div class="ferry-banner" role="status">
+              <span>
+                {'⚓'} <strong>{ferryPlan?.edit !== undefined ? 'Changing a ferry route' : 'Setting up a ferry route'}</strong> (not a move order)
+                {' — '}
+                {target === 'ferryPickup'
+                  ? 'Step 1 of 2: click the PICKUP city, where the ship loads.'
+                  : `${pickupCity ? `Pickup: ${pickupCity.name}. ` : ''}${ferryPlan?.edit !== undefined || !pickupCity ? 'Step 2 of 2: ' : ''}Click the DROP square, where the cargo is put ashore.`}
+              </span>
+              <button onClick={(e) => { blur(e); setTarget(null); setFerryPlan(null); }}>Cancel (Esc)</button>
+            </div>
+          );
+        })()}
         <StatusLine
           unit={playing ? selectedUnit : null} onFit={requestFit} onCenter={() => { if (selectedPos) focus(selectedPos); }} prodMap={prodMap} onToggleProdMap={() => setProdMap(!prodMap)}
           routesMap={routesMap} onToggleRoutes={() => setRoutesMap(!routesMap)}

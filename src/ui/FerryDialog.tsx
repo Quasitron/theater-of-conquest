@@ -38,7 +38,7 @@ export function FerryDialog({ view, unit, onJoin, onNew, onChange, onToggleWait,
       ))}
       <label class="picker-row">
         <input type="checkbox" checked={waitFull} onChange={(e) => { blur(e); setWaitFull(!waitFull); }} />
-        New route waits at the pickup city until the carrier is full
+        Wait Until Full at Pickup City (New Routes)
       </label>
       <div class="picker-actions">
         <button class="primary" onClick={(e) => { blur(e); onNew(waitFull); }}>New route…</button>
