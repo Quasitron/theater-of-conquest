@@ -130,6 +130,9 @@ canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-ra
 button.primary.blink { background: #e8890c; border-color: #e8890c; }
 button.blink { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.35; } }
+/* The turn is being worked out. A rotation runs off the main thread, so it keeps turning while the computer players move. */
+.spinner { display: inline-block; width: 0.9em; height: 0.9em; border: 2px solid #4a5666; border-top-color: #e8890c; border-radius: 50%; vertical-align: -0.1em; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .glyph { display: inline-block; min-width: 1.4em; text-align: center; font-weight: 700; background: #0f1318; border-radius: 4px; }
 button.linklike { border: 0; background: none; padding: 0; text-align: left; color: var(--accent); text-decoration: underline; }

@@ -85,6 +85,7 @@ export interface Replay {
  */
 export function replayFights(
   entries: readonly LogEntry[], me: PlayerId, names: string[], lookup: DescribeLookup, cap = REPLAY_CAP,
+  teammates: (p: PlayerId | null) => boolean = () => false,
 ): Replay {
   const starts: number[] = [];
   entries.forEach((e, i) => {
@@ -94,15 +95,27 @@ export function replayFights(
   const all = fightsFromEvents(
     entries.slice(from).map((e) => e.event), (e) => describeEvent(e, me, names, lookup),
   ).filter((f) => f.attackerOwner !== me);
-  return { steps: pickForReplay(all, cap), more: Math.max(0, all.length - cap) };
+  return { steps: pickForReplay(all, cap, (f) => fightPriority(f, me, teammates)), more: Math.max(0, all.length - cap) };
 }
 
-/** Up to `cap` fights, in the order they happened; when there are too many, city captures are kept first. */
-export function pickForReplay(all: readonly Fight[], cap: number): Fight[] {
+/** How much a fight matters to `me` when a replay has to be cut short: 0 you were attacked, 1 a teammate was involved, 2 anyone else's. */
+export function fightPriority(f: Fight, me: PlayerId, teammates: (p: PlayerId | null) => boolean): number {
+  if (f.defenderOwner === me) return 0;
+  if (teammates(f.defenderOwner) || teammates(f.attackerOwner)) return 1;
+  return 2;
+}
+
+/**
+ * Up to `cap` fights, in the order they happened. When there are too many, your own battles are kept first, then your
+ * team's, then the rest; within each of those, city captures come first.
+ */
+export function pickForReplay(all: readonly Fight[], cap: number, priority: (f: Fight) => number = () => 0): Fight[] {
   if (all.length <= cap) return [...all];
-  const chosen = new Set<Fight>();
-  for (const f of all) if (f.captured && chosen.size < cap) chosen.add(f);
-  for (const f of all) if (chosen.size < cap) chosen.add(f);
+  const ranked = all
+    .map((f, i) => ({ f, i, key: priority(f) * 2 + (f.captured ? 0 : 1) }))
+    .sort((a, b) => a.key - b.key || a.i - b.i)
+    .slice(0, cap);
+  const chosen = new Set(ranked.map((r) => r.f));
   return all.filter((f) => chosen.has(f));
 }
 

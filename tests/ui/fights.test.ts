@@ -120,6 +120,20 @@ describe('replayFights', () => {
     expect(r.steps.filter((s) => s.captured)).toHaveLength(2);
   });
 
+  it('in a capped replay keeps battles against you first, then your team, then others', () => {
+    const log: LogEntry[] = [started(0, 1), started(2, 1)];
+    // Player 2 attacks player 3 (a stranger) many times, then player 1 (my teammate), then me; all unit fights.
+    const fight = (owner: number, defender: number, x: number): LogEntry => entry({ ...combat(owner, true, x, 0), defender: { kind: 'unit', unitId: 9, owner: defender, unitType: 'army' } } as GameEvent);
+    for (let i = 0; i < REPLAY_CAP; i++) log.push(fight(2, 3, i));
+    log.push(fight(2, 1, 40), fight(2, 0, 50));
+    log.push(started(0, 2));
+    const r = replayFights(log, 0, ['Me', 'Ally', 'Foe', 'Other'], lookup, REPLAY_CAP, (p) => p === 1);
+    const xs = r.steps.map((s) => s.at.x);
+    expect(r.steps).toHaveLength(REPLAY_CAP);
+    expect(xs.slice(-2)).toEqual([40, 50]); // both kept, in the order they happened
+    expect(xs).not.toContain(REPLAY_CAP - 1); // a stranger's fight made room
+  });
+
   it('is empty when there is nothing, as after a reload', () => {
     expect(replayFights([], 0, names, lookup)).toEqual({ steps: [], more: 0 });
   });
