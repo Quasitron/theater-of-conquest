@@ -1486,10 +1486,10 @@ export function GameScreen({ session, onQuit }: Props) {
             onCancel={() => setPicker(null)}
             onJoin={(routeId) => { setPicker(null); order(pickerUnit, { type: 'setFerry', unitId: pickerUnit.id, ferry: { routeId } }); }}
             onLeave={() => { setPicker(null); order(pickerUnit, { type: 'setFerry', unitId: pickerUnit.id, ferry: null }); }}
-            onToggleWait={(routeId) => {
+            onSetWait={(routeId, waitFull) => {
               const r = view.ferryRoutes.find((x) => x.id === routeId);
-              setPicker(null);
-              if (r) act({ type: 'editFerry', routeId, pickup: r.pickup.id, drop: r.drop, waitFull: !r.waitFull });
+              // The dialog stays open: its checkbox follows the route.
+              if (r) act({ type: 'editFerry', routeId, pickup: r.pickup.id, drop: r.drop, waitFull });
             }}
             onNew={(waitFull) => {
               setPicker(null);

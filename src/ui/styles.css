@@ -122,6 +122,7 @@ canvas.minimap { flex: 0 0 auto; width: 100%; aspect-ratio: 200 / 140; border-ra
 .picker h3 { margin: 0; }
 .picker-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .picker-row input:disabled { opacity: 0.4; }
+.ferry-route-row { flex-wrap: wrap; cursor: default; }
 .picker-actions { display: flex; gap: 6px; }
 .picker-actions button { margin: 0; }
 
