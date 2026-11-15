@@ -345,7 +345,8 @@ export function GameScreen({ session, onQuit }: Props) {
       const approach = approachSquare(view, selectedUnit, hover);
       if (approach === null) return dirTo(view, selectedUnit, hover) !== null ? { path: [{ x: hover.x, y: hover.y }], ok: true, label: 'infiltrate' } : { path: null, ok: false, label: 'no known path' };
       const r = planPath(view, selectedUnit, approach, 1); // the step into the city comes after reaching the approach square
-      return { ...r, label: r.ok ? `infiltrate · ${r.label}` : r.label };
+      // The drawn line runs on into the city itself, as it does for other units' paths.
+      return { ...r, path: r.path ? [...r.path, { x: hover.x, y: hover.y }] : r.path, label: r.ok ? `infiltrate · ${r.label}` : r.label };
     }
     // A loaded transport next to open land: a click offers to put a unit ashore there.
     if (landersFor(view, selectedUnit, hover).length > 0 && dirTo(view, selectedUnit, hover) !== null) {
