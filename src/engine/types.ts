@@ -57,7 +57,7 @@ export type Orders =
       /** Turns a blocked path is waited out before the orders end (default 3). */
       wait?: number;
       /** What the unit does on arrival (default: wait for orders). */
-      arrival?: 'sentry' | 'repair';
+      arrival?: 'sentry' | 'repair' | 'explore';
     }
   | {
       kind: 'patrol';
@@ -85,7 +85,7 @@ export interface CityRoute {
   /** Turns a unit waits when its way is blocked before it asks for orders. */
   blockWait: number;
   /** 'wait' leaves the unit awaiting orders at the destination; 'sentry' puts it on sentry. */
-  arrival: 'wait' | 'sentry';
+  arrival: 'wait' | 'sentry' | 'explore';
   /** The player who set the route; it lapses if the city changes hands. */
   by: PlayerId;
 }

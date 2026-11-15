@@ -1,6 +1,7 @@
 import { CITY_STRENGTH_HITS, RANK_NAMES, garrisonBonus, rankOf, UNIT_STATS, buildTime, buildableTypes, cargoCapacity, cargoUsed, unitDisplayName, type City, type PlayerView, type Unit, type UnitType } from '../engine';
 import { memo } from 'preact/compat';
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import type { ComponentChildren } from 'preact';
 import { ActionBar } from './ActionBar';
 import { ordersText } from './actions';
 import type { ActionId } from './keys';
@@ -13,6 +14,37 @@ import { Chevrons } from './Chevrons';
 import { Flag } from './Flag';
 
 export type Selection = { kind: 'unit'; id: number } | { kind: 'city'; id: number } | { kind: 'enemy'; id: number } | null;
+
+/**
+ * The side panel's scrolling box. When more of it lies below the visible part (a phone or an iPad squeezes it under the log)
+ * a fading "more" arrow shows at the bottom, so it is plain that scrolling reveals the rest.
+ */
+function ScrollPanel({ children }: { children: ComponentChildren }) {
+  const box = useRef<HTMLElement>(null);
+  const [more, setMore] = useState(false);
+  const check = () => {
+    const el = box.current;
+    if (!el) return;
+    setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 6);
+    // The unit card stays put while the commands scroll, but only when the panel has room for the card and some commands.
+    const head = el.querySelector<HTMLElement>('.unit-head');
+    el.classList.toggle('pin', head !== null && el.clientHeight >= head.offsetHeight + 140);
+  };
+  useEffect(check); // after every render: the content may have changed
+  useEffect(() => {
+    const el = box.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <aside class="panel" ref={box} onScroll={check}>
+      {children}
+      {more && <div class="scroll-hint" aria-hidden="true"><span>▾ more</span></div>}
+    </aside>
+  );
+}
 
 /** The unit's (or city's) picture in your colour, at the top right of the panel; nothing if it has no picture. */
 function Picture({ src, color }: { src: string | undefined; color: string }) {
@@ -45,16 +77,19 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
   const st = UNIT_STATS[u.type];
   const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).sort((a, b) => a.id - b.id);
   const [open, setOpen] = useState(false);
+  // In a city the card names it (in place of the terrain).
+  const inCity = u.carriedBy === null ? view.knownCities.find((c) => c.x === u.x && c.y === u.y) : undefined;
   // Fighters out on a patrol tied to this carrier are part of its group even while they are away.
   const away = st.carries.length > 0 ? patrolsFrom(view.myUnits, u) : [];
   return (
     <div>
+      <div class="unit-head">
       <Picture src={UNIT_ICONS[u.type]?.src} color={myColor} />
       <h3><span class="glyph owned" style={{ background: myColor }}>{UNIT_GLYPH[u.type]}</span> {unitDisplayName(u)}<Chevrons rank={rankOf(u.wins, u.type)} /></h3>
       {view.rules.promotions && st.promotes && <p>Rank: {RANK_NAMES[rankOf(u.wins, u.type)]}{u.wins ? ` (${u.wins} win${u.wins === 1 ? '' : 's'})` : ''}</p>}
       <p>Orders: {ordersText(view, u)}</p>
       {u.hunted !== undefined && <p class="crippled-tag">Manhunt on in this city: move out!</p>}
-      {groundUnder(view, u) && <p>Terrain: {groundUnder(view, u)}</p>}
+      {inCity ? <p>Location: {inCity.name}</p> : groundUnder(view, u) && <p>Terrain: {groundUnder(view, u)}</p>}
       <HealthBar u={u} />
       <StatBar label="Moves" value={u.movesLeft} max={st.move} kind="moves" />
       {u.fuel !== null && st.range !== null && <StatBar label="Fuel" value={u.fuel} max={st.range} kind="fuel" low={u.fuel <= Math.ceil(st.range / 4)} />}
@@ -76,6 +111,7 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
           )}
         </div>
       )}
+      </div>
       <ActionBar view={view} unit={u} onAction={onAction} />
     </div>
   );
@@ -139,13 +175,13 @@ function NextBar({ readyCount, onAction }: { readyCount: number; onAction: Props
 
 function EmptyPanel({ text, readyCount, onAction }: { text: string; readyCount: number; onAction: Props['onAction'] }) {
   return (
-    <aside class="panel">
+    <ScrollPanel>
       <p>{text}</p>
       <div class="actions">
         <button onClick={(e) => { blur(e); onAction('next'); }}>Next unit</button>
         {readyCount === 0 && <button class="primary" onClick={(e) => { blur(e); onAction('endTurn'); }}>End Turn</button>}
       </div>
-    </aside>
+    </ScrollPanel>
   );
 }
 
@@ -156,38 +192,38 @@ function SidePanelView({ view, selection, onSelectUnit, onProduction, onAction, 
     if (!e) return <EmptyPanel text="That unit is no longer in view." readyCount={readyCount} onAction={onAction} />;
     const seen = e.visibleNow ? 'In sight now' : `Last seen turn ${e.turnSeen}`;
     return (
-      <aside class="panel">
+      <ScrollPanel>
         <Picture src={UNIT_ICONS[e.type]?.src} color={enemyColor} />
         <h3><span class="glyph owned" style={{ background: enemyColor }}>{UNIT_GLYPH[e.type]}</span> {UNIT_STATS[e.type].name}<Chevrons rank={e.rank ?? 0} /></h3>
         <p><Flag name={view.players[e.owner].name} /> {view.players[e.owner].name}</p>
         <p>{seen}</p>
         {groundUnder(view, e) && <p>Terrain: {groundUnder(view, e)}</p>}
         <NextBar readyCount={readyCount} onAction={onAction} />
-      </aside>
+      </ScrollPanel>
     );
   }
   if (selection.kind === 'unit') {
     const u = view.myUnits.find((x) => x.id === selection.id);
     if (!u) return <EmptyPanel text="That unit is gone." readyCount={readyCount} onAction={onAction} />;
     return (
-      <aside class="panel">
+      <ScrollPanel>
         <UnitDetails key={u.id} u={u} view={view} onAction={onAction} onSelectUnit={onSelectUnit} myColor={myColor} />
-      </aside>
+      </ScrollPanel>
     );
   }
   const own = view.myCities.find((c) => c.id === selection.id);
   if (own) {
     return (
-      <aside class="panel">
+      <ScrollPanel>
         <CityDetails city={own} view={view} onProduction={onProduction} onSelectUnit={onSelectUnit} onOpenCity={onOpenCity} myColor={myColor} />
         <NextBar readyCount={readyCount} onAction={onAction} />
-      </aside>
+      </ScrollPanel>
     );
   }
   const known = view.knownCities.find((c) => c.id === selection.id);
   const owner = known?.owner;
   return (
-    <aside class="panel">
+    <ScrollPanel>
       <h3>{known?.capital && <span class="capital-star" title="Capital: builds 25% faster">★ </span>}{known?.name ?? `City #${selection.id}`}</h3>
       {known?.capital && <p>Capital: builds 25% faster</p>}
       <p>{owner === null || owner === undefined ? 'Neutral (last known)' : <><Flag name={view.players[owner].name} /> {view.players[owner].name}{view.allies.includes(owner) ? ' (ally)' : ' (last known)'}</>}</p>
@@ -195,7 +231,7 @@ function SidePanelView({ view, selection, onSelectUnit, onProduction, onAction, 
       {known?.intel && <p>Spy report on who is inside: {known.intel.garrison.length === 0 ? 'nobody' : known.intel.garrison.map((g) => `${g.count} ${UNIT_STATS[g.type].name}`).join(', ')}.</p>}
       {known?.intel && <p>Spy report: {known.intel.production === null ? 'building nothing' : `building ${UNIT_STATS[known.intel.production].name}, ${known.intel.turnsLeft} turn${known.intel.turnsLeft === 1 ? '' : 's'} to go`}</p>}
       <NextBar readyCount={readyCount} onAction={onAction} />
-    </aside>
+    </ScrollPanel>
   );
 }
 

@@ -171,6 +171,7 @@ export function executeOrders(
     endOrders(u, 'arrived', events);
     if (arrival === 'sentry') u.orders = { kind: 'sentry' };
     else if (arrival === 'repair' && u.damage > 0 && inFriendlyCity(s, u)) u.orders = { kind: 'repair' };
+    else if (arrival === 'explore' && validateOrders(s, u, { kind: 'explore' }) === null) u.orders = { kind: 'explore' };
     else pickUpRoute(s, u);
   };
 
@@ -199,7 +200,11 @@ export function executeOrders(
     const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? (o.toB ? o.b : o.a) : findFrontier(map, u);
     if (target === null) return endOrders(u, 'nothingToExplore', events);
     if (u.x === target.x && u.y === target.y) {
-      if (o.kind === 'goto') return arrive();
+      if (o.kind === 'goto') {
+        arrive();
+        if (u.orders?.kind === 'explore') continue; // it sets out to explore with the moves it has left
+        return;
+      }
       if (o.kind === 'patrol') o.toB = !o.toB;
       continue;
     }

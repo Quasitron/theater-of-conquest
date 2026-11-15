@@ -102,6 +102,22 @@ describe('route following', () => {
     expect(u).toMatchObject({ x: 6, y: 0, orders: { kind: 'sentry' } });
   });
 
+  it('can send the unit exploring on arrival: the route is accepted and the new unit carries it', () => {
+    let s = game();
+    const set = run(s, { type: 'setRoute', player: 0, cityId: 0, route: route({ arrival: 'explore' }) });
+    expect(set.state.cities[0].routes?.[0].arrival).toBe('explore');
+    s = set.state;
+    readyToBuild(s);
+    s = round(s).state;
+    const u = s.units.find((x) => x.type === 'army' && x.owner === 0)!;
+    expect(u.orders).toMatchObject({ kind: 'goto', arrival: 'explore' });
+    // Arrived, it does not wait for orders: it sets out to explore (or says there is nothing left to explore).
+    for (let i = 0; i < 8; i++) s = round(s).state;
+    const done = s.units.find((x) => x.id === u.id)!;
+    expect(done.orders === null || done.orders.kind === 'explore').toBe(true);
+    expect(done.orders?.kind === 'goto').toBe(false);
+  });
+
   it('leaves units of other types without orders', () => {
     let s = game();
     s = run(s, { type: 'setRoute', player: 0, cityId: 0, route: route() }).state;

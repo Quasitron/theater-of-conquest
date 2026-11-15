@@ -26,7 +26,7 @@ export function validateRoute(s: GameState, pid: PlayerId, city: City, route: Om
     return 'unknown unit type';
   }
   if (!Number.isInteger(route.blockWait) || route.blockWait < 1 || route.blockWait > 9) return 'invalid blocked wait';
-  if (route.arrival !== 'wait' && route.arrival !== 'sentry') return 'invalid arrival mode';
+  if (route.arrival !== 'wait' && route.arrival !== 'sentry' && route.arrival !== 'explore') return 'invalid arrival mode';
   const can = routeUnitTypes(pathMapFromState(s, pid), city, dest);
   const bad = route.types.find((t) => !can[t]);
   return bad ? `${UNIT_STATS[bad].name} cannot make that trip` : null;
@@ -57,7 +57,7 @@ export function applyRoute(s: GameState, city: City, u: Unit): void {
     target: { x: dest.x, y: dest.y },
     routeCity: dest.id,
     wait: route.blockWait,
-    ...(route.arrival === 'sentry' ? { arrival: 'sentry' as const } : {}),
+    ...(route.arrival === 'sentry' || route.arrival === 'explore' ? { arrival: route.arrival } : {}),
   };
   if (validateOrders(s, u, orders) === null) u.orders = orders;
 }
