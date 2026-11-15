@@ -130,6 +130,8 @@ export function GameScreen({ session, onQuit }: Props) {
   const [target, setTarget] = useState<TargetMode>(null);
   const [group, setGroup] = useState<GroupState>(null);
   const [groupBox, setGroupBox] = useState<GroupBox | null>(null);
+  /** True from pressing End Turn until the computer players have finished moving (the work runs just after a paint). */
+  const [endingTurn, setEndingTurn] = useState(false);
   const [prodMap, setProdMap] = useState(false);
   const [routesMap, setRoutesMap] = useState(false);
   const [unitsOpen, setUnitsOpen] = useState(false);
@@ -549,7 +551,7 @@ export function GameScreen({ session, onQuit }: Props) {
     // Newly sighted enemies come first (they are often the ones that then attack), then the replay of what the other
     // players did since the last turn (animated mode), then the turn proper.
     const afterSights = () => {
-      const rp = getCombatMode() === 'animated' ? replayFights(session.log(view.me), view.me, names, lookup) : null;
+      const rp = getCombatMode() === 'animated' ? replayFights(session.log(view.me), view.me, names, lookup, undefined, (p) => p !== null && p !== view.me && view.players[view.me].team !== undefined && view.players[p]?.team === view.players[view.me].team) : null;
       if (rp && rp.steps.length > 0) {
         setReplayPaused(false);
         setPlayedStep(-1);
@@ -931,11 +933,23 @@ export function GameScreen({ session, onQuit }: Props) {
     applyAutoFit(v, selectedUnit ? v.myUnits.find((u) => u.id === selectedUnit.id) ?? null : null);
   };
 
+  /**
+   * Ends the turn. The computer players then move in one go, which can take a while on a busy map, so the screen first
+   * shows that work is under way (and the End Turn button stops flashing), then the moves run.
+   */
+  const endTurn = () => {
+    if (endingTurn) return;
+    setEndingTurn(true);
+    window.setTimeout(() => {
+      try { act({ type: 'endTurn' }); } finally { setEndingTurn(false); }
+    }, 50);
+  };
+
   const doAction = (id: ActionId) => {
     if (!playing) return;
     if (id !== 'info') setInfoId(null);
     if (id === 'endTurn') {
-      act({ type: 'endTurn' });
+      endTurn();
       return;
     }
     // Space and Tab on a unit that has orders just move on, leaving its orders alone.
@@ -1302,7 +1316,8 @@ export function GameScreen({ session, onQuit }: Props) {
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
           {!target && !groupHint && !message && allMoved && <span class="message" role="status">All units have moved. Press Enter or click End Turn.</span>}
           {session.saveError && <span class="error" role="alert">{session.saveError}</span>}
-          <button class={endTurnBlinks ? 'primary blink' : 'primary'} onClick={(e) => { blur(e); play('click'); act({ type: 'endTurn' }); }} disabled={!playing}>End Turn</button>
+          {endingTurn && <span class="message working" role="status"><span class="spinner" aria-hidden="true" /> Computer players are moving…</span>}
+          <button class={endTurnBlinks && !endingTurn ? 'primary blink' : 'primary'} onClick={(e) => { blur(e); play('click'); endTurn(); }} disabled={!playing || endingTurn}>End Turn</button>
         </span>
       </header>
       <div class="mapcol">
