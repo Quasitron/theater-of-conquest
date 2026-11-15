@@ -76,7 +76,7 @@ export function visibleButtons(view: PlayerView, u: Unit): ActionId[] {
 }
 
 /** "Boston → Brest": a ferry route as the player reads it (the drop square is named by the city on it, else its coordinates). */
-export function ferryLabel(view: PlayerView, r: PlayerView['ferryRoutes'][number]): string {
+export function ferryLabel(view: PlayerView, r: { pickup: { name: string }; drop: { x: number; y: number } }): string {
   const city = view.knownCities.find((c) => c.x === r.drop.x && c.y === r.drop.y);
   return `${r.pickup.name} → ${city ? city.name : `${r.drop.x},${r.drop.y}`}`;
 }

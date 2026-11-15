@@ -41,7 +41,7 @@ export function StatusLine({
       <button class={groupActive ? 'primary' : ''} title="Drag a box over your units, then give them all one order (Shift+drag with a mouse)" onClick={(e) => { blur(e); onGroup(); }}>
         {groupActive ? 'Cancel Group' : 'Group'}
       </button>
-      <button class={routesMap ? 'primary' : ''} title="Show the routes set on your cities" onClick={(e) => { blur(e); onToggleRoutes(); }}>
+      <button class={routesMap ? 'primary' : ''} title="Show the routes set on your cities (green arrows) and your ferry routes (blue dashed, grey when paused)" onClick={(e) => { blur(e); onToggleRoutes(); }}>
         {routesMap ? 'Hide Routes' : 'Routes'}
       </button>
       <button class={prodMap ? 'primary' : ''} title="Show what every city is building and when it finishes" onClick={(e) => { blur(e); onToggleProdMap(); }}>

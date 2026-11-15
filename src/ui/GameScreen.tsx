@@ -9,7 +9,7 @@ import {
 } from '../engine';
 import type { SaveStore } from '../storage';
 import { availableActions, escortable, loadCandidates } from './actions';
-import { FerryDialog } from './FerryDialog';
+import { FerryDialog, emptyFerryDraft, type FerryDraft } from './FerryDialog';
 import { autoFit, centerOn, clampCamera, exploredBox, keepInViewWrap, pan, type Camera } from './camera';
 import { CityScreen } from './CityScreen';
 import { installAudioUnlock, play, playAll } from '../audio/engine';
@@ -164,7 +164,10 @@ export function GameScreen({ session, onQuit }: Props) {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [picker, setPicker] = useState<null | 'load' | 'unload' | 'ferry'>(null);
   /** A ferry route being set up on the map: the pickup city once chosen, the route being changed (if any), and the wait-until-full choice. */
-  const [ferryPlan, setFerryPlan] = useState<null | { edit?: number; pickup?: number; waitFull: boolean }>(null);
+  const [ferryPlan, setFerryPlan] = useState<null | { edit?: number; pickup?: number }>(null);
+  /** The Ferry Route dialog's unsaved changes, kept while the player picks squares on the map, and the error a failed Save shows. */
+  const [ferryDraft, setFerryDraft] = useState<FerryDraft>(emptyFerryDraft());
+  const [ferryError, setFerryError] = useState<string | null>(null);
   // A loaded transport sent onto a land square: which unit to put ashore there.
   const [landAt, setLandAt] = useState<null | { transportId: number; dir: Dir }>(null);
   const [infoId, setInfoId] = useState<number | null>(null);
@@ -819,6 +822,41 @@ export function GameScreen({ session, onQuit }: Props) {
   const setOrders = (u: Unit, orders: Orders | null) => order(u, { type: 'setOrders', unitId: u.id, orders });
 
   /**
+   * Save and Close in the Ferry Route dialog: the changes to existing routes first, then the carrier's own route. Returns
+   * the error of the first command the game refuses (the dialog stays open to show it), or null.
+   */
+  const saveFerry = (u: Unit): string | null => {
+    const d = ferryDraft;
+    const cmds: SessionCommand[] = [];
+    for (const r of view.ferryRoutes) {
+      const sq = d.squares[r.id];
+      const wait = d.wait[r.id] ?? r.waitFull;
+      if (!sq && wait === r.waitFull) continue;
+      cmds.push({ type: 'editFerry', routeId: r.id, pickup: sq?.pickup ?? r.pickup.id, drop: sq?.drop ?? r.drop, waitFull: wait });
+    }
+    const own: SessionCommand[] = [];
+    if (d.assign === 'new' && d.fresh) own.push({ type: 'setFerry', unitId: u.id, ferry: { pickup: d.fresh.pickup, drop: d.fresh.drop, ...(d.fresh.waitFull ? { waitFull: true } : {}) } });
+    else if (d.assign === null) { if (u.ferry !== undefined) own.push({ type: 'setFerry', unitId: u.id, ferry: null }); }
+    else if (typeof d.assign === 'number' && d.assign !== u.ferry) own.push({ type: 'setFerry', unitId: u.id, ferry: { routeId: d.assign } });
+    // Other carriers taken off their routes (after the route edits, which need a carrier on the route to check against).
+    for (const id of d.removed) cmds.push({ type: 'setFerry', unitId: id, ferry: null });
+    // This carrier's own assignment goes last, so a route it joins still exists.
+    cmds.push(...own);
+    const pre = ready;
+    for (const cmd of cmds) {
+      const err = session.act(cmd);
+      if (err) return err;
+    }
+    if (cmds.length > 0) {
+      setMessage(null);
+      afterOwnAct();
+      showOwnFights();
+      if (session.view().myUnits.some((x) => x.id === u.id)) settle(u.id, pre);
+    }
+    return null;
+  };
+
+  /**
    * Go-to or patrol given by a click: the unit (having made any moves it could) stays selected with its route
    * showing for ROUTE_PAUSE_MS, then the cycle moves on to the next ready unit, as in the original game.
    */
@@ -1038,6 +1076,8 @@ export function GameScreen({ session, onQuit }: Props) {
         setMessage(null);
         return;
       case 'ferry':
+        setFerryDraft(emptyFerryDraft());
+        setFerryError(null);
         setPicker('ferry');
         return;
       case 'resumeFerry': return order(u, { type: 'resumeFerry', unitId: u.id });
@@ -1073,19 +1113,22 @@ export function GameScreen({ session, onQuit }: Props) {
           setMessage('Click one of your cities for the pickup (Esc cancels).');
           return;
         }
-        setFerryPlan((plan) => ({ ...(plan ?? { waitFull: false }), pickup: city.id }));
+        setFerryPlan((plan) => ({ ...(plan ?? {}), pickup: city.id }));
         setTarget('ferryDrop');
         setMessage(null);
         return;
       }
       if (mode === 'ferryDrop') {
         const plan = ferryPlan;
-        const unit = selectedUnit;
         if (!plan || plan.pickup === undefined) return setTarget(null);
+        // The squares go into the dialog's draft; nothing changes in the game until Save and Close.
+        const squares = { pickup: plan.pickup, drop: { x: p.x, y: p.y } };
+        setFerryDraft((d) => plan.edit !== undefined
+          ? { ...d, squares: { ...d.squares, [plan.edit!]: squares } }
+          : { ...d, assign: 'new', fresh: { ...squares, waitFull: d.fresh?.waitFull ?? false } });
         setTarget(null);
         setFerryPlan(null);
-        if (plan.edit !== undefined) act({ type: 'editFerry', routeId: plan.edit, pickup: plan.pickup, drop: p, waitFull: plan.waitFull });
-        else order(unit, { type: 'setFerry', unitId: unit.id, ferry: { pickup: plan.pickup, drop: p, ...(plan.waitFull ? { waitFull: true } : {}) } });
+        setPicker('ferry');
         return;
       }
       if (mode === 'escort') {
@@ -1225,6 +1268,7 @@ export function GameScreen({ session, onQuit }: Props) {
         else if (info) setInfoId(null);
         else if (picker) setPicker(null);
         else if (landAt) setLandAt(null);
+        else if (target === 'ferryPickup' || target === 'ferryDrop') { setTarget(null); setFerryPlan(null); setPicker('ferry'); }
         else if (target) setTarget(null);
         else setSelection(null);
         return;
@@ -1383,7 +1427,7 @@ export function GameScreen({ session, onQuit }: Props) {
                   ? 'Step 1 of 2: click the PICKUP city, where the ship loads.'
                   : `${pickupCity ? `Pickup: ${pickupCity.name}. ` : ''}${ferryPlan?.edit !== undefined || !pickupCity ? 'Step 2 of 2: ' : ''}Click the DROP square, where the cargo is put ashore.`}
               </span>
-              <button onClick={(e) => { blur(e); setTarget(null); setFerryPlan(null); }}>Cancel (Esc)</button>
+              <button onClick={(e) => { blur(e); setTarget(null); setFerryPlan(null); setPicker('ferry'); }}>Back to the dialog (Esc)</button>
             </div>
           );
         })()}
@@ -1483,25 +1527,20 @@ export function GameScreen({ session, onQuit }: Props) {
           <FerryDialog
             view={view}
             unit={pickerUnit}
-            onCancel={() => setPicker(null)}
-            onJoin={(routeId) => { setPicker(null); order(pickerUnit, { type: 'setFerry', unitId: pickerUnit.id, ferry: { routeId } }); }}
-            onLeave={() => { setPicker(null); order(pickerUnit, { type: 'setFerry', unitId: pickerUnit.id, ferry: null }); }}
-            onSetWait={(routeId, waitFull) => {
-              const r = view.ferryRoutes.find((x) => x.id === routeId);
-              // The dialog stays open: its checkbox follows the route.
-              if (r) act({ type: 'editFerry', routeId, pickup: r.pickup.id, drop: r.drop, waitFull });
+            draft={ferryDraft}
+            error={ferryError}
+            onDraft={setFerryDraft}
+            onCancel={() => { setPicker(null); setFerryDraft(emptyFerryDraft()); setFerryError(null); }}
+            onSave={() => {
+              const err = saveFerry(pickerUnit);
+              if (err) setFerryError(err);
+              else { setPicker(null); setFerryDraft(emptyFerryDraft()); setFerryError(null); }
             }}
-            onNew={(waitFull) => {
+            onPickSquares={(routeId) => {
               setPicker(null);
-              const here = view.myCities.find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
-              setFerryPlan({ waitFull, ...(here ? { pickup: here.id } : {}) });
+              const here = routeId === null ? view.myCities.find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y) : undefined;
+              setFerryPlan({ ...(routeId !== null ? { edit: routeId } : {}), ...(here ? { pickup: here.id } : {}) });
               setTarget(here ? 'ferryDrop' : 'ferryPickup');
-              setMessage(null);
-            }}
-            onChange={(routeId, waitFull) => {
-              setPicker(null);
-              setFerryPlan({ edit: routeId, waitFull });
-              setTarget('ferryPickup');
               setMessage(null);
             }}
           />

@@ -88,6 +88,7 @@ export function buildManual(): ManualSection[] {
         'A city keeps building the same unit until you change it. To change it after the current unit is finished, pick a unit in the "Then build" menu on the production screen; the city switches then and keeps building the new unit.',
         'To put a unit ashore from a transport, move the transport toward a land square next to it (arrow key or click): a list of the units aboard asks which one lands there. The Unload button lands a whole load at once.',
         'A route sends the units a city builds to a destination city automatically: set it on the city screen. A city can have several routes (Army to one city, Armor to another), each unit type on one of them.',
+        'The Routes button on the map shows them: green arrows for city routes and blue dashed lines for ferry routes (grey when none of a route\'s carriers is running it).',
       ],
     },
     {
