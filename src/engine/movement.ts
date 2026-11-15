@@ -2,7 +2,7 @@ import type { Dir, GameEvent, GameState, Pos, Unit } from './types';
 import type { RandomSource } from './rng';
 import { UNIT_STATS, armorBlockedBy, armorSlowedBy, canCarry } from './units';
 import { reliefAt, step, terrainAt } from './map';
-import { cargoOf, cargoRoom, cityAt, destroyUnit, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
+import { canJoinStack, cargoOf, cargoRoom, cityAt, destroyUnit, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
 import { areFriendly } from './relations';
 import { attackCity, attackUnit, bombCity, bombardCity } from './attack';
 
@@ -103,8 +103,9 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
 
   const occupants = topLevelUnitsAt(s, to.x, to.y);
   // An enemy spy hiding in a city is no obstacle (the city's own units come and go); out in the open it is found by walking into it.
-  const enemy = occupants.find((o) => !areFriendly(s, o.owner, u.owner) && !(city && o.type === 'spy'));
-  if (enemy) return attackUnit(s, rng, u, enemy, events);
+  const foes = occupants.filter((o) => !areFriendly(s, o.owner, u.owner) && !(city && o.type === 'spy'));
+  // Against a stack the best defender takes the fight (attackUnit picks it).
+  if (foes.length > 0) return attackUnit(s, rng, u, foes[0], events);
 
   if (city) {
     spendMove(u);
@@ -131,7 +132,7 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
   if (st.domain === 'land' && terrain !== 'land') return 'land units cannot enter water';
   if (u.type === 'armor' && s.rules.advancedUnits && armorBlockedBy(reliefAt(s, to.x, to.y))) return 'Armor cannot enter mountains';
   if (st.domain === 'sea' && terrain !== 'water') return 'ships can only enter water or friendly cities';
-  if (occupants.length > 0) {
+  if (occupants.length > 0 && !canJoinStack(s, u, to)) {
     const canPassOver = st.domain === 'air' && u.movesLeft > 1 && (u.fuel ?? 0) > 1;
     if (!canPassOver) return 'square is occupied';
   }

@@ -53,6 +53,11 @@ export const HOUSE_RULE_OPTIONS: { key: keyof HouseRules; label: string; hint: s
     hint: "Each player's starting city is a capital, marked with a gold star. It builds 25% faster (never less than 1 turn faster), also when it is war-torn. A captured capital keeps its star and its boost for the new owner.",
   },
   {
+    key: 'stacking',
+    label: 'Stackable units',
+    hint: "Up to 3 of your land or sea units may share a square outside a city, which clears traffic jams. An attack on a stack fights its best defender (the unit most likely to beat the attacker), one unit at a time, so a stack can still be wiped out by repeated attacks. Aircraft cannot join a stack, and a winner only moves in once the last defender is gone.",
+  },
+  {
     key: 'cityStrength',
     label: 'City strength',
     hint: "A player's city takes 3 hits to fall and keeps its damage between attacks, healing 1 hit a turn, so groups can wear it down. Cruisers and Battleships can also bombard a player's city, down to its last hit, but cannot take it. Neutral cities stay easy.",

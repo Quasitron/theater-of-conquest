@@ -318,7 +318,12 @@ export function GameScreen({ session, onQuit }: Props) {
     }
     if (city) return { at: hover, label: attackLabel(cityAttackChance(view, selectedUnit, city.owner, city.damage, visibleGarrison(view, city, city.owner))) };
     // A unit: odds against the first enemy seen on the square (the one that defends), its damage assumed none.
-    const foe = view.enemies.find((e) => e.visibleNow && e.x === hover.x && e.y === hover.y);
+    // With the stacking rule the best defender of a stack takes the fight: the one the attacker is least likely to beat.
+    const ground = viewRelief(view, hover.x, hover.y);
+    const foes = view.enemies.filter((e) => e.visibleNow && e.x === hover.x && e.y === hover.y);
+    const foe = view.rules.stacking && foes.length > 1
+      ? foes.reduce((best, e) => (unitAttackChance(selectedUnit, e.type, e.rank ?? 0, view.rules, ground) < unitAttackChance(selectedUnit, best.type, best.rank ?? 0, view.rules, ground) ? e : best))
+      : foes[0];
     // Submarine strike: "Strike" when the enemy cannot see the sub (a surprise), the ordinary odds when an escort or city next to it can.
     const surprise = !!foe && strikeIsSurprise(view, selectedUnit, foe);
     const odds = foe ? unitAttackChance(selectedUnit, foe.type, foe.rank ?? 0, { ...view.rules, submarineStrike: surprise }, viewRelief(view, hover.x, hover.y)) : null;
@@ -1099,10 +1104,13 @@ export function GameScreen({ session, onQuit }: Props) {
       }
       return giveRoute(selectedUnit, { kind: 'goto', target: approach }, p);
     }
-    const unit = view.myUnits.find((u) => u.x === p.x && u.y === p.y && u.carriedBy === null);
+    // Stacking rule: clicking a square with several of your units selects them one after another.
+    const stack = view.myUnits.filter((u) => u.x === p.x && u.y === p.y && u.carriedBy === null).sort((a, b) => a.id - b.id);
+    const stackAt = selectedUnit ? stack.findIndex((u) => u.id === selectedUnit.id) : -1;
+    const unit = stackAt >= 0 && stack.length > 1 ? stack[(stackAt + 1) % stack.length] : stack[0];
     // A host with room for the selected unit (a carrier for a fighter, a transport for an army) is a boarding
     // order, not a selection. Press Esc first to select the host itself.
-    if (unit && selectedUnit && unit.id !== selectedUnit.id && explored
+    if (unit && selectedUnit && stackAt < 0 && unit.id !== selectedUnit.id && explored
       && hostHasRoom(unit, view.myUnits.filter((c) => c.carriedBy === unit.id), selectedUnit.type)) {
       return giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
     }

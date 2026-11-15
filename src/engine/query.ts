@@ -19,6 +19,19 @@ export function topLevelUnitsAt(s: GameState, x: number, y: number): Unit[] {
   return unitsAt(s, x, y).filter((u) => u.carriedBy === null);
 }
 
+/** Stacking rule: the most units of one player that may share a square outside a city. */
+export const STACK_LIMIT = 3;
+
+/**
+ * Stacking rule: whether `u` may end a move on p, a square outside a city that already holds units, by joining them. All
+ * of them must be the mover's own land or sea units (no aircraft on either side) and there must be a free place.
+ */
+export function canJoinStack(s: GameState, u: Unit, p: { x: number; y: number }): boolean {
+  if (!s.rules.stacking || UNIT_STATS[u.type].domain === 'air') return false;
+  const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => o !== u);
+  return here.length > 0 && here.length < STACK_LIMIT && here.every((o) => o.owner === u.owner && UNIT_STATS[o.type].domain !== 'air');
+}
+
 export function cargoOf(s: GameState, carrier: Unit): Unit[] {
   return s.units.filter((u) => u.carriedBy === carrier.id);
 }

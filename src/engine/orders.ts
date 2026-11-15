@@ -3,7 +3,7 @@ import type { RandomSource } from './rng';
 import { UNIT_STATS, attackRating, canCarry, fightRatings, hitsOf, isCrippled } from './units';
 import { combatWinChance } from './combat';
 import { chebyshev, index, isCoastal, neighbors, reliefAt } from './map';
-import { cityAt, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
+import { canJoinStack, cityAt, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
 import { areFriendly } from './relations';
 import { canPlayerSeeUnit, updateFog } from './fog';
 import { moveUnit } from './movement';
@@ -148,7 +148,7 @@ function ownBlocks(s: GameState, u: Unit, p: Pos): boolean {
   if (UNIT_STATS[u.type].domain === 'air' || cityAt(s, p.x, p.y)) return false;
   const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => o.owner === u.owner && o !== u);
   if (here.length === 0) return false;
-  return !here.some((h) => hasRoomFor(s, h, u.type));
+  return !here.some((h) => hasRoomFor(s, h, u.type)) && !canJoinStack(s, u, p);
 }
 
 /**

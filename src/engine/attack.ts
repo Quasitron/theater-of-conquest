@@ -4,7 +4,7 @@ import { CITY_COMBAT, CITY_STRENGTH_HITS, STRIKE_CHANCE, UNIT_STATS, attackRatin
 import { chebyshev, normalize, reliefAt, terrainAt } from './map';
 import { cityAt, destroyUnit, spawnUnit, topLevelUnitsAt, trimCargo, unitsAt } from './query';
 import { areFriendly } from './relations';
-import { resolveCombat } from './combat';
+import { combatWinChance, resolveCombat } from './combat';
 import { relocate, settleAircraft, slowArmor, spendMove } from './movement';
 import { canPlayerSeeUnit, noteCityTaken, reveal } from './fog';
 import { WAR_TORN_MAX } from './production';
@@ -55,7 +55,35 @@ function withdrawSquare(s: GameState, sub: Unit, foe: Unit): { x: number; y: num
   return best;
 }
 
-export function attackUnit(s: GameState, rng: RandomSource, att: Unit, def: Unit, events: GameEvent[]): string | null {
+/**
+ * Stacking rule: an attack on a square holding several units fights the one most likely to beat this attacker (the
+ * best defender, counting damage and ground); ties go to the oldest unit. Units the attacker may not attack are not
+ * candidates; if none can be attacked `def` is returned and the usual restriction applies. Without the rule, or on a
+ * lone unit, it is `def` itself.
+ */
+export function stackDefender(s: GameState, att: Unit, def: Unit): Unit {
+  if (!s.rules.stacking || cityAt(s, def.x, def.y)) return def;
+  const here = topLevelUnitsAt(s, def.x, def.y).filter((o) => o.owner === def.owner);
+  if (here.length < 2) return def;
+  const a = UNIT_STATS[att.type];
+  let best: Unit | null = null;
+  let bestChance = Infinity;
+  for (const o of here.sort((p, q) => p.id - q.id)) {
+    if (attackRestriction(s, att, o) !== null) continue;
+    const d = UNIT_STATS[o.type];
+    const rating = fightRatings(s.rules, att.type, o.type, reliefAt(s, o.x, o.y));
+    const bombard = a.domain === 'sea' && d.domain === 'land';
+    const chance = combatWinChance(
+      { attack: attackRating(s.rules, att, rating.attack), shot: a.shot, hits: hitsOf(att), damage: att.damage },
+      { defense: bombard ? rating.defense / 2 : rating.defense, shot: d.shot, hits: hitsOf(o), damage: o.damage },
+    );
+    if (chance < bestChance) { bestChance = chance; best = o; }
+  }
+  return best ?? def;
+}
+
+export function attackUnit(s: GameState, rng: RandomSource, att: Unit, requested: Unit, events: GameEvent[]): string | null {
+  const def = stackDefender(s, att, requested);
   const restriction = attackRestriction(s, att, def);
   if (restriction) return restriction;
   const a = UNIT_STATS[att.type];
