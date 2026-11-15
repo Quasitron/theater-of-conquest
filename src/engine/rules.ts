@@ -22,6 +22,8 @@ export interface HouseRules {
   armorNoRiverCover: boolean;
   /** Each player's starting city is a capital: it builds 25% faster (at least 1 turn), and keeps that when captured. */
   capitalCities: boolean;
+  /** Up to 3 of a player's land or sea units may share a square outside a city; an attack on the square fights its best defender, one unit at a time. */
+  stacking: boolean;
 }
 
 export const CLASSIC_RULES: HouseRules = {
@@ -36,6 +38,7 @@ export const CLASSIC_RULES: HouseRules = {
   submarineStrike: false,
   armorNoRiverCover: false,
   capitalCities: false,
+  stacking: false,
 };
 
 /** Bumped whenever a change alters how an old command log replays. 4: units arriving in a route city take the route. 5: a carrier leaving a city takes the fighters there. 6: a patrol tied to a carrier moves with it. 7: aircraft wait a turn when blocked. 8: equal-length paths prefer the straight line. 9: fighters aboard a carrier await orders instead of sleeping. 10: a player with no city and no unit able to take one is knocked out. 11: kills and losses are counted for the status report. 12: bombarding a city no longer counts as a win towards a promotion (with the city strength and promotions rules on, older games replay differently; older saves load from their saved position). 13: Armor can be promoted (with the Advanced units and promotions rules on, older games replay differently; older saves load from their saved position). 14: the submarine strike rule (only changes games that turn it on). 15: a Spy takes 16 turns to build, 14 for each after the first (with the Advanced units rule on, older games replay differently; older saves load from their saved position). 16: with the Advanced units rule on, a crippled unit attacks at half strength (older games replay differently; older saves load from their saved position). 17: standing orders may enter an ally's city even when an allied unit is in it (older games replay differently; older saves load from their saved position). 18: a captured city is known to the loser's teammates as its new owner's (older games replay
@@ -45,5 +48,5 @@ position). 20: a sentried transport or carrier wakes when a unit boards it (olde
 load from their saved position). 21: an Elite unit is crippled by half of its raised hits, not of its base hits (with the
 promotions rule on, older games replay differently; older saves load from their saved position). 22: Spies are promoted
 after 1, 2 and 3 wins, hide better as they rise, and a failed revolt may leave the spy alive but hunted (with the Advanced
-units rule on, older games replay differently; older saves load from their saved position). 23: a city's strength (city strength rule) is known only from sight, yours or a teammate's; out of sight it shows what was last seen (older games replay differently; older saves load from their saved position). 24: a unit repairing in a city wakes when an enemy that could take the city comes near (older games replay differently; older saves load from their saved position). */
-export const RULES_VERSION = 24;
+units rule on, older games replay differently; older saves load from their saved position). 23: a city's strength (city strength rule) is known only from sight, yours or a teammate's; out of sight it shows what was last seen (older games replay differently; older saves load from their saved position). 24: a unit repairing in a city wakes when an enemy that could take the city comes near (older games replay differently; older saves load from their saved position). 25: the stacking rule (only changes games that turn it on). */
+export const RULES_VERSION = 25;

@@ -495,6 +495,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Own top-level units outside own cities.
   // The unit that needs orders is drawn last, so it is the one that shows when several share a square (an enemy city).
   const outside = showUnits ? [...view.myUnits].sort((a, b) => Number(blinking(a)) - Number(blinking(b))) : [];
+  const stackSize = (x: number, y: number) => outside.filter((o) => o.carriedBy === null && o.x === x && o.y === y).length;
   for (const u of outside) {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
     each((mx, my, sx, sy) => {
@@ -503,6 +504,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
       sentryTag(face(u), sx + t * 0.5, sy + t * 0.5, 1, ownAlpha(u));
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
       if (cargo > 0) badge(sx, sy, cargo, ownAlpha(u));
+      else if (stackSize(u.x, u.y) > 1) badge(sx, sy, stackSize(u.x, u.y), ownAlpha(u)); // stacking rule: how many share the square
       if (isCrippled(u)) {
         // bottom-right: the top-left holds the rank chevrons. A red cross on a white square.
         const cs = t * 0.24, cx0 = sx + t * 0.68, cy0 = sy + t * 0.68, arm = cs * 0.34;
