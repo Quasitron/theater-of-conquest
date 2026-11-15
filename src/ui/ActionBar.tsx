@@ -11,6 +11,8 @@ export const ACTION_LABELS: Record<ActionId, { label: string; key: string }> = {
   repair: { label: 'Repair', key: 'R' },
   moveTo: { label: 'Move To', key: 'T' },
   escort: { label: 'Escort', key: 'E' },
+  ferry: { label: 'Ferry Route', key: 'F' },
+  resumeFerry: { label: 'Resume Route', key: 'Y' },
   airbase: { label: 'Build Airbase', key: 'B' },
   sabotage: { label: 'Sabotage Production', key: 'G' },
   hurt: { label: 'Damage Garrison', key: 'M' },

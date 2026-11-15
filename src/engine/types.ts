@@ -45,6 +45,8 @@ export interface Unit {
   blockedTurns: number;
   /** A spy whose revolt failed but got away: the id of the city where the manhunt is on (cleared when it moves). */
   hunted?: number;
+  /** A carrier on a ferry route: the route's id. It stays when the orders end (paused), so the route can be resumed. */
+  ferry?: number;
 }
 
 export type Orders =
@@ -58,6 +60,8 @@ export type Orders =
       wait?: number;
       /** What the unit does on arrival (default: wait for orders). */
       arrival?: 'sentry' | 'repair' | 'explore';
+      /** Ferry route leg: heading for the route's pickup city or its drop square (the target follows the route). */
+      ferry?: 'pickup' | 'drop';
     }
   | {
       kind: 'patrol';
@@ -88,6 +92,17 @@ export interface CityRoute {
   arrival: 'wait' | 'sentry' | 'explore';
   /** The player who set the route; it lapses if the city changes hands. */
   by: PlayerId;
+}
+
+/** A ferry route: a carrier loads at the pickup city, sails to the drop square, unloads everything, and goes back. Shared by the carriers on it. */
+export interface FerryRoute {
+  id: number;
+  /** Id of the pickup city. */
+  pickup: number;
+  drop: Pos;
+  by: PlayerId;
+  /** Wait at the pickup city until the carrier is full, instead of setting out with the first cargo. */
+  waitFull?: boolean;
 }
 
 export interface City {
@@ -172,6 +187,8 @@ export interface GameState {
   over: boolean;
   /** Per player, indexed by PlayerId; absent in games saved before the status report existed. */
   stats?: PlayerStats[];
+  /** The players' ferry routes (absent until one is made). */
+  ferryRoutes?: FerryRoute[];
 }
 
 export type Command =
@@ -196,6 +213,12 @@ export type Command =
   | { type: 'incite'; player: PlayerId; unitId: number }
   /** A spy inside an enemy city damages one of the units there by a hit (never destroying it). */
   | { type: 'hurtGarrison'; player: PlayerId; unitId: number }
+  /** Puts a carrier on a ferry route (an existing one by id, or a new one) or takes it off (null); a carrier given a route starts at once. */
+  | { type: 'setFerry'; player: PlayerId; unitId: number; ferry: { routeId: number } | { pickup: number; drop: Pos; waitFull?: boolean } | null }
+  /** A carrier on a ferry route whose orders were interrupted carries on with the route. */
+  | { type: 'resumeFerry'; player: PlayerId; unitId: number }
+  /** Changes a ferry route for every carrier on it. */
+  | { type: 'editFerry'; player: PlayerId; routeId: number; pickup: number; drop: Pos; waitFull?: boolean }
   | { type: 'renameCity'; player: PlayerId; cityId: number; name: string }
   | { type: 'renameUnit'; player: PlayerId; unitId: number; name: string | null }
   | { type: 'endTurn'; player: PlayerId }

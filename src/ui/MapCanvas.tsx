@@ -42,6 +42,7 @@ interface Props {
   /** Own units heading left, so their pictures are mirrored. */
   headingLeft?: ReadonlySet<number>;
   cityRoutes?: { from: Pos; to: Pos; types: UnitType[] }[];
+  ferryRoutes?: { from: Pos; to: Pos; paused: boolean }[];
   attack: { at: Pos; label: string } | null;
   /** The user zoomed with the wheel or a pinch (turns auto-fit off). */
   onZoom?: () => void;
@@ -113,7 +114,7 @@ export function MapCanvas(p: Props) {
       activeId: p.activeId, blinkOn, path: p.path, pathOk: p.pathOk, pathLabel: p.pathLabel, pathTarget: p.pathTarget,
       route: p.route, routeLabel: p.routeLabel, patrols: p.patrols, productionMap: p.productionMap, flash: p.flash, sightings: p.sightings,
       fx: p.fx?.map((a) => ({ fight: a.fight, age: performance.now() - a.start, duration: a.duration })),
-      pending: p.pending, headingLeft: p.headingLeft, cityRoutes: p.cityRoutes, attack: p.attack,
+      pending: p.pending, headingLeft: p.headingLeft, cityRoutes: p.cityRoutes, ferryRoutes: p.ferryRoutes, attack: p.attack,
       groupBox: p.groupBox,
     });
   });

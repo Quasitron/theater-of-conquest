@@ -40,7 +40,8 @@ describe('keyToAction', () => {
     expect(keyToAction('Insert', 'Insert')).toEqual({ kind: 'action', id: 'clearOrders' });
     expect(keyToAction('Delete', 'Delete')).toEqual({ kind: 'action', id: 'disband' });
     expect(keyToAction('c', 'KeyC')).toEqual({ kind: 'action', id: 'center' });
-    expect(keyToAction('f', 'KeyF')).toBeNull();
+    expect(keyToAction('f', 'KeyF')).toEqual({ kind: 'action', id: 'ferry' });
+    expect(keyToAction('y', 'KeyY')).toEqual({ kind: 'action', id: 'resumeFerry' });
     expect(keyToAction('Enter', 'Enter')).toEqual({ kind: 'action', id: 'endTurn' });
   });
 
@@ -52,7 +53,6 @@ describe('keyToAction', () => {
     for (const k of ['q', 'w', 'a', 'd']) {
       expect(keyToAction(k, `Key${k.toUpperCase()}`)).toBeNull();
     }
-    expect(keyToAction('y', 'KeyY')).toBeNull();
   });
 });
 

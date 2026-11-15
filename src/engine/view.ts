@@ -56,6 +56,8 @@ export interface PlayerView {
   stats: PlayerStats;
   /** Other players still in the game that hold no city any more, with how many units they have left (just the count). */
   cityless: { id: PlayerId; name: string; units: number }[];
+  /** My ferry routes, with the pickup city's name and position and how many of my carriers are on each. */
+  ferryRoutes: { id: number; pickup: { id: number; name: string; x: number; y: number }; drop: { x: number; y: number }; waitFull: boolean; carriers: number }[];
 }
 
 function riverNetView(s: GameState, explored: ArrayLike<unknown>): Pick<PlayerView, 'riverNet'> {
@@ -118,5 +120,9 @@ export function getPlayerView(s: GameState, me: PlayerId): PlayerView {
     cityless: s.players
       .filter((p) => p.id !== me && !p.eliminated && !s.cities.some((c) => c.owner === p.id))
       .map((p) => ({ id: p.id, name: p.name, units: s.units.filter((x) => x.owner === p.id).length })),
+    ferryRoutes: (s.ferryRoutes ?? []).filter((r) => r.by === me).flatMap((r) => {
+      const c = s.cities.find((x) => x.id === r.pickup);
+      return c ? [{ id: r.id, pickup: { id: c.id, name: c.name, x: c.x, y: c.y }, drop: { ...r.drop }, waitFull: !!r.waitFull, carriers: s.units.filter((u) => u.ferry === r.id).length }] : [];
+    }),
   };
 }

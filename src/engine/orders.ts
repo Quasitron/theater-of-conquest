@@ -11,6 +11,7 @@ import { attackRestriction, attackUnit } from './attack';
 import { unloadCargo } from './cargo';
 import { aircraftCanReach, dirBetween, findFrontier, findPath, pathMapFromState } from './path';
 import { pickUpRoute } from './routes';
+import { ferryArrive, ferryRouteOf, pruneFerryRoutes } from './ferry';
 
 const NO_AIR_EXPLORE = 'aircraft cannot explore yet';
 const NO_PATROL_BASE = 'patrol must start or end at a city or carrier';
@@ -62,7 +63,8 @@ export function validateOrders(s: GameState, u: Unit, o: Orders): string | null 
       return null;
     case 'goto': {
       if (!validSquare(s, u, o.target)) return 'target is not an explored square';
-      if (o.target.x === u.x && o.target.y === u.y) return 'already there';
+      if (o.ferry && u.ferry === undefined) return 'not on a ferry route';
+      if (o.target.x === u.x && o.target.y === u.y) return o.ferry ? null : 'already there';
       const map = pathMapFromState(s, u.owner);
       const path = findPath(map, u, o.target);
       if (path === null) return 'no known path';
@@ -158,7 +160,17 @@ function ownBlocks(s: GameState, u: Unit, p: Pos): boolean {
 export function executeOrders(
   s: GameState, rng: RandomSource, u: Unit, events: GameEvent[], turnStart = false,
 ): void {
+  let ferryLegChanged = false;
   const arrive = (): void => {
+    if (u.orders?.kind === 'goto' && u.orders.ferry) {
+      // A ferry carrier: switch legs, or wait (orders kept) for cargo at the pickup or for room ashore at the drop.
+      const next = ferryArrive(s, u, u.orders.ferry, events);
+      if (next) {
+        u.orders.ferry = next;
+        ferryLegChanged = true;
+      }
+      return;
+    }
     if (UNIT_STATS[u.type].carries.includes('army') && cityAt(s, u.x, u.y)?.owner === u.owner) {
       unloadCargo(s, u, null, events); // 'nothing to unload' is fine
     }
@@ -192,6 +204,14 @@ export function executeOrders(
   for (;;) {
     const o = u.orders;
     if (!s.units.includes(u) || o === null || o.kind === 'sentry' || o.kind === 'repair' || o.kind === 'escort' || u.movesLeft <= 0) return;
+    if (o.kind === 'goto' && o.ferry) {
+      // The target follows the route (it may have been edited); a lost pickup city or a vanished route ends the orders.
+      const route = ferryRouteOf(s, u);
+      const pick = route && s.cities.find((c) => c.id === route.pickup);
+      if (!route) delete u.ferry;
+      if (!route || !pick || pick.owner !== u.owner) return endOrders(u, 'destinationLost', events);
+      o.target = o.ferry === 'pickup' ? { x: pick.x, y: pick.y } : { x: route.drop.x, y: route.drop.y };
+    }
     if (o.kind === 'goto' && o.routeCity !== undefined) {
       const dest = s.cities.find((c) => c.id === o.routeCity);
       if (!dest || dest.owner !== u.owner) return endOrders(u, 'destinationLost', events);
@@ -203,6 +223,10 @@ export function executeOrders(
       if (o.kind === 'goto') {
         arrive();
         if (u.orders?.kind === 'explore') continue; // it sets out to explore with the moves it has left
+        if (ferryLegChanged) {
+          ferryLegChanged = false;
+          continue; // a ferry carrier sets out on its next leg with the moves it has left
+        }
         return;
       }
       if (o.kind === 'patrol') o.toB = !o.toB;
@@ -365,6 +389,7 @@ export function wakeRepaired(s: GameState, pid: PlayerId, events: GameEvent[]): 
 export function runPlayerOrders(s: GameState, rng: RandomSource, pid: PlayerId, events: GameEvent[]): void {
   wakeSentries(s, pid, events);
   wakeRepaired(s, pid, events);
+  pruneFerryRoutes(s);
   const ids = s.units
     .filter((u) => u.owner === pid && u.orders !== null && u.orders.kind !== 'sentry' && u.orders.kind !== 'repair' && u.orders.kind !== 'escort')
     .map((u) => u.id)

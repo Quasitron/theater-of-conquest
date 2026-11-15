@@ -1,4 +1,4 @@
-import { UNIT_STATS, canBecomeAirbase, canCarry, rankOf, unitDisplayName, type Orders, type PlayerView, type Unit } from '../engine';
+import { UNIT_STATS, canBecomeAirbase, canCarry, canFerry, rankOf, unitDisplayName, type Orders, type PlayerView, type Unit } from '../engine';
 import type { ActionId } from './keys';
 
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
@@ -18,7 +18,7 @@ export function escortable(view: PlayerView, u: Unit): Unit[] {
 }
 
 export const UNIT_BUTTONS: ActionId[] = [
-  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'explore', 'load', 'unload', 'patrol', 'escort', 'airbase', 'sabotage', 'hurt', 'incite', 'goHome', 'clearOrders', 'center', 'info', 'disband',
+  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'explore', 'load', 'unload', 'patrol', 'escort', 'ferry', 'resumeFerry', 'airbase', 'sabotage', 'hurt', 'incite', 'goHome', 'clearOrders', 'center', 'info', 'disband',
 ];
 
 /** True when a spy's own report on the city it stands in shows no garrison at all. */
@@ -49,6 +49,9 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     patrol: !fixed,
     // A warship (not a transport) can escort when a transport of ours at sea has no escort yet.
     escort: st.domain === 'sea' && u.type !== 'transport' && u.carriedBy === null && escortable(view, u).length > 0,
+    ferry: canFerry(u.type) && u.carriedBy === null,
+    // A carrier whose route was interrupted (an enemy came near, say) carries on with it.
+    resumeFerry: u.ferry !== undefined && u.orders === null && view.ferryRoutes.some((r) => r.id === u.ferry),
     info: true,
     fit: true,
     explore: !air && !fixed,
@@ -72,8 +75,21 @@ export function visibleButtons(view: PlayerView, u: Unit): ActionId[] {
   return UNIT_BUTTONS.filter((id) => avail[id]);
 }
 
+/** "Boston → Brest": a ferry route as the player reads it (the drop square is named by the city on it, else its coordinates). */
+export function ferryLabel(view: PlayerView, r: PlayerView['ferryRoutes'][number]): string {
+  const city = view.knownCities.find((c) => c.x === r.drop.x && c.y === r.drop.y);
+  return `${r.pickup.name} → ${city ? city.name : `${r.drop.x},${r.drop.y}`}`;
+}
+
 /** The orders of u in words, naming the transport an escort follows. */
 export function ordersText(view: PlayerView, u: Unit): string {
+  const route = u.ferry === undefined ? undefined : view.ferryRoutes.find((r) => r.id === u.ferry);
+  if (route && u.orders === null) return `Ferry paused: ${ferryLabel(view, route)}`;
+  if (route && u.orders?.kind === 'goto' && u.orders.ferry) {
+    const here = u.x === route.pickup.x && u.y === route.pickup.y;
+    const leg = u.orders.ferry === 'drop' ? 'to drop' : here ? `waiting at ${route.pickup.name}` : `to ${route.pickup.name}`;
+    return `Ferry: ${ferryLabel(view, route)} (${leg})`;
+  }
   return describeOrders(u.orders, (id) => {
     const t = view.myUnits.find((x) => x.id === id);
     return t ? unitDisplayName(t) : undefined;

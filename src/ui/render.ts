@@ -53,6 +53,8 @@ export interface DrawOptions {
   groupBox?: GroupBox | null;
   /** The player's city routes, drawn as arrows from each route city to its destination. */
   cityRoutes?: { from: Pos; to: Pos; types: UnitType[] }[];
+  /** Ferry routes, from the pickup city to the drop square; `paused` draws them greyed out. */
+  ferryRoutes?: { from: Pos; to: Pos; paused: boolean }[];
   /** Production map: hides the units and shows what each own city is building. */
   productionMap?: boolean;
   /** Attack hover: a red crosshair with the label, drawn instead of the hover preview. */
@@ -695,6 +697,48 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         ctx.lineWidth = 3;
         ctx.strokeText(label, mx, my - 2);
         ctx.fillText(label, mx, my - 2);
+      }
+    }
+  }
+
+  // Ferry routes: a blue dashed line with an arrowhead at each end, a ring at the drop square and an anchor between; grey when paused.
+  for (const r of o.ferryRoutes ?? []) {
+    for (const [from, to] of copiesOf([r.from, r.to])) {
+      const colour = r.paused ? '#8a94a0' : '#4fc3f7';
+      ctx.strokeStyle = colour;
+      ctx.fillStyle = colour;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      ctx.moveTo(cx(from), cy(from));
+      ctx.lineTo(cx(to), cy(to));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const ang = Math.atan2(cy(to) - cy(from), cx(to) - cx(from));
+      const head = Math.max(6, t * 0.4);
+      const arrow = (px: number, py: number, a: number) => {
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px - head * Math.cos(a - 0.4), py - head * Math.sin(a - 0.4));
+        ctx.lineTo(px - head * Math.cos(a + 0.4), py - head * Math.sin(a + 0.4));
+        ctx.closePath();
+        ctx.fill();
+      };
+      arrow(cx(to), cy(to), ang);
+      arrow(cx(from), cy(from), ang + Math.PI);
+      ctx.beginPath();
+      ctx.arc(cx(to), cy(to), Math.max(5, t * 0.4), 0, Math.PI * 2);
+      ctx.stroke();
+      if (cityLabelVisible(t)) {
+        ctx.font = `bold ${Math.round(t * 0.4)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        const mx = (cx(from) + cx(to)) / 2;
+        const my = (cy(from) + cy(to)) / 2;
+        ctx.strokeText('⚓', mx, my - 2);
+        ctx.fillText('⚓', mx, my - 2);
       }
     }
   }
