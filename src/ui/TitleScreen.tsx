@@ -3,6 +3,7 @@ import { Fragment } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { SettingsDialog } from './SettingsDialog';
 import { ManualDialog } from './ManualDialog';
+import { WhatsNewButton, WhatsNewDialogHost, useWhatsNew } from './WhatsNewButton';
 import { GameSession } from '../app/session';
 import { CLASSIC_RULES, MAX_PLAYERS, validateMapSize, type HouseRules } from '../engine';
 import { DEFAULT_WORLD, SIZE_PRESETS, type CityDensity, type Climate, type Landmass, type SizePreset, type WorldOptions } from '../mapgen';
@@ -58,6 +59,7 @@ export function TitleScreen({ store, onStart }: Props) {
   const [panel, setPanel] = useState<'menu' | 'new' | 'load'>('menu');
   const [soundOpen, setSoundOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const news = useWhatsNew();
   const [loading, setLoading] = useState(false);
   const [mapKind, setMapKind] = useState<'random' | 'theater'>('random');
   const [theaterId, setTheaterId] = useState(THEATERS[0]?.id ?? '');
@@ -190,6 +192,7 @@ export function TitleScreen({ store, onStart }: Props) {
               <button onClick={() => setPanel('new')} class={autosave ? '' : 'primary'}>New Game</button>
               <button onClick={() => setPanel('load')}>Load…</button>
               <button onClick={() => setManualOpen(true)}>Manual</button>
+              <WhatsNewButton news={news} />
               <button onClick={() => setSoundOpen(true)}>Settings</button>
             </div>
           </section>
@@ -380,6 +383,7 @@ export function TitleScreen({ store, onStart }: Props) {
       <p class="title-version">{VERSION_LABEL} · Anonymous visit counts, no cookies</p>
       {soundOpen && <SettingsDialog onClose={() => setSoundOpen(false)} />}
       {manualOpen && <ManualDialog onClose={() => setManualOpen(false)} />}
+      <WhatsNewDialogHost news={news} />
       {loading && <div class="loading-overlay" role="status"><div class="loading-spinner" /><p>Loading game…</p></div>}
     </main>
   );
