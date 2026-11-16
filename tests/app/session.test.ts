@@ -71,6 +71,18 @@ describe('GameSession', () => {
     expect(GameSession.fromSave(parsed.save, store).phase).toBe('handoff');
   });
 
+  it('units put on Hold or Standby survive a save and load, but only for the same turn', () => {
+    const s = GameSession.create({ world, seed: 5, seats: [human('Ann'), idle('Bot')] }, null);
+    s.readyState = { turn: s.state.turn, player: s.state.currentPlayer, held: [3, 4], skipped: [7] };
+    const parsed = parseSave(serializeSave(s.toSave('slot')));
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(GameSession.fromSave(parsed.save, null).readyState).toEqual(s.readyState);
+    // After the turn moves on, the old list is neither saved nor restored.
+    expect(s.act({ type: 'endTurn' })).toBeNull();
+    expect(s.toSave('slot').readyState).toBeUndefined();
+    expect(GameSession.fromSave({ ...parsed.save, snapshot: s.state }, null).readyState).toBeNull();
+  });
+
   it('a save that still has the old orange seat colour loads with brown', () => {
     const s = GameSession.create({ world: { ...world, players: 2 }, seed: 5, seats: [human('Ann'), { ...human('Ben'), color: '#f4a259' }] }, null);
     const parsed = parseSave(serializeSave(s.toSave('slot')));

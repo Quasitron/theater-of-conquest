@@ -573,8 +573,9 @@ export function GameScreen({ session, onQuit }: Props) {
     setReports([]);
     setReportIdx(0);
     if (session.phase !== 'playing') return;
-    setHeld(new Set());
-    setSkipped([]);
+    const aside = asideThisTurn();
+    setHeld(new Set(aside.held));
+    setSkipped(aside.skipped);
     exploredAt.current.set(view.me, exploredCount(view));
     // Newly sighted enemies come first (they are often the ones that then attack), then the replay of what the other
     // players did since the last turn (animated mode), then the turn proper.
@@ -598,6 +599,16 @@ export function GameScreen({ session, onQuit }: Props) {
     sightingTimer.current = window.setTimeout(() => setNewSightings([]), 2200);
     sightHold.current = window.setTimeout(afterSights, SIGHT_HOLD_MS);
   }, [turnKey]);
+
+  /** The units put aside this turn that a loaded save remembered (nothing for any other turn). */
+  function asideThisTurn(): { held: number[]; skipped: number[] } {
+    const rs = session.readyState;
+    return rs && rs.turn === view.turn && rs.player === view.me ? { held: rs.held, skipped: rs.skipped } : { held: [], skipped: [] };
+  }
+  // Kept on the session so a save carries it. After the turn effect above, which reads what a loaded save remembered first.
+  useEffect(() => {
+    if (session.phase === 'playing') session.readyState = { turn: view.turn, player: view.me, held: [...held], skipped: [...skipped] };
+  }, [held, skipped]);
 
   /** The start of the turn proper: production reports come first; the unit cycle starts after the last one. */
   const beginTurn = () => {
@@ -680,7 +691,8 @@ export function GameScreen({ session, onQuit }: Props) {
     holdNews.current = false;
     flushNews();
     autoRepair();
-    const first = readyNow(new Set(), [])[0];
+    const aside = asideThisTurn();
+    const first = readyNow(new Set(aside.held), aside.skipped)[0];
     if (first) {
       if (fitOf(view.me).auto) {
         setSelection({ kind: 'unit', id: first.id });
