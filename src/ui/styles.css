@@ -221,6 +221,13 @@ svg.leader circle { fill: #ffd24a; }
 .prod-layout { display: flex; align-items: flex-start; gap: 12px; }
 .prod-layout .unit-card { flex: 0 0 280px; margin: 0; }
 @media (max-width: 760px) { .prod-layout .unit-card { display: none; } }
+.whatsnew-button { position: relative; }
+.news-dot { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #ffb020; vertical-align: middle; }
+.news-entry { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid #333c48; }
+.news-entry h3 { margin: 0; }
+.news-entry h3 .muted { font-size: 0.75rem; font-weight: 400; margin-left: 6px; }
+.news-entry p { margin: 0; }
+.news-image { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #333c48; align-self: flex-start; }
 .manual-search { position: sticky; top: 0; z-index: 1; padding: 6px 0; background: inherit; display: flex; gap: 8px; }
 .manual-search input { flex: 1; min-width: 0; box-sizing: border-box; }
 .manual-contents { display: flex; flex-wrap: wrap; gap: 4px; }
