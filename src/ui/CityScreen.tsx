@@ -189,14 +189,19 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
           </div>
           <p class="muted stats-line">{shown ? `${UNIT_STATS[shown].name}: ${statsText(shown)}` : 'Nothing will be built.'}</p>
           {bar}
-          {onSetNext && city.production !== null && (
+          {onSetNext && cursor !== null && (
             <label class="next-production">Then build{' '}
               <select
-                value={city.nextProduction ?? ''} aria-label="Then build"
-                onChange={(e) => { const v = (e.target as HTMLSelectElement).value; onSetNext(v === '' ? null : (v as UnitType)); }}
+                value={cursor !== city.production || city.nextProduction === cursor ? '' : city.nextProduction ?? ''} aria-label="Then build"
+                onChange={(e) => {
+                  const v = (e.target as HTMLSelectElement).value;
+                  // A highlighted unit not yet chosen is switched to first, so "then" follows what will be built.
+                  if (cursor !== city.production) onPick(cursor);
+                  onSetNext(v === '' ? null : (v as UnitType));
+                }}
               >
-                <option value="">Keep building {UNIT_STATS[city.production].name}</option>
-                {ROWS.filter((t): t is UnitType => t !== null && t !== city.production && usable(t)).map((t) => <option key={t} value={t}>{UNIT_STATS[t].name}</option>)}
+                <option value="">Keep building {UNIT_STATS[cursor].name}</option>
+                {ROWS.filter((t): t is UnitType => t !== null && t !== cursor && usable(t)).map((t) => <option key={t} value={t}>{UNIT_STATS[t].name}</option>)}
               </select>
             </label>
           )}

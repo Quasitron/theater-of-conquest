@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'then-build-follows',
+    version: '0.9.85',
+    date: '2026-11-16',
+    title: '"Then build" follows your choice',
+    text: ['On the production screen, the "Then build" menu now updates to the unit you have highlighted, instead of staying on the one the city was building.'],
+  },
+  {
     id: 'hold-saved',
     version: '0.9.84',
     date: '2026-11-16',
