@@ -31,6 +31,16 @@ const ferry = (s: GameState, unitId: number, f: { routeId: number } | { pickup: 
   apply(s, { type: 'setFerry', player: 0, unitId, ferry: f });
 
 describe('ferry routes', () => {
+  it('the drop square must be a sea tile (or one of your cities)', () => {
+    const s = game();
+    const t = addUnit(s, 'transport', 0, 0, 0);
+    const r = ferry(s, t.id, { pickup: 0, drop: { x: 6, y: 0 } });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe('the drop square must be a sea tile (or one of your cities)');
+    expect(ferry(s, t.id, { pickup: 0, drop: { x: 8, y: 0 } }).ok).toBe(false); // the enemy city
+    expect(ferry(s, t.id, { pickup: 0, drop: DROP }).ok).toBe(true);
+  });
+
   it('a transport on a route waits for cargo, takes it to the drop square, puts it ashore, and returns', () => {
     let s = game();
     const t = addUnit(s, 'transport', 0, 0, 0);
