@@ -40,6 +40,32 @@ function readyToBuild(s: GameState, type: 'army' | 'fighter' = 'army'): void {
   s.cities[0].progress = buildTime(s.cities[0], type) - 1;
 }
 
+describe('units unloaded in a city', () => {
+  // Water, then a city of player 0 (x=1), land, and a second city of theirs (x=4).
+  function coastal(): GameState {
+    const s = makeGame(['.*##*'], { starts: [0, 1] });
+    s.cities[1].owner = 0;
+    for (const c of s.cities) c.production = null;
+    s.fog[0].explored.fill(1);
+    return s;
+  }
+
+  it('take the city route, as units that walk in do (types not on it stay put)', () => {
+    let s = coastal();
+    s = run(s, { type: 'setRoute', player: 0, cityId: 0, route: { destId: 1, types: ['army'], blockWait: 3, arrival: 'wait' } }).state;
+    const t = addUnit(s, 'transport', 0, 1, 0);
+    const army = addUnit(s, 'army', 0, 1, 0);
+    const fighter = addUnit(s, 'fighter', 0, 1, 0);
+    army.carriedBy = t.id;
+    fighter.carriedBy = t.id;
+    s = run(s, { type: 'unload', player: 0, transportId: t.id, unitIds: null }).state;
+    const a = s.units.find((u) => u.id === army.id)!;
+    expect(a.carriedBy).toBeNull();
+    expect(a.orders).toMatchObject({ kind: 'goto', target: { x: 4, y: 0 }, routeCity: 1 });
+    expect(s.units.find((u) => u.id === fighter.id)!.orders).toBeNull();
+  });
+});
+
 describe('setRoute', () => {
   it('stores a valid route and clears it again', () => {
     const s = game();

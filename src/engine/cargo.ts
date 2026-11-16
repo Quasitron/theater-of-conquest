@@ -1,6 +1,7 @@
 import type { GameEvent, GameState, Unit } from './types';
 import { UNIT_STATS, canCarry, cargoUsed } from './units';
 import { cargoOf, cargoRoom, cityAt } from './query';
+import { pickUpRoute } from './routes';
 
 export function inOwnCity(s: GameState, t: Unit): boolean {
   return cityAt(s, t.x, t.y)?.owner === t.owner;
@@ -39,6 +40,8 @@ export function unloadCargo(s: GameState, t: Unit, unitIds: number[] | null, eve
     c.orders = null;
     if (release) c.carriedBy = null;
   }
+  // Units put ashore in a city of ours take its production route, as ones that walk in do.
+  if (release) for (const c of chosen) pickUpRoute(s, c);
   events.push({ type: 'cargoUnloaded', transportId: t.id, owner: t.owner, unitIds: chosen.map((c) => c.id) });
   return null;
 }
