@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import {
-  CITY_STRENGTH_HITS, UNIT_STATS, buildableTypes, buildTime, garrisonBonus, pathMapFromView, rankOf, routeUnitTypes, unitDisplayName,
+  CITY_STRENGTH_HITS, UNIT_STATS, buildableTypes, buildTime, warTornSpeedPercent, warTornTurnsLeft, garrisonBonus, pathMapFromView, rankOf, routeUnitTypes, unitDisplayName,
   type City, type CityRoute, type PlayerView, type UnitType,
 } from '../engine';
 import { UNIT_GLYPH } from './colors';
@@ -137,8 +137,19 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
     defence.push(`Garrison defence +${garrisonBonus(landHere)} (${landHere} land unit${landHere === 1 ? '' : 's'} inside)`);
   }
   if (city.capital) defence.push('Capital: builds 25% faster');
-  if (city.warTorn) defence.push(`War-torn: builds ${city.warTorn * 25}% slower`);
-  const defenceBlock = defence.length > 0 && <div class="city-defence">{defence.map((d) => <p key={d}>{d}</p>)}</div>;
+  const speed = city.warTorn ? warTornSpeedPercent(city.warTorn) : 100;
+  const turnsLeft = warTornTurnsLeft(city);
+  const defenceBlock = (defence.length > 0 || !!city.warTorn) && (
+    <div class="city-defence">
+      {defence.map((d) => <p key={d}>{d}</p>)}
+      {city.warTorn ? (
+        <div class="progress" title={`Builds at ${speed}% of full speed`}>
+          <span>War-torn: builds at {speed}% of full speed. Full capacity in {turnsLeft} turn{turnsLeft === 1 ? '' : 's'}.</span>
+          <div class="progress-bar"><div class="progress-fill" style={{ width: `${speed}%` }} /></div>
+        </div>
+      ) : null}
+    </div>
+  );
   const bar = progress && (
     <div class="progress" title={`${progress.done}/${progress.total}`}>
       <span>Producing: {UNIT_STATS[progress.type].name} {progress.done}/{progress.total}{city.nextProduction ? `, then ${UNIT_STATS[city.nextProduction].name}` : ''}</span>

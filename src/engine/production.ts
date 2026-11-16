@@ -22,6 +22,16 @@ export const WAR_TORN_MAX = 4;
 /** A war-torn city recovers one step after this many of its owner's turns. */
 export const WAR_TORN_RECOVERY_TURNS = 10;
 
+/** How fast a war-torn city builds, as a percent of full speed (3 captures: build times are 75% longer, so 57%). */
+export function warTornSpeedPercent(warTorn: number): number {
+  return Math.round(100 / (1 + WAR_TORN_SLOWDOWN * warTorn));
+}
+
+/** Owner turns until a war-torn city builds at full speed again. */
+export function warTornTurnsLeft(city: Pick<City, 'warTorn' | 'warTornClock'>): number {
+  return Math.max(0, (city.warTorn ?? 0) * WAR_TORN_RECOVERY_TURNS - (city.warTornClock ?? 0));
+}
+
 export function setProduction(s: GameState, city: City, type: UnitType | null): string | null {
   if (type !== null && UNIT_STATS[type].domain === 'sea' && !isCoastal(s, city.x, city.y)) {
     return 'inland cities cannot build ships';
