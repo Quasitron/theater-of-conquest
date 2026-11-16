@@ -164,7 +164,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [picker, setPicker] = useState<null | 'load' | 'unload' | 'ferry'>(null);
   /** A ferry route being set up on the map: the pickup city once chosen, the route being changed (if any), and the wait-until-full choice. */
-  const [ferryPlan, setFerryPlan] = useState<null | { edit?: number; pickup?: number }>(null);
+  const [ferryPlan, setFerryPlan] = useState<null | { edit?: number; pickup?: number; note?: string }>(null);
   /** The Ferry Route dialog's unsaved changes, kept while the player picks squares on the map, and the error a failed Save shows. */
   const [ferryDraft, setFerryDraft] = useState<FerryDraft>(emptyFerryDraft());
   const [ferryError, setFerryError] = useState<string | null>(null);
@@ -1113,7 +1113,7 @@ export function GameScreen({ session, onQuit }: Props) {
           setMessage('Click one of your cities for the pickup (Esc cancels).');
           return;
         }
-        setFerryPlan((plan) => ({ ...(plan ?? {}), pickup: city.id }));
+        setFerryPlan((plan) => ({ ...(plan ?? {}), pickup: city.id, note: undefined }));
         setTarget('ferryDrop');
         setMessage(null);
         return;
@@ -1122,6 +1122,12 @@ export function GameScreen({ session, onQuit }: Props) {
         const plan = ferryPlan;
         if (!plan || plan.pickup === undefined) return setTarget(null);
         // The squares go into the dialog's draft; nothing changes in the game until Save and Close.
+        // The ship sails to the drop square, so it must be water (or a city of yours); cargo goes ashore from there.
+        const ground = view.terrain[p.y * view.width + p.x];
+        if (ground !== 'water' && !view.myCities.some((c) => c.x === p.x && c.y === p.y)) {
+          setFerryPlan({ ...plan, note: 'The drop square must be a sea tile (or one of your cities). Pick the water beside the coast where the cargo should land.' });
+          return;
+        }
         const squares = { pickup: plan.pickup, drop: { x: p.x, y: p.y } };
         setFerryDraft((d) => plan.edit !== undefined
           ? { ...d, squares: { ...d.squares, [plan.edit!]: squares } }
@@ -1425,7 +1431,8 @@ export function GameScreen({ session, onQuit }: Props) {
                 {' — '}
                 {target === 'ferryPickup'
                   ? 'Step 1 of 2: click the PICKUP city, where the ship loads.'
-                  : `${pickupCity ? `Pickup: ${pickupCity.name}. ` : ''}${ferryPlan?.edit !== undefined || !pickupCity ? 'Step 2 of 2: ' : ''}Click the DROP square, where the cargo is put ashore.`}
+                  : `${pickupCity ? `Pickup: ${pickupCity.name}. ` : ''}${ferryPlan?.edit !== undefined || !pickupCity ? 'Step 2 of 2: ' : ''}Click a SEA square for the drop, where the ship stops and puts the cargo ashore.`}
+                {ferryPlan?.note && <strong class="error" role="alert"> {ferryPlan.note}</strong>}
               </span>
               <button onClick={(e) => { blur(e); setTarget(null); setFerryPlan(null); setPicker('ferry'); }}>Back to the dialog (Esc)</button>
             </div>

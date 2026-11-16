@@ -110,6 +110,8 @@ function validateFerry(s: GameState, u: Unit, pickup: number, drop: Pos): string
   if (!Number.isInteger(drop?.x) || !Number.isInteger(drop?.y) || drop.x < 0 || drop.x >= s.width || drop.y < 0 || drop.y >= s.height) return 'invalid drop square';
   if (s.fog[u.owner].explored[drop.y * s.width + drop.x] !== 1) return 'the drop square is not explored';
   if (drop.x === city.x && drop.y === city.y) return 'the drop square must differ from the pickup city';
+  const dropCity = cityAt(s, drop.x, drop.y);
+  if (terrainAt(s, drop.x, drop.y) !== 'water' && !(dropCity && dropCity.owner === u.owner)) return 'the drop square must be a sea tile (or one of your cities)';
   // Own units standing about (even the carrier itself on the drop square) do not count: the route is about the sea or land between.
   if (findPath({ ...pathMapFromState(s, u.owner), own: new Map() }, { type: u.type, x: city.x, y: city.y }, drop) === null) return 'no known path between the pickup city and the drop square';
   return null;
