@@ -25,7 +25,7 @@ export const HOUSE_RULE_OPTIONS: { key: keyof HouseRules; label: string; hint: s
   {
     key: 'warTornCities',
     label: 'War-torn cities',
-    hint: "A city taken from another player builds 25% slower for each such capture (up to 4), recovering one step every 10 turns.",
+    hint: "A city taken from another player build times are 25% longer for each such capture (up to 4), recovering one step every 10 turns. The city screen shows its speed as a percent of full capacity and how many turns until it is back to full.",
   },
   {
     key: 'promotions',

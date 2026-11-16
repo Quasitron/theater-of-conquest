@@ -1,4 +1,4 @@
-import { CITY_STRENGTH_HITS, RANK_NAMES, garrisonBonus, rankOf, UNIT_STATS, buildTime, buildableTypes, cargoCapacity, cargoUsed, unitDisplayName, type City, type PlayerView, type Unit, type UnitType } from '../engine';
+import { CITY_STRENGTH_HITS, RANK_NAMES, garrisonBonus, rankOf, UNIT_STATS, buildTime, warTornSpeedPercent, warTornTurnsLeft, buildableTypes, cargoCapacity, cargoUsed, unitDisplayName, type City, type PlayerView, type Unit, type UnitType } from '../engine';
 import { memo } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
@@ -128,7 +128,7 @@ function CityDetails({ city, view, onProduction, onSelectUnit, onOpenCity, myCol
       <h3>{city.capital && <span class="capital-star" title="Capital: builds 25% faster">★ </span>}{city.name}</h3>
       {city.capital && <p>Capital: builds 25% faster</p>}
       {view.rules.cityStrength && <p>Strength {CITY_STRENGTH_HITS - (city.damage ?? 0)}/{CITY_STRENGTH_HITS}</p>}
-      {city.warTorn ? <p>War-torn: builds {city.warTorn * 25}% slower</p> : null}
+      {city.warTorn ? <p>War-torn: builds at {warTornSpeedPercent(city.warTorn)}% of full speed, full capacity in {warTornTurnsLeft(city)} turns</p> : null}
       {view.rules.garrisonsDefend && <p>Garrison defence +{garrisonBonus(here.filter((u) => UNIT_STATS[u.type].domain === 'land').length)}</p>}
       <h4>Orders</h4>
       <div class="actions">
