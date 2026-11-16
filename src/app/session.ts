@@ -5,7 +5,7 @@ import {
 } from '../engine';
 import { playAiTurn } from '../ai/play';
 import { generateWorld, type GeneratedWorld, type WorldOptions } from '../mapgen';
-import type { SaveFile, SaveStore, SeatConfig } from '../storage';
+import type { ReadyState, SaveFile, SaveStore, SeatConfig } from '../storage';
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 /** A command without `player`; the session fills in the current player. */
@@ -36,6 +36,8 @@ export class GameSession {
   saveError: string | null = null;
   /** A one-off message about how this game was loaded (e.g. from an older version). */
   notice: string | null = null;
+  /** Units put aside on Hold or Standby this turn; kept in saves so a reload does not ask for their orders again. */
+  readyState: ReadyState | null = null;
   private logs: LogEntry[][];
   /** Per player: type and display name of each unit they have ever owned. Never holds another player's units. */
   private roster: Map<number, { type: UnitType; name: string }>[];
@@ -79,6 +81,8 @@ export class GameSession {
     const name = save.name === 'autosave' && save.gameName ? save.gameName : save.name;
     const session = new GameSession(save.seats, save.initial, save.snapshot, [...save.commands], store, name);
     session.notice = note ?? null;
+    const rs = save.readyState;
+    if (rs && rs.turn === save.snapshot.turn && rs.player === save.snapshot.currentPlayer) session.readyState = rs;
     if (save.snapshot.over) {
       session.phase = 'over';
     } else {
@@ -153,6 +157,7 @@ export class GameSession {
       initial: this.initial,
       commands: [...this.commands],
       snapshot: this.state,
+      ...(this.readyState && this.readyState.turn === this.state.turn && this.readyState.player === this.state.currentPlayer ? { readyState: this.readyState } : {}),
     };
   }
 

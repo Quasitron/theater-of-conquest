@@ -13,6 +13,14 @@ export interface SeatConfig {
   team?: number;
 }
 
+/** The units the player has put aside this turn (Hold Position, Standby), so a reload does not ask for their orders again. */
+export interface ReadyState {
+  turn: number;
+  player: number;
+  held: number[];
+  skipped: number[];
+}
+
 export interface SaveFile {
   format: 3;
   rulesVersion: number;
@@ -24,6 +32,8 @@ export interface SaveFile {
   initial: GameState;
   commands: Command[];
   snapshot: GameState;
+  /** Absent in older saves, and when nothing was put aside. Only used if it is for the snapshot's turn and player. */
+  readyState?: ReadyState;
 }
 
 export const OLDER_VERSION_NOTE = 'Loaded from an older version; its history could not be verified.';

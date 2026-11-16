@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'hold-saved',
+    version: '0.9.84',
+    date: '2026-11-16',
+    title: 'Hold and Standby survive a reload',
+    text: ['Units you put on Hold Position or Standby are remembered when you save and load the game in the middle of a turn, so they no longer ask for orders again.'],
+  },
+  {
     id: 'whats-new',
     version: '0.9.83',
     date: '2026-11-16',
