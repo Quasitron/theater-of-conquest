@@ -211,6 +211,28 @@ describe('findFrontier', () => {
   });
 });
 
+describe('findFrontier with neutral cities', () => {
+  // A known neutral city at x=8; the explored ground ends at x=9. From x=3 the unexplored edge (x=9) is farther than the city's side.
+  const setup = () => {
+    const s = game(['#######*#####', '#############']);
+    for (const y of [0, 1]) for (let x = 0; x < 10; x++) s.fog[0].explored[y * 13 + x] = 1;
+    return s;
+  };
+
+  it('goes for the square beside a known neutral city when that is nearer than the unexplored edge', () => {
+    const s = setup();
+    expect(findFrontier(pm(s), { type: 'army', x: 3, y: 0 })).toEqual({ x: 9, y: 0 });
+    expect(findFrontier(pm(s), { type: 'army', x: 3, y: 0 }, true)).toEqual({ x: 6, y: 0 });
+  });
+
+  it('ignores a city the unit already stands beside, and a city that is not neutral', () => {
+    const s = setup();
+    expect(findFrontier(pm(s), { type: 'army', x: 6, y: 0 }, true)).toEqual({ x: 9, y: 0 });
+    s.fog[0].knownCityOwner[0] = 1;
+    expect(findFrontier(pm(s), { type: 'army', x: 3, y: 0 }, true)).toEqual({ x: 9, y: 0 });
+  });
+});
+
 describe('arrivalTurn', () => {
   it('counts turns from moves left then the full move rate', () => {
     expect(arrivalTurn({ type: 'army', damage: 0, movesLeft: 1 }, 1, 5)).toBe(5);

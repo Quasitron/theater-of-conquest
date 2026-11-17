@@ -224,9 +224,17 @@ export function findPath(m: PathMap, u: Mobile, to: Pos): Pos[] | null {
   return null;
 }
 
-/** Nearest reachable square (distance >= 1) with an unexplored neighbor; lowest index on ties. */
-export function findFrontier(m: PathMap, u: Mobile): Pos | null {
+/**
+ * Nearest reachable square (distance >= 1) with an unexplored neighbor; lowest index on ties. With `neutralCities`, a
+ * square beside a known neutral city counts too, and wins a tie on distance (so an explorer heads for a city it can see
+ * when that is nearer than the unexplored ground). A city the unit already stands beside is left out, so an explorer
+ * told to carry on does not turn back to it.
+ */
+export function findFrontier(m: PathMap, u: Mobile, neutralCities = false): Pos | null {
   const start = u.y * m.width + u.x;
+  const isNeutral = (i: number) => m.terrain[i] === 'city' && m.cityOwner.get(i) === null;
+  const skip = new Set<number>();
+  if (neutralCities) for (const n of neighborsOf(m, start)) if (isNeutral(n)) skip.add(n);
   const seen = new Set<number>([start]);
   let level = [start];
   while (level.length > 0) {
@@ -238,9 +246,9 @@ export function findFrontier(m: PathMap, u: Mobile): Pos | null {
         next.push(n);
       }
     }
-    const hit = next.filter(
-      (i) => enterable(m, u.type, i, true) && neighborsOf(m, i).some((n) => m.terrain[n] === null),
-    );
+    const open = next.filter((i) => enterable(m, u.type, i, true));
+    const cityHit = neutralCities ? open.filter((i) => neighborsOf(m, i).some((n) => isNeutral(n) && !skip.has(n))) : [];
+    const hit = cityHit.length > 0 ? cityHit : open.filter((i) => neighborsOf(m, i).some((n) => m.terrain[n] === null));
     if (hit.length > 0) {
       const best = Math.min(...hit);
       return { x: best % m.width, y: Math.floor(best / m.width) };

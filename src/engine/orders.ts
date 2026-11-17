@@ -123,6 +123,9 @@ function endOrders(u: Unit, reason: OrdersEndReason, events: GameEvent[]): void 
   events.push({ type: 'ordersEnded', unitId: u.id, owner: u.owner, reason });
 }
 
+/** Explorers that can capture a city (Army, Armor) also head for known neutral cities, stopping beside them. */
+const canTakeCities = (u: Unit): boolean => u.type === 'army' || u.type === 'armor';
+
 /** True when a visible enemy unit stands next to `u`. */
 function enemyAdjacent(s: GameState, u: Unit): boolean {
   return s.units.some(
@@ -217,7 +220,7 @@ export function executeOrders(
       if (!dest || dest.owner !== u.owner) return endOrders(u, 'destinationLost', events);
     }
     const map = pathMapFromState(s, u.owner);
-    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? (o.toB ? o.b : o.a) : findFrontier(map, u);
+    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? (o.toB ? o.b : o.a) : findFrontier(map, u, canTakeCities(u));
     if (target === null) return endOrders(u, 'nothingToExplore', events);
     if (u.x === target.x && u.y === target.y) {
       if (o.kind === 'goto') {

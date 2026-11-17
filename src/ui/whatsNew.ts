@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'explore-neutral-cities',
+    version: '0.9.90',
+    date: '2026-11-17',
+    title: 'Explorers go for neutral cities',
+    text: ['An Army or Armor on Explore now heads for a neutral city it knows about when that is nearer than the unexplored edge, and stops beside it so you can decide whether to attack. If you tell it to carry on, it leaves that city alone.'],
+  },
+  {
     id: 'stack-splash',
     version: '0.9.89',
     date: '2026-11-17',
