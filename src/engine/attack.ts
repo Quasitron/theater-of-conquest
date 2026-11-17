@@ -82,6 +82,29 @@ export function stackDefender(s: GameState, att: Unit, def: Unit): Unit {
   return best ?? def;
 }
 
+/** Stacking rule: the chance that each other unit in a stack is hurt when a bomber or a ship beats the stack's defender. */
+export const SPLASH_CHANCE = 0.5;
+
+/**
+ * Stacking rule: when a Bomber or a sea unit wins against a stack outside a city, the shells and bombs hit the rest of
+ * the stack too: each of its other units, by chance, takes one hit (and is destroyed if that was its last).
+ */
+function splashStack(s: GameState, rng: RandomSource, att: Unit, owner: number, at: { x: number; y: number }, events: GameEvent[]): void {
+  if (!s.rules.stacking || cityAt(s, at.x, at.y)) return;
+  if (att.type !== 'bomber' && UNIT_STATS[att.type].domain !== 'sea') return;
+  const others = topLevelUnitsAt(s, at.x, at.y).filter((o) => o.owner === owner).sort((p, q) => p.id - q.id);
+  for (const o of others) {
+    if (rng.next() >= SPLASH_CHANCE) continue;
+    const killed = o.damage + 1 >= hitsOf(o);
+    events.push({ type: 'stackSplash', unitId: o.id, owner: o.owner, unitType: o.type, x: at.x, y: at.y, killed });
+    if (killed) destroyUnit(s, o, 'combat', events, att.owner);
+    else {
+      o.damage += 1;
+      trimCargo(s, o, events);
+    }
+  }
+}
+
 export function attackUnit(s: GameState, rng: RandomSource, att: Unit, requested: Unit, events: GameEvent[]): string | null {
   const def = stackDefender(s, att, requested);
   const restriction = attackRestriction(s, att, def);
@@ -131,6 +154,7 @@ export function attackUnit(s: GameState, rng: RandomSource, att: Unit, requested
 
   if (r.attackerWon) {
     destroyUnit(s, def, 'combat', events, att.owner);
+    splashStack(s, rng, att, def.owner, target, events);
     recordWin(s, att, events);
     trimCargo(s, att, events);
     const targetClear = topLevelUnitsAt(s, target.x, target.y).every((u) => areFriendly(s, u.owner, att.owner));

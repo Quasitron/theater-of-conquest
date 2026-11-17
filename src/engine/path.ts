@@ -3,7 +3,7 @@ import type { PlayerView } from './view';
 import type { MapLike } from './map';
 import { DIRS, chebyshev, index, normalize as normalizeSquare } from './map';
 import { areFriendly } from './relations';
-import { STACK_LIMIT } from './query';
+import { stackLimitOf } from './query';
 import { UNIT_STATS, armorBlockedBy, armorSlowedBy, cargoCapacity, effectiveMove } from './units';
 
 export interface PathMap {
@@ -22,8 +22,8 @@ export interface PathMap {
   enemy: Set<number>;
   /** Own top-level units on non-city squares; room[type] = free cargo space (in slots) on hosts there that carry `type`. */
   own: Map<number, { count: number; air: number; room: Partial<Record<UnitType, number>> }>;
-  /** Stacking rule: how many of one player's units may share an open square (0 when the rule is off). */
-  stackLimit: number;
+  /** Stacking rule: whether it is on (the limit itself depends on the unit: stackLimitOf). */
+  stacking: boolean;
   /** When true, non-air units treat squares holding own units (without room) as walls. */
   blockOwn: boolean;
 }
@@ -78,7 +78,7 @@ export function pathMapFromState(s: GameState, pid: PlayerId, opts: { blockOwn?:
     width: s.width, height: s.height, wrap: s.wrap, me: pid, turn: s.turn,
     terrain, ...(relief ? { relief } : {}), cityOwner, enemy,
     own: buildOwn(m, s.units.filter((u) => u.owner === pid)),
-    stackLimit: s.rules.stacking ? STACK_LIMIT : 0,
+    stacking: s.rules.stacking,
     blockOwn: opts.blockOwn ?? false,
   };
 }
@@ -94,7 +94,7 @@ export function pathMapFromView(v: PlayerView, opts: { blockOwn?: boolean } = {}
     width: v.width, height: v.height, wrap: v.wrap, me: v.me, turn: v.turn,
     terrain: v.terrain, ...(v.relief && v.rules.advancedUnits ? { relief: v.relief } : {}), cityOwner, enemy,
     own: buildOwn(m, v.myUnits),
-    stackLimit: v.rules.stacking ? STACK_LIMIT : 0,
+    stacking: v.rules.stacking,
     blockOwn: opts.blockOwn ?? false,
   };
 }
@@ -113,7 +113,7 @@ function enterable(m: PathMap, t: UnitType, i: number, isTarget: boolean): boole
   if (domain === 'sea' && terrain !== 'water' && city !== m.me) return false;
   if (own) {
     // Stacking rule: a land or sea unit may join up to the limit of its own, no aircraft among them.
-    const joins = m.stackLimit > 0 && domain !== 'air' && own.air === 0 && own.count < m.stackLimit;
+    const joins = m.stacking && own.air === 0 && own.count < stackLimitOf(domain);
     return isTarget ? joins : !m.blockOwn || domain === 'air' || joins;
   }
   return true;
