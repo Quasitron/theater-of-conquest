@@ -7,7 +7,7 @@ describe('playersLeft', () => {
   it('does not count teammates as opponents', () => {
     const ps = [{ id: 0, team: 1 }, { id: 1, team: 1 }, { id: 2, team: 1 }, { id: 3, team: 2 }, { id: 4, team: 3, eliminated: true }];
     expect(playersLeft(ps, 0)).toEqual({ left: 1, mates: 2 });
-    expect(playersLeft(ps.map((p) => ({ id: p.id })), 0)).toEqual({ left: 3, mates: 0 });
+    expect(playersLeft(ps.map((p) => ({ id: p.id })), 0)).toEqual({ left: 4, mates: 0 });
   });
 });
 
