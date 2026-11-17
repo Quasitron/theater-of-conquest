@@ -41,7 +41,7 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   moveTo: 'Move To: then click a square; the unit goes there by the shortest known way, over as many turns as it takes.',
   patrol: 'Patrol back and forth between two squares: click the first, then the second.',
   goHome: 'Go Home: head for the nearest friendly city.',
-  explore: 'Explore: the unit wanders out to uncover the nearest unexplored squares by itself.',
+  explore: 'Explore: the unit wanders out to uncover the nearest unexplored squares by itself. An Army or Armor also heads for a known neutral city when it is nearer, and stops beside it so you can decide.',
   escort: 'Escort: a warship follows a Transport and guards it, fighting what it is likely to beat.',
   ferry: 'Ferry Route: a Transport (or any other carrier except a Carrier) runs a standing route: it loads at a pickup city, sails to a drop square, puts everything ashore, and goes back, over and over. Routes are shared: pick an existing one to put another carrier on it. A route can wait at the pickup until the carrier is full. When an enemy comes near, or the pickup city is lost, the carrier waits for orders.',
   resumeFerry: 'Resume Route: a carrier whose ferry route was interrupted carries on with it.',
