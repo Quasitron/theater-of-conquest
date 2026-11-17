@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'elimination-count',
+    version: '0.9.86',
+    date: '2026-11-17',
+    title: 'Opponent count ignores teammates',
+    text: ['The "Empire falls" newspaper now counts only real opponents, and mentions how many teammates you still have.'],
+  },
+  {
     id: 'then-build-follows',
     version: '0.9.85',
     date: '2026-11-16',
