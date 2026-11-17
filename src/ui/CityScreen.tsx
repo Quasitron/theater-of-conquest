@@ -37,7 +37,8 @@ interface Props {
 function routeSummary(view: PlayerView, route: CityRoute): string {
   const dest = view.myCities.find((c) => c.id === route.destId);
   const types = route.types.map((t) => UNIT_STATS[t].name).join(', ');
-  return `${types} → ${dest ? dest.name : 'a lost city'}`;
+  const on = route.arrival === 'explore' ? 'Explore' : route.arrival === 'sentry' ? 'Sentry' : 'Wait for orders';
+  return `${types} → ${dest ? dest.name : 'a lost city'} (${on})`;
 }
 
 export function CityScreen({ view, city, anchor, color, error, onPick, onRename, onSetNext, onSetRoutes, onSelectUnit, onClose, startOnProduction = false }: Props) {
