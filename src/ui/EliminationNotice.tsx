@@ -11,10 +11,18 @@ export function eliminationHeadline(colorNames: (string | null)[], count: number
   return `${NUMBER_WORDS[count] ?? count} EMPIRES FALL!`;
 }
 
+/** Players still in the game besides `me`: opponents, and teammates (same team) who are not opponents. */
+export function playersLeft(players: { id: number; team?: number; eliminated?: boolean }[], me: number): { left: number; mates: number } {
+  const myTeam = players[me]?.team;
+  const alive = players.filter((p) => p.id !== me && !p.eliminated);
+  const left = alive.filter((p) => myTeam === undefined || p.team !== myTeam).length;
+  return { left, mates: alive.length - left };
+}
+
 /** A newspaper front page at the start of a turn: these players have been knocked out, and how many opponents are left. */
 export function EliminationNotice({ view, colors, ids, onOk }: { view: PlayerView; colors: string[]; ids: number[]; onOk: () => void }) {
   const name = (id: number) => view.players.find((p) => p.id === id)?.name ?? `Player ${id + 1}`;
-  const left = view.players.filter((p) => p.id !== view.me && !p.eliminated).length;
+  const { left, mates } = playersLeft(view.players, view.me);
   const headline = eliminationHeadline(ids.map((id) => (colors[id] ? colorName(colors[id]) : null)), ids.length);
   // Size the headline to the width of its band: long colour names get smaller type.
   const headlineSize = Math.min(9.5, 88 / (headline.length * 0.74));
@@ -41,7 +49,7 @@ export function EliminationNotice({ view, colors, ids, onOk }: { view: PlayerVie
             </p>
           );
         })}
-        <p class="paper-text">{left === 0 ? 'No opponents are left.' : left === 1 ? '1 opponent is still in the game.' : `${left} opponents are still in the game.`}</p>
+        <p class="paper-text">{left === 0 ? 'No opponents are left.' : left === 1 ? '1 opponent is still in the game.' : `${left} opponents are still in the game.`}{mates > 0 && ` Your team has ${mates} other player${mates === 1 ? '' : 's'} left.`}</p>
         <button class="primary" onClick={(e) => { blur(e); onOk(); }}>OK</button>
       </div>
     </PlacedDialog>
