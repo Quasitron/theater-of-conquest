@@ -257,6 +257,8 @@ export type GameEvent =
   | { type: 'cityCaptured'; cityId: number; by: PlayerId; from: PlayerId | null }
   | { type: 'unitProduced'; unitId: number; cityId: number; unitType: UnitType }
   | { type: 'unitPromoted'; unitId: number; owner: PlayerId; unitType: UnitType; rank: number }
+  /** Stacking rule: a bomber or ship that beat a stack's defender also hit this unit of the stack (killed: it was destroyed). */
+  | { type: 'stackSplash'; unitId: number; owner: PlayerId; unitType: UnitType; x: number; y: number; killed: boolean }
   | { type: 'airbaseBuilt'; unitId: number; owner: PlayerId; x: number; y: number }
   /** A bomber's hit on a city: its production so far is lost, or one of the units in it is destroyed. */
   | { type: 'cityBombed'; cityId: number; by: PlayerId; owner: PlayerId; effect: 'production' | 'unit'; unitType?: UnitType }

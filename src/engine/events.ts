@@ -61,6 +61,9 @@ export function eventsFor(s: GameState, events: readonly GameEvent[], pid: Playe
         if (mine(e.by) || mine(e.owner) || (c !== undefined && seen(c.x, c.y))) out.push(e);
         break;
       }
+      case 'stackSplash':
+        if (mine(e.owner) || seen(e.x, e.y)) out.push(e);
+        break;
       case 'unitPromoted':
       case 'unitProduced':
         if (mine(owners.get(e.unitId))) out.push(e);

@@ -98,6 +98,8 @@ export function describeEvent(
       const effect = e.effect === 'unit' ? `lost ${withArticle(UNIT_STATS[e.unitType ?? 'army'].name)}` : 'lost its production';
       return `${whose(e.by, true)} bomber hit ${city}: it ${effect}.`;
     }
+    case 'stackSplash':
+      return `${unitName(e.unitId)} was ${e.killed ? 'destroyed' : 'hurt'} in the blast on its stack.`;
     case 'unitPromoted':
       return `${unitName(e.unitId)} was promoted to ${RANK_NAMES[e.rank]}.`;
     case 'cargoUnloaded': {

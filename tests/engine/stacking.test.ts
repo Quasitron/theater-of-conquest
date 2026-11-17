@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { apply } from '../../src/engine/apply';
 import { pathMapFromState, findPath } from '../../src/engine/path';
-import { stackDefender } from '../../src/engine/attack';
-import { STACK_LIMIT, topLevelUnitsAt } from '../../src/engine/query';
+import { attackUnit, stackDefender } from '../../src/engine/attack';
+import { STACK_LIMIT_LAND, STACK_LIMIT_SEA, topLevelUnitsAt } from '../../src/engine/query';
 import type { GameState } from '../../src/engine/types';
 import { addUnit, makeGame } from '../helpers';
 
@@ -24,13 +24,12 @@ const move = (s: GameState, id: number, dir: 2 | 6, player = 0) => apply(s, { ty
 describe('stacking rule', () => {
   it('lets own units share a square outside a city up to the limit', () => {
     const s = game(true);
-    addUnit(s, 'army', 0, 3, 0);
-    addUnit(s, 'army', 0, 3, 0);
+    for (let i = 0; i < STACK_LIMIT_LAND - 1; i++) addUnit(s, 'army', 0, 3, 0);
     const a = addUnit(s, 'army', 0, 2, 0);
     const r = move(s, a.id, east);
     expect(r.ok).toBe(true);
-    expect(r.ok && topLevelUnitsAt(r.state, 3, 0)).toHaveLength(STACK_LIMIT);
-    // A fourth is turned away.
+    expect(r.ok && topLevelUnitsAt(r.state, 3, 0)).toHaveLength(STACK_LIMIT_LAND);
+    // One more is turned away.
     if (!r.ok) return;
     const d = addUnit(r.state, 'army', 0, 2, 0);
     expect(move(r.state, d.id, east)).toMatchObject({ ok: false, error: 'square is occupied' });
@@ -80,13 +79,63 @@ describe('stacking rule', () => {
     if (r.state.units.some((u) => u.id === a.id)) expect(r.state.units.find((u) => u.id === a.id)!.x).toBe(3);
   });
 
+  it('lets 4 land units share a square but only 3 ships', () => {
+    const sea = makeGame(['*.....*'], { starts: [0, 1], rules: { stacking: true } });
+    for (const c of sea.cities) c.production = null;
+    for (let i = 0; i < STACK_LIMIT_SEA; i++) addUnit(sea, 'destroyer', 0, 3, 0);
+    const d = addUnit(sea, 'destroyer', 0, 2, 0);
+    expect(move(sea, d.id, east)).toMatchObject({ ok: false, error: 'square is occupied' });
+  });
+
+  /** Rolls: 0 (the attacker always hits) until the first unit of `until` is gone, then the given splash rolls. */
+  const splashRng = (s: GameState, until: number, rolls: number[]) => ({
+    next: () => (s.units.some((u) => u.id === until) ? 0 : rolls.shift() ?? 0.99),
+  });
+
+  it('a bomber that beats a stack\'s defender may also hurt each other unit, by chance', () => {
+    const s = game(true);
+    s.rules.advancedUnits = true;
+    const armor = addUnit(s, 'armor', 1, 4, 0);
+    const first = addUnit(s, 'army', 1, 4, 0);
+    const second = addUnit(s, 'army', 1, 4, 0);
+    const bomber = addUnit(s, 'bomber', 0, 3, 0);
+    const events: unknown[] = [];
+    attackUnit(s, splashRng(s, armor.id, [0.1, 0.9]), bomber, armor, events as never);
+    // The first army was hit (and, with one hit point, destroyed); the second was missed.
+    expect(s.units.some((u) => u.id === first.id)).toBe(false);
+    expect(s.units.find((u) => u.id === second.id)?.damage).toBe(0);
+    expect(events).toContainEqual(expect.objectContaining({ type: 'stackSplash', unitId: first.id, killed: true }));
+  });
+
+  it('a ship that beats a stack hurts a unit that survives the hit', () => {
+    const s = makeGame(['*......*'], { starts: [0, 1], rules: { stacking: true } });
+    const a = addUnit(s, 'destroyer', 1, 4, 0);
+    const b = addUnit(s, 'destroyer', 1, 4, 0);
+    const ship = addUnit(s, 'battleship', 0, 3, 0);
+    attackUnit(s, splashRng(s, a.id, [0.1]), ship, a, []);
+    expect(s.units.find((u) => u.id === b.id)?.damage).toBe(1);
+  });
+
+  it('ground attackers, fighters and cities cause no splash', () => {
+    const s = game(true);
+    const a = addUnit(s, 'army', 1, 4, 0);
+    const b = addUnit(s, 'army', 1, 4, 0);
+    const army = addUnit(s, 'army', 0, 3, 0);
+    attackUnit(s, splashRng(s, a.id, [0.1, 0.1]), army, a, []);
+    expect(s.units.some((u) => u.id === b.id)).toBe(true);
+    const f = addUnit(s, 'fighter', 0, 3, 0);
+    const c = addUnit(s, 'army', 1, 5, 0);
+    const d = addUnit(s, 'army', 1, 5, 0);
+    attackUnit(s, splashRng(s, c.id, [0.1, 0.1]), f, c, []);
+    expect(s.units.some((u) => u.id === d.id)).toBe(true);
+  });
+
   it('plans paths through and onto stacks that have room, and not onto full ones', () => {
     const s = game(true);
     addUnit(s, 'army', 0, 3, 0);
     const a = addUnit(s, 'army', 0, 1, 0);
     expect(findPath(pathMapFromState(s, 0), a, { x: 3, y: 0 })).not.toBeNull();
-    addUnit(s, 'army', 0, 3, 0);
-    addUnit(s, 'army', 0, 3, 0);
+    for (let i = 0; i < STACK_LIMIT_LAND - 1; i++) addUnit(s, 'army', 0, 3, 0);
     expect(findPath(pathMapFromState(s, 0), a, { x: 3, y: 0 })).toBeNull();
   });
 });

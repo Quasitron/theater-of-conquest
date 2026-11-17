@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GameSession } from '../../src/app/session';
-import { STACK_LIMIT } from '../../src/engine/query';
+import { STACK_LIMIT_LAND as STACK_LIMIT } from '../../src/engine/query';
 import { DEFAULT_WORLD, SIZE_PRESETS } from '../../src/mapgen/options';
 
 describe('computer players with the stacking rule', () => {

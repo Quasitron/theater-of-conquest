@@ -16,6 +16,16 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-splash',
+    version: '0.9.89',
+    date: '2026-11-17',
+    title: 'Bigger land stacks, and splash damage',
+    text: [
+      'With the Stackable units house rule on, up to 4 land units can now share a square (ships still 3).',
+      'The risk: when a Bomber or a ship beats a stack\'s best defender, the blast may hurt the rest of the stack. Each other unit has an even chance of taking one hit, so some are damaged and some are spared. A unit on its last hit is destroyed.',
+    ],
+  },
+  {
     id: 'route-arrival-shown',
     version: '0.9.88',
     date: '2026-11-17',
