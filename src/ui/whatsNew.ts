@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'route-arrival-shown',
+    version: '0.9.88',
+    date: '2026-11-17',
+    title: 'Routes show what units do on arrival',
+    text: ['The list of a city\'s routes now ends with the arrival order, for example "Army, Armor → Tangier (Explore)".'],
+  },
+  {
     id: 'elimination-count',
     version: '0.9.86',
     date: '2026-11-17',

@@ -100,3 +100,4 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 | 0.9.85 | 2026-11-16 | Production screen: the "Then build" menu now follows the unit highlighted in the list ("Keep building X" names the highlighted unit, and X is left out of the choices). Choosing a "then" unit while another is highlighted switches to the highlighted one first. |
 | 0.9.86 | 2026-11-17 | The "Empire falls" newspaper no longer counts your teammates as opponents: it says how many opponents are left, and how many other players your team has left. |
 | 0.9.87 | 2026-11-17 | City route form: the dialog is a little wider, and unit names like "Army (→ Tarragona)" stay on one line instead of wrapping. |
+| 0.9.88 | 2026-11-17 | City routes list what the units do on arrival: "Army, Armor → Tangier (Explore)", "(Sentry)" or "(Wait for orders)", in the route form and on the city screen. |
