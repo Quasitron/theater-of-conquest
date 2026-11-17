@@ -178,7 +178,10 @@ button.linklike { border: 0; background: none; padding: 0; text-align: left; col
 .unit-list li { display: flex; flex-direction: column; }
 .unit-list li .muted { font-size: 0.8rem; margin-left: 1.8em; }
 .route-types { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; border: 1px solid #333c48; border-radius: 6px; padding: 8px; }
+.route-types label { white-space: nowrap; }
 .route-types label.disabled { opacity: 0.45; }
+/* Wide enough that "Armor (→ Tarragona)" stays on one line. */
+.dialog:has(.route-types) { width: 480px; }
 .rename { display: flex; gap: 6px; }
 .rename input { flex: 1; min-width: 0; }
 
