@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'enemy-stacks',
+    version: '0.9.99',
+    date: '2026-11-18',
+    title: 'See how big an enemy stack is',
+    text: ['Enemy stacks now show a count badge on the map, just like your own. Click one and the side panel lists every unit on the square (click any to inspect it), and the attack odds say "stack of N".'],
+  },
+  {
     id: 'replay-chronology',
     version: '0.9.98',
     date: '2026-11-18',

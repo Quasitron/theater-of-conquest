@@ -455,11 +455,22 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   });
   for (const w of waiting) hide(w.fight);
   const hidden = (x: number, y: number) => hiddenSquares.has(`${x},${y}`);
+  // Enemy stacks: units seen on one square are drawn on top of each other, so the top one carries a count badge.
+  const foeCount = new Map<string, number>();
+  for (const e of showUnits ? view.enemies : []) {
+    const key = `${e.x},${e.y},${e.visibleNow}`;
+    foeCount.set(key, (foeCount.get(key) ?? 0) + 1);
+  }
   for (const e of showUnits ? view.enemies : []) {
     const age = view.turn - e.turnSeen;
     const alpha = e.visibleNow ? 1 : age < 1 ? 0.7 : 0.4;
+    const key = `${e.x},${e.y},${e.visibleNow}`;
     each((mx, my, sx, sy) => {
-      if (mx === e.x && my === e.y && !hidden(mx, my)) unitMark(sx, sy, colors[e.owner], e.type, alpha, 1, 0.5, 0.5, false, e.rank ?? 0);
+      if (mx === e.x && my === e.y && !hidden(mx, my)) {
+        unitMark(sx, sy, colors[e.owner], e.type, alpha, 1, 0.5, 0.5, false, e.rank ?? 0);
+        const n = foeCount.get(key) ?? 1;
+        if (n > 1) badge(sx, sy, n, alpha);
+      }
     });
   }
 
