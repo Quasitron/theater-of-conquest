@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'square-units',
+    version: '0.9.93',
+    date: '2026-11-18',
+    title: 'Units on this square',
+    text: ['When a square holds more than one unit, the side panel now lists them all under the selected unit, with their orders. Click one of yours to select it. Teammates\' units on the square are listed too.'],
+  },
+  {
     id: 'friendly-squares',
     version: '0.9.92',
     date: '2026-11-17',

@@ -152,6 +152,9 @@ button.blink { animation: pulse 1s ease-in-out infinite; }
 button.linklike { border: 0; background: none; padding: 0; text-align: left; color: var(--accent); text-decoration: underline; }
 .cargo-list { margin: 4px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
 .cargo-list button { width: 100%; text-align: left; font-size: 0.85rem; padding: 2px 8px; margin: 0; }
+.square-units h4 { margin: 6px 0 2px; font-size: 0.85rem; }
+.square-units .cargo-list button.current { border-color: #e0e0e0; font-weight: 600; }
+.square-units .mate { display: block; font-size: 0.85rem; padding: 2px 8px; opacity: 0.8; }
 .unit-info { text-align: left; max-width: 360px; }
 .unit-info h2, .unit-info p { margin: 0; }
 .report-tabs { display: flex; gap: 6px; }
