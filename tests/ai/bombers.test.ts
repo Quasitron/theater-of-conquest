@@ -81,26 +81,66 @@ describe('Hard AI bombers (Advanced units rule)', () => {
 });
 
 describe('Hard AI airbases (Advanced units rule)', () => {
-  it('an idle army on open land a few squares from its city turns itself into an Airbase once it has a bomber', () => {
-    const s = game(['*#########*', '...........']);
+  // Own city at x=0, the enemy's at x=22: a stretch of open country between, out of reach of the city's own Bombers.
+  const LONG = ['*' + '#'.repeat(21) + '*'];
+  /** The AI (player 1) owns the first city and knows the other as player 0's. */
+  const own = (s: GameState) => {
     s.cities[0].owner = 1;
     s.cities[1].owner = 0;
+    for (const c of s.cities) s.fog[1].knownCityOwner[c.id] = c.owner;
+  };
+  const setup = (rows = LONG) => {
+    const s = game(rows);
+    own(s);
     s.turn = 40;
-    addUnit(s, 'bomber', 1, 0, 0);
+    addUnit(s, 'bomber', 1, 0, 0, { orders: { kind: 'sentry' } });
     for (let i = 0; i < 3; i++) addUnit(s, 'army', 1, 0, 0, { orders: { kind: 'sentry' } });
-    const army = addUnit(s, 'army', 1, 4, 0);
+    return s;
+  };
+
+  it('an idle army on remote open land that brings an enemy city into Bomber range turns itself into an Airbase', () => {
+    const s = setup();
+    const army = addUnit(s, 'army', 1, 14, 0);
     expect(next(s)).toEqual({ type: 'buildAirbase', unitId: army.id });
+  });
+
+  it('never builds one beside its own city, or right next to the enemy', () => {
+    const near = setup();
+    addUnit(near, 'army', 1, 4, 0);
+    expect(next(near)).not.toMatchObject({ type: 'buildAirbase' });
+    const close = setup();
+    addUnit(close, 'army', 1, 19, 0);
+    expect(next(close)).not.toMatchObject({ type: 'buildAirbase' });
+  });
+
+  it('builds none when its cities already cover every enemy city, or another base already does', () => {
+    const covered = setup(['*' + '#'.repeat(9) + '*']); // the enemy city is 10 from its own: its Bombers already reach it
+    addUnit(covered, 'army', 1, 6, 0);
+    expect(next(covered)).not.toMatchObject({ type: 'buildAirbase' });
+    const twin = setup();
+    addUnit(twin, 'airbase', 1, 13, 0, { movesLeft: 0, fuel: null });
+    addUnit(twin, 'army', 1, 14, 0);
+    expect(next(twin)).not.toMatchObject({ type: 'buildAirbase' });
+  });
+
+  it('the oldest idle soldier in a city walks out to the nearest remote square that reaches an uncovered enemy city', () => {
+    const s = game(LONG);
+    own(s);
+    s.turn = 40;
+    addUnit(s, 'bomber', 1, 0, 0, { orders: { kind: 'sentry' } });
+    for (let i = 0; i < 3; i++) addUnit(s, 'army', 1, 0, 0, { orders: { kind: 'sentry' } });
+    const walker = addUnit(s, 'army', 1, 0, 0);
+    const cmd = next(s);
+    expect(cmd).toMatchObject({ type: 'setOrders', unitId: walker.id, orders: { kind: 'goto' } });
+    const target = (cmd as { orders: { target: { x: number } } }).orders.target;
+    expect(target.x).toBeGreaterThanOrEqual(12);
+    expect(target.x).toBeLessThanOrEqual(17);
   });
 
   it('does nothing of the kind without a bomber, below turn 30, or when the rule is off', () => {
     const base = (mutate: (s: GameState) => void) => {
-      const s = game(['*#########*']);
-      s.cities[0].owner = 1;
-      s.cities[1].owner = 0;
-      s.turn = 40;
-      addUnit(s, 'bomber', 1, 0, 0, { orders: { kind: 'sentry' } });
-      for (let i = 0; i < 3; i++) addUnit(s, 'army', 1, 0, 0, { orders: { kind: 'sentry' } });
-      addUnit(s, 'army', 1, 4, 0);
+      const s = setup();
+      addUnit(s, 'army', 1, 14, 0);
       mutate(s);
       return next(s);
     };
@@ -109,7 +149,6 @@ describe('Hard AI airbases (Advanced units rule)', () => {
     expect(base((s) => { s.turn = 20; })).not.toMatchObject({ type: 'buildAirbase' });
     expect(base((s) => { s.rules.advancedUnits = false; })).not.toMatchObject({ type: 'buildAirbase' });
   });
-
   it('a bomber lands on an own airbase to refuel when that is nearer than a city', () => {
     const s = game(['*##########*', '............']);
     s.cities[0].owner = 0;

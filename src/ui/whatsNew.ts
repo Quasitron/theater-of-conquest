@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ai-airbases',
+    version: '0.9.95',
+    date: '2026-11-18',
+    title: 'Smarter Airbases for the computer',
+    text: ['Computer players on Hard now build Airbases out in remote country, where they bring an enemy city into Bomber range, instead of beside their own cities where they only drew fire.'],
+  },
+  {
     id: 'troop-transport',
     version: '0.9.94',
     date: '2026-11-18',

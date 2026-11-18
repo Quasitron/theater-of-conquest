@@ -805,41 +805,58 @@ function wantsAirbase(view: PlayerView): boolean {
   return soldiers >= 4 && bases < Math.min(2, 1 + Math.floor(view.myCities.length / 12));
 }
 
-/** Open land two to six squares from an own city and at least three from any foreign one, away from other Airbases. */
-function airbaseSquare(view: PlayerView, sq: Pos): boolean {
-  if (view.terrain[sq.y * view.width + sq.x] !== 'land') return false;
-  const dOwn = Math.min(999, ...view.myCities.map((c) => chebyshev(geo(view), sq, c)));
-  if (dOwn < 2 || dOwn > 6) return false;
-  if (view.knownCities.some((c) => isFoe(view, c.owner) && chebyshev(geo(view), sq, c) < 3)) return false;
-  return !view.myUnits.some((b) => b.type === 'airbase' && chebyshev(geo(view), sq, b) < 4);
+/** An Airbase must stand at least this far from every own city: remote ground, where it opens up new reach. */
+const BASE_FROM_OWN = 6;
+/** ...and at least this far from any foreign city, so the enemy's garrison cannot simply walk over and take it. */
+const BASE_FROM_FOE = 5;
+/** A Bomber flying out from a base can hit a city this close (range 24, out and back, with the sortie margin). */
+const BASE_REACH = 10;
+/** ...and bases keep this far apart. */
+const BASE_APART = 8;
+/** The soldier walks at most this many squares to the spot. */
+const BASE_WALK = 16;
+
+/**
+ * How many foreign cities an Airbase on `sq` would newly bring within a Bomber's reach: those within BASE_REACH of it that
+ * no own city or Airbase already covers. 0 when the square is no good (not open land, too near a city of either side or
+ * another base), so a base is only ever built far out where it extends the Bombers' reach, never beside a city.
+ */
+function airbaseValue(view: PlayerView, sq: Pos): number {
+  if (view.terrain[sq.y * view.width + sq.x] !== 'land') return 0;
+  const d = (a: Pos, b: Pos) => chebyshev(geo(view), a, b);
+  if (view.myCities.some((c) => d(sq, c) < BASE_FROM_OWN)) return 0;
+  const foes = view.knownCities.filter((c) => isFoe(view, c.owner));
+  if (foes.some((c) => d(sq, c) < BASE_FROM_FOE)) return 0;
+  const bases = view.myUnits.filter((b) => b.type === 'airbase');
+  if (bases.some((b) => d(sq, b) < BASE_APART)) return 0;
+  const covered = (c: Pos) => view.myCities.some((m) => d(c, m) <= BASE_REACH) || bases.some((b) => d(c, b) <= BASE_REACH);
+  return foes.filter((c) => d(sq, c) <= BASE_REACH && !covered(c)).length;
 }
 
 /**
  * An idle soldier on a good square turns itself into an Airbase; otherwise the oldest idle soldier waiting in a city
- * walks to the good square nearest the enemy that it can reach.
+ * walks to the reachable square that brings the most uncovered enemy cities into Bomber range (the nearest one on ties).
  */
 function airbaseOrders(view: PlayerView, u: Unit): SessionCommand | null {
   if (!wantsAirbase(view) || u.carriedBy !== null) return null;
-  if (airbaseSquare(view, u)) return { type: 'buildAirbase', unitId: u.id };
+  if (airbaseValue(view, u) > 0) return { type: 'buildAirbase', unitId: u.id };
   const inCity = view.myCities.some((c) => at(c, u));
   const oldest = view.myUnits
     .filter((s) => (s.type === 'army' || s.type === 'armor') && s.carriedBy === null && s.orders === null && view.myCities.some((c) => at(c, s)))
     .sort((a, b) => a.id - b.id)[0];
   if (!inCity || oldest?.id !== u.id) return null;
-  const foreign = view.knownCities.filter((c) => isFoe(view, c.owner));
-  if (foreign.length === 0) return null;
+  if (!view.knownCities.some((c) => isFoe(view, c.owner))) return null;
   const walk = reach(view, u);
-  let best: { sq: Pos; d: number } | null = null;
+  let best: { sq: Pos; value: number; steps: number } | null = null;
   for (const [i, steps] of walk) {
-    if (steps < 2 || steps > 10) continue;
+    if (steps < 2 || steps > BASE_WALK) continue;
     const sq = { x: i % view.width, y: Math.floor(i / view.width) };
-    if (!airbaseSquare(view, sq)) continue;
-    const d = Math.min(...foreign.map((c) => chebyshev(geo(view), sq, c)));
-    if (best === null || d < best.d || (d === best.d && steps < (walk.get(best.sq.y * view.width + best.sq.x) ?? 999))) best = { sq, d };
+    const value = airbaseValue(view, sq);
+    if (value === 0) continue;
+    if (best === null || value > best.value || (value === best.value && steps < best.steps)) best = { sq, value, steps };
   }
   return best ? goTo(view, u, best.sq) : null;
 }
-
 function decide(view: PlayerView, u: Unit, port: City | null, t: AiTuning, memo: AiMemo): SessionCommand | null {
   switch (u.type) {
     case 'army':
