@@ -25,6 +25,7 @@ import { battlesAgainstMe, newEliminations, recentSightings, sentryLines } from 
 import { EliminationNotice } from './EliminationNotice';
 import { NewsNotice } from './NewsNotice';
 import { cityThreatened } from '../engine/orders';
+import { stackLimitOf } from '../engine/query';
 import { spyHeadlines, type NewsItem } from './spyNews';
 import { unitsHeadingLeft } from './unitIcons';
 import { builtThisTurn, nextReadyAfter, readyUnits, reportQueue, type NearHint, type ProductionReportItem } from './cycle';
@@ -1138,8 +1139,9 @@ export function GameScreen({ session, onQuit }: Props) {
         // The squares go into the dialog's draft; nothing changes in the game until Save and Close.
         // The ship sails to the drop square, so it must be water (or a city of yours); cargo goes ashore from there.
         const ground = view.terrain[p.y * view.width + p.x];
-        if (ground !== 'water' && !view.myCities.some((c) => c.x === p.x && c.y === p.y)) {
-          setFerryPlan({ ...plan, note: 'The drop square must be a sea tile (or one of your cities). Pick the water beside the coast where the cargo should land.' });
+        const friendlyCity = view.knownCities.some((c) => c.x === p.x && c.y === p.y && (c.owner === view.me || (c.owner !== null && view.allies.includes(c.owner))));
+        if (ground !== 'water' && !friendlyCity) {
+          setFerryPlan({ ...plan, note: 'The drop square must be a sea tile (or a friendly city). Pick the water beside the coast where the cargo should land.' });
           return;
         }
         const squares = { pickup: plan.pickup, drop: { x: p.x, y: p.y } };
@@ -1219,6 +1221,15 @@ export function GameScreen({ session, onQuit }: Props) {
     if (unit && selectedUnit && stackAt < 0 && unit.id !== selectedUnit.id && explored
       && hostHasRoom(unit, view.myUnits.filter((c) => c.carriedBy === unit.id), selectedUnit.type)) {
       return giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
+    }
+    // Stacking rule: with a unit selected that is not part of this stack, a click on the square is an order to join it
+    // (when there is room; a full stack just selects as before).
+    if (unit && selectedUnit && stackAt < 0 && explored && view.rules.stacking
+      && UNIT_STATS[selectedUnit.type].domain !== 'air' && view.terrain[p.y * view.width + p.x] !== 'city'
+      && !stack.some((u) => UNIT_STATS[u.type].domain === 'air')) {
+      const limit = stackLimitOf(UNIT_STATS[selectedUnit.type].domain);
+      const total = stack.length + view.allyUnits.filter((a) => a.x === p.x && a.y === p.y).length;
+      if (total < limit) return giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
     }
     if (unit) return setSelection({ kind: 'unit', id: unit.id });
     // An enemy unit seen here: say what it is (with nothing selected the panel shows it; otherwise the click is still an order).

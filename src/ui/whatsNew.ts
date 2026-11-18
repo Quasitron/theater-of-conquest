@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'friendly-squares',
+    version: '0.9.92',
+    date: '2026-11-17',
+    title: 'Go to friendly stacks and cities',
+    text: ['Click a stack of your own or a teammate\'s units with a unit selected and it now goes there, when there is room, instead of just selecting. Allied units in a city no longer block paths into it, and a ferry route can drop at a teammate\'s city.'],
+  },
+  {
     id: 'ally-stacking',
     version: '0.9.91',
     date: '2026-11-17',
