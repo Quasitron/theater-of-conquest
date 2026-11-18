@@ -8,7 +8,7 @@ import { setNextProduction, setProduction } from './production';
 import { endTurn, resign } from './turn';
 import { catchSpies, updateFog } from './fog';
 import { hurtGarrison, incitePeople, sabotageCity } from './spy';
-import { inOwnCity, loadUnits, unloadCargo } from './cargo';
+import { inFriendlyCity, inOwnCity, loadUnits, unloadCargo } from './cargo';
 import { chooseHome, giveOrders, runEscorts } from './orders';
 import { cleanName } from './names';
 import { teammatesOf } from './relations';
@@ -128,7 +128,7 @@ export function apply(state: GameState, cmd: Command, inPlace = false): ApplyRes
       if (!u) error = 'no such unit';
       else if (u.owner !== actor) error = 'not your unit';
       else if (cmd.repair && u.damage === 0) error = 'nothing to repair';
-      else if (cityAt(s, u.x, u.y)?.owner === actor) {
+      else if (inFriendlyCity(s, u)) {
         error = cmd.repair ? giveOrders(s, rng, u, { kind: 'repair' }, events) : 'already home';
       } else {
         const home = chooseHome(s, u);

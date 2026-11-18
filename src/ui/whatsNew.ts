@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'gohome-allies',
+    version: '0.9.103',
+    date: '2026-11-18',
+    title: 'Go Home also finds your teammates\' cities',
+    text: ['Go Home (and Repair) now heads for the nearest city of yours or a teammate\'s, so a bomber or ship that is only near allied cities can still use it. A unit already standing in an allied city counts as home.'],
+  },
+  {
     id: 'stack-under-fade-30',
     version: '0.9.102',
     date: '2026-11-18',
