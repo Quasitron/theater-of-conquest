@@ -15,7 +15,7 @@ function game(advanced = true): GameState {
 }
 const east = 2 as const;
 
-describe('troop transport', () => {
+describe('APC (troopTransport)', () => {
   it('is built only with the Advanced units rule', () => {
     expect(buildableTypes({ advancedUnits: true })).toContain('troopTransport');
     expect(buildableTypes({ advancedUnits: false })).not.toContain('troopTransport');

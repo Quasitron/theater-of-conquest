@@ -95,7 +95,7 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
     return null;
   }
   if (city && !areFriendly(s, city.owner, u.owner)) {
-    if (u.type === 'troopTransport') return 'a troop transport cannot attack';
+    if (u.type === 'troopTransport') return 'an APC cannot attack';
     if (st.domain === 'sea' && st.bombard && s.rules.cityStrength && city.owner !== null) return bombardCity(s, rng, u, city, events);
     if (st.domain === 'air' && u.type === 'bomber' && s.rules.advancedUnits) return bombCity(s, rng, u, city, events);
     if (st.domain !== 'land') return 'only land units can attack cities';
@@ -131,7 +131,7 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
 
   const terrain = terrainAt(s, to.x, to.y);
   if (st.domain === 'land' && terrain !== 'land') return 'land units cannot enter water';
-  if (movesLikeArmor(u.type) && s.rules.advancedUnits && armorBlockedBy(reliefAt(s, to.x, to.y))) return u.type === 'armor' ? 'Armor cannot enter mountains' : 'a troop transport cannot enter mountains';
+  if (movesLikeArmor(u.type) && s.rules.advancedUnits && armorBlockedBy(reliefAt(s, to.x, to.y))) return u.type === 'armor' ? 'Armor cannot enter mountains' : 'an APC cannot enter mountains';
   if (st.domain === 'sea' && terrain !== 'water') return 'ships can only enter water or friendly cities';
   if (occupants.length > 0 && !canJoinStack(s, u, to)) {
     const canPassOver = st.domain === 'air' && u.movesLeft > 1 && (u.fuel ?? 0) > 1;

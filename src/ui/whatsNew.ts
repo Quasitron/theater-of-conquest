@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'apc-rename',
+    version: '0.9.97',
+    date: '2026-11-18',
+    title: 'The Troop Transport is now the APC',
+    text: ['The new land carrier is renamed the APC (Armored Personnel Carrier), so it cannot be mistaken for the ship Transport. Nothing else about it changed, and saved games are unaffected.'],
+  },
+  {
     id: 'news-close-top',
     version: '0.9.96',
     date: '2026-11-18',
@@ -33,12 +40,12 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     id: 'troop-transport',
     version: '0.9.94',
     date: '2026-11-18',
-    title: 'The Troop Transport',
+    title: 'The APC (Armored Personnel Carrier)',
     text: [
-      'A new unit with the Advanced units rule: a tracked carrier for four Armies or Spies (not Armor). It moves like Armor, with the same terrain limits, and loads and unloads on any land square: walk an Army onto it, or use Load. It can run routes over land, too.',
+      'A new unit with the Advanced units rule, the Armored Personnel Carrier (APC): a tracked carrier for four Armies or Spies (not Armor). It moves like Armor, with the same terrain limits, and loads and unloads on any land square: walk an Army onto it, or use Load. It can run routes over land, too.',
       'It cannot attack and is easy prey: Armor kills it almost at will, an Army has an even fight with it, and it can hide in a forest. If it is destroyed, everyone aboard dies with it.',
     ],
-    image: { src: 'troop-transport.png', alt: 'The Troop Transport card' },
+    image: { src: 'apc.png', alt: 'The APC card' },
   },
   {
     id: 'square-units',
