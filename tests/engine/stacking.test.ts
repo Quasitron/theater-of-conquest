@@ -130,6 +130,58 @@ describe('stacking rule', () => {
     expect(s.units.some((u) => u.id === d.id)).toBe(true);
   });
 
+  describe('with allies', () => {
+    /** Three players on a land strip with cities at x=0, 8 and 9: 0 and 1 are on one team, 2 is the enemy. */
+    const allied = (stacking: boolean): GameState => {
+      const s = makeGame(['*#######**'], { players: 3, starts: [0, 1, 2], rules: { stacking } });
+      for (const c of s.cities) c.production = null;
+      s.players[0].team = 1;
+      s.players[1].team = 1;
+      s.fog[0].explored.fill(1);
+      return s;
+    };
+
+    it('lets a unit join an ally\'s stack, sharing the one limit for the square', () => {
+      const s = allied(true);
+      addUnit(s, 'army', 1, 3, 0);
+      addUnit(s, 'army', 1, 3, 0);
+      addUnit(s, 'army', 0, 3, 0);
+      const a = addUnit(s, 'army', 0, 2, 0);
+      const r = move(s, a.id, east);
+      expect(r.ok).toBe(true);
+      expect(r.ok && topLevelUnitsAt(r.state, 3, 0)).toHaveLength(4);
+      if (!r.ok) return;
+      const d = addUnit(r.state, 'army', 0, 2, 0);
+      expect(move(r.state, d.id, east)).toMatchObject({ ok: false, error: 'square is occupied' });
+    });
+
+    it('still keeps an ally\'s square closed when the rule is off, and plans paths onto it only with the rule on', () => {
+      const off = allied(false);
+      addUnit(off, 'army', 1, 3, 0);
+      const a = addUnit(off, 'army', 0, 2, 0);
+      expect(move(off, a.id, east)).toMatchObject({ ok: false });
+      expect(findPath(pathMapFromState(off, 0), a, { x: 3, y: 0 })).toBeNull();
+      const on = allied(true);
+      addUnit(on, 'army', 1, 3, 0);
+      const b = addUnit(on, 'army', 0, 2, 0);
+      expect(findPath(pathMapFromState(on, 0), b, { x: 3, y: 0 })).not.toBeNull();
+    });
+
+    it('an enemy attack on a mixed stack fights the best defender of either owner, and splash reaches them all', () => {
+      const s = allied(true);
+      s.rules.advancedUnits = true;
+      const armor = addUnit(s, 'armor', 1, 4, 0);
+      const mine = addUnit(s, 'army', 0, 4, 0);
+      const bomber = addUnit(s, 'bomber', 2, 3, 0);
+      expect(stackDefender(s, bomber, mine).id).toBe(armor.id);
+      const events: unknown[] = [];
+      const rng = { next: () => (s.units.some((u) => u.id === armor.id) ? 0 : 0.1) };
+      attackUnit(s, rng, bomber, mine, events as never);
+      expect(s.units.some((u) => u.id === armor.id)).toBe(false);
+      expect(events).toContainEqual(expect.objectContaining({ type: 'stackSplash', unitId: mine.id, owner: 0 }));
+    });
+  });
+
   it('plans paths through and onto stacks that have room, and not onto full ones', () => {
     const s = game(true);
     addUnit(s, 'army', 0, 3, 0);

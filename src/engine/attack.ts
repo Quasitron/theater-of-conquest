@@ -63,7 +63,7 @@ function withdrawSquare(s: GameState, sub: Unit, foe: Unit): { x: number; y: num
  */
 export function stackDefender(s: GameState, att: Unit, def: Unit): Unit {
   if (!s.rules.stacking || cityAt(s, def.x, def.y)) return def;
-  const here = topLevelUnitsAt(s, def.x, def.y).filter((o) => o.owner === def.owner);
+  const here = topLevelUnitsAt(s, def.x, def.y).filter((o) => areFriendly(s, o.owner, def.owner));
   if (here.length < 2) return def;
   const a = UNIT_STATS[att.type];
   let best: Unit | null = null;
@@ -92,7 +92,7 @@ export const SPLASH_CHANCE = 0.5;
 function splashStack(s: GameState, rng: RandomSource, att: Unit, owner: number, at: { x: number; y: number }, events: GameEvent[]): void {
   if (!s.rules.stacking || cityAt(s, at.x, at.y)) return;
   if (att.type !== 'bomber' && UNIT_STATS[att.type].domain !== 'sea') return;
-  const others = topLevelUnitsAt(s, at.x, at.y).filter((o) => o.owner === owner).sort((p, q) => p.id - q.id);
+  const others = topLevelUnitsAt(s, at.x, at.y).filter((o) => areFriendly(s, o.owner, owner)).sort((p, q) => p.id - q.id);
   for (const o of others) {
     if (rng.next() >= SPLASH_CHANCE) continue;
     const killed = o.damage + 1 >= hitsOf(o);

@@ -151,9 +151,9 @@ function adjacentForeignCities(s: GameState, u: Unit): Set<number> {
  */
 function ownBlocks(s: GameState, u: Unit, p: Pos): boolean {
   if (UNIT_STATS[u.type].domain === 'air' || cityAt(s, p.x, p.y)) return false;
-  const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => o.owner === u.owner && o !== u);
+  const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => areFriendly(s, o.owner, u.owner) && o !== u);
   if (here.length === 0) return false;
-  return !here.some((h) => hasRoomFor(s, h, u.type)) && !canJoinStack(s, u, p);
+  return !here.some((h) => h.owner === u.owner && hasRoomFor(s, h, u.type)) && !canJoinStack(s, u, p);
 }
 
 /**

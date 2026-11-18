@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ally-stacking',
+    version: '0.9.91',
+    date: '2026-11-17',
+    title: 'Stack with your allies',
+    text: ['With Stackable units on, you can now move onto a teammate\'s stack, and they can join yours. The square keeps one limit (4 land, 3 sea) whoever the units belong to. Each player still orders only their own units. An enemy attack on a mixed stack fights the best defender of either side, and splash damage can hit any of them.'],
+  },
+  {
     id: 'explore-neutral-cities',
     version: '0.9.90',
     date: '2026-11-17',
