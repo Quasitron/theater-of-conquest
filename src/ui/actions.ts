@@ -43,7 +43,7 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     center: true,
     endTurn: true,
     disband: true,
-    load: st.carries.length > 0 && inCity && loadCandidates(view, u).length > 0,
+    load: st.carries.length > 0 && (inCity || u.type === 'troopTransport') && loadCandidates(view, u).length > 0,
     unload: hasCargo,
     goHome: view.myCities.length > 0 && !inCity && !fixed,
     patrol: !fixed,

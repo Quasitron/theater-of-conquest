@@ -4,7 +4,7 @@ import type { MapLike } from './map';
 import { DIRS, chebyshev, index, normalize as normalizeSquare } from './map';
 import { areFriendly } from './relations';
 import { stackLimitOf } from './query';
-import { UNIT_STATS, armorBlockedBy, armorSlowedBy, cargoCapacity, effectiveMove } from './units';
+import { UNIT_STATS, armorBlockedBy, armorSlowedBy, cargoCapacity, effectiveMove, movesLikeArmor } from './units';
 
 export interface PathMap {
   width: number;
@@ -125,7 +125,7 @@ function enterable(m: PathMap, t: UnitType, i: number, isTarget: boolean): boole
   // A host with room can be boarded wherever it floats, whatever the terrain.
   if (own && isTarget && (own.room[t] ?? 0) >= UNIT_STATS[t].slots) return true;
   if (domain === 'land' && terrain !== 'land' && city !== m.me) return false;
-  if (t === 'armor' && armorBlockedBy(m.relief?.[i] ?? 'clear')) return false;
+  if (movesLikeArmor(t) && armorBlockedBy(m.relief?.[i] ?? 'clear')) return false;
   if (domain === 'sea' && terrain !== 'water' && city !== m.me) return false;
   if (own) {
     // Stacking rule: a land or sea unit may join up to the limit of its own, no aircraft among them.
@@ -228,7 +228,7 @@ export function findPath(m: PathMap, u: Mobile, to: Pos): Pos[] | null {
     for (const n of neighborsOf(m, i)) {
       if (closed.has(n) || !enterable(m, u.type, n, n === goal)) continue;
       // Armor loses the rest of its turn in rough, river and forest ground, so those squares cost it a little more.
-      const slow = u.type === 'armor' && armorSlowedBy(m.relief?.[n] ?? 'clear') ? SLOW_COST : 0;
+      const slow = movesLikeArmor(u.type) && armorSlowedBy(m.relief?.[n] ?? 'clear') ? SLOW_COST : 0;
       const gn = gi + 1 + slow + TIE * offLine(n);
       if (gn >= (g.get(n) ?? Infinity)) continue;
       g.set(n, gn);
@@ -298,7 +298,7 @@ export function pathArrivalTurn(
     }
     moves--;
     const p = path[k];
-    if (p && u.type === 'armor' && armorSlowedBy(m.relief?.[p.y * m.width + p.x] ?? 'clear')) moves = 0;
+    if (p && movesLikeArmor(u.type) && armorSlowedBy(m.relief?.[p.y * m.width + p.x] ?? 'clear')) moves = 0;
   }
   return t;
 }

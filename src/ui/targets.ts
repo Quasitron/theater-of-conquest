@@ -1,4 +1,4 @@
-import { CITY_STRENGTH_HITS, UNIT_STATS, armorBlockedBy, attackBlockedReason, hostHasRoom, step, type Dir, type MapLike, type PlayerView, type Pos, type Unit } from '../engine';
+import { CITY_STRENGTH_HITS, UNIT_STATS, armorBlockedBy, movesLikeArmor, attackBlockedReason, hostHasRoom, step, type Dir, type MapLike, type PlayerView, type Pos, type Unit } from '../engine';
 
 export interface StepTarget {
   x: number;
@@ -61,7 +61,7 @@ export function stepTargets(v: PlayerView, u: Unit): StepTarget[] {
       out.push({ ...p, dir: d as Dir, attack: false });
       continue;
     }
-    const blocked = u.type === 'armor' && v.rules.advancedUnits && armorBlockedBy(v.relief?.[p.y * v.width + p.x] ?? 'clear');
+    const blocked = movesLikeArmor(u.type) && v.rules.advancedUnits && armorBlockedBy(v.relief?.[p.y * v.width + p.x] ?? 'clear');
     const fits = domain === 'air' || (domain === 'land' ? terrain === 'land' && !blocked : terrain === 'water');
     const allyThere = v.allyUnits.some((a) => a.x === p.x && a.y === p.y);
     if (fits && ((friends.length === 0 && !allyThere) || domain === 'air')) out.push({ ...p, dir: d as Dir, attack: false });

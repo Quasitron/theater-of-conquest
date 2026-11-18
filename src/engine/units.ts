@@ -28,7 +28,7 @@ export interface UnitStats {
 }
 
 export const UNIT_TYPES: readonly UnitType[] = [
-  'army', 'armor', 'fighter', 'bomber', 'transport', 'destroyer', 'submarine', 'cruiser', 'battleship', 'carrier', 'airbase', 'spy',
+  'army', 'armor', 'troopTransport', 'fighter', 'bomber', 'transport', 'destroyer', 'submarine', 'cruiser', 'battleship', 'carrier', 'airbase', 'spy',
 ];
 
 const base = { range: null, carries: [] as readonly UnitType[], capacity: 0, slots: 1, advanced: false, producible: true, capacityLossPerDamage: 0, bombard: false, seesSubs: false, promotes: false };
@@ -36,6 +36,8 @@ const base = { range: null, carries: [] as readonly UnitType[], capacity: 0, slo
 export const UNIT_STATS: Record<UnitType, UnitStats> = {
   army:       { ...base, name: 'Army',       domain: 'land', move: 1, hits: 1,  attack: 2, defense: 2, shot: 1, build: 6,  buildRepeat: 5 },
   armor:      { ...base, advanced: true, promotes: true, slots: 2, name: 'Armor', domain: 'land', move: 2, hits: 2,  attack: 2, defense: 2, shot: 1, build: 12, buildRepeat: 10 },
+  /** Carries up to four Armies or Spies across land at Armor's pace; no attack, one hit, and its cargo dies with it. Loads and unloads on any land square. */
+  troopTransport: { ...base, advanced: true, slots: 2, name: 'Troop Transport', domain: 'land', move: 2, hits: 1, attack: 0, defense: 2, shot: 1, build: 12, buildRepeat: 10, carries: ['army', 'spy'], capacity: 4 },
   fighter:    { ...base, name: 'Fighter',    domain: 'air',  move: 5, hits: 1,  attack: 2, defense: 2, shot: 1, build: 12, buildRepeat: 10, range: 20 },
   bomber:     { ...base, advanced: true, name: 'Bomber', domain: 'air', move: 4, hits: 1, attack: 2, defense: 2, shot: 2, build: 12, buildRepeat: 10, range: 24 },
   transport:  { ...base, promotes: true, name: 'Transport',  domain: 'sea',  move: 2, hits: 3,  attack: 1, defense: 1, shot: 1, build: 30, buildRepeat: 25, carries: ['army', 'armor', 'spy'], capacity: 6, capacityLossPerDamage: 2 },
@@ -113,10 +115,15 @@ export function canBecomeAirbase(type: UnitType): boolean {
  * `armorNoRiverCover` takes the river bonus away from a defending Armor.
  */
 export function doublesDefense(att: UnitType, def: UnitType, ground: Relief, armorNoRiverCover = false): boolean {
+  // A Troop Transport can hide in a forest (and nowhere else): its defence doubles there against everything but an Army.
+  if (def === 'troopTransport') return ground === 'forest' && att !== 'army';
   if (def !== 'army' && def !== 'armor') return false;
   if (ground === 'forest' || ground === 'mountain') return att !== 'army';
   return ground === 'river' && att === 'armor' && !(armorNoRiverCover && def === 'armor');
 }
+
+/** Armor and the Troop Transport share one set of terrain limits (see armorBlockedBy and armorSlowedBy). */
+export const movesLikeArmor = (type: UnitType): boolean => type === 'armor' || type === 'troopTransport';
 
 /** Armor cannot enter mountains, and its move is cut to one in rough, river and forest squares. */
 export function armorBlockedBy(ground: Relief): boolean {
@@ -137,6 +144,8 @@ export function fightRatings(
   let defense = UNIT_STATS[def].defense;
   if (rules.advancedUnits && doublesDefense(att, def, defGround, rules.armorNoRiverCover)) defense *= 2;
   if (UNIT_STATS[def].domain === 'air' && UNIT_STATS[att].domain === 'sea' && att !== 'carrier' && rules.advancedUnits) attack = Math.min(attack, 1);
+  // Armor runs a Troop Transport down: half the defence it has against anything else.
+  if (def === 'troopTransport' && att === 'armor') defense /= 2;
   if (att === 'bomber' && def === 'fighter') attack = 1;
   if (def === 'bomber' && att === 'fighter') defense = 1;
   return { attack, defense };
@@ -149,6 +158,7 @@ export function attackBlockedReason(
   const a = UNIT_STATS[att];
   const d = UNIT_STATS[def];
   if (att === 'spy') return 'a spy cannot attack';
+  if (att === 'troopTransport') return 'a troop transport cannot attack';
   if ((att === 'submarine' && d.domain === 'land') || (a.domain === 'land' && def === 'submarine')) {
     return 'submarines and land units cannot attack each other';
   }
