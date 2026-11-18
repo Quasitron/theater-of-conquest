@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-under-fade-30',
+    version: '0.9.102',
+    date: '2026-11-18',
+    title: 'Stack fade made a little stronger',
+    text: ['The other units on the square of the unit you are giving orders to are now fainter still, so the active one is easier to spot.'],
+  },
+  {
     id: 'stack-under-fade',
     version: '0.9.101',
     date: '2026-11-18',
