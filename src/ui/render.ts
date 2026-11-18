@@ -1,5 +1,5 @@
 import { EXPLOSION_TAIL_MS, drawExplosion, explosionFade, explosionReady, explosionVariant } from './explosions';
-import { CITY_STRENGTH_HITS, rankOf, UNIT_STATS, buildTime, isCrippled, type PlayerView, type Pos, type Unit, type UnitType } from '../engine';
+import { CITY_STRENGTH_HITS, rankOf, UNIT_STATS, buildTime, isCrippled, type PlayerId, type PlayerView, type Pos, type Unit, type UnitType } from '../engine';
 import type { Camera } from './camera';
 import type { StepTarget } from './targets';
 import { TERRAIN_COLORS, UNIT_GLYPH } from './colors';
@@ -246,6 +246,14 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Terrain, cities and fog. The ground comes first, from the terrain pictures once they have loaded.
   const layered = drawGroundLayer(ctx, view, cam, width, height);
   if (layered) drawRivers(ctx, view, cam, width, height);
+  // A city taken in a replay fight that has not played out yet (or is still playing) keeps its previous owner's colour,
+  // so the map does not give the result away before the fight does.
+  const priorOwner = new Map<string, PlayerId | null>();
+  for (const f of o.pending ?? []) if (f.captured) priorOwner.set(`${f.at.x},${f.at.y}`, f.defenderOwner);
+  for (const a of o.fx ?? []) {
+    const frame = fightFrame(a.age, a.fight, a.duration);
+    if (frame && a.fight.captured && frame.burst < 1) priorOwner.set(`${a.fight.at.x},${a.fight.at.y}`, a.fight.defenderOwner);
+  }
   each((mx, my, sx, sy) => {
     const i = my * view.width + mx;
     const terrain = view.terrain[i];
@@ -261,9 +269,11 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     }
     if (terrain === 'city') {
       const city = view.knownCities.find((c) => c.x === mx && c.y === my);
-      drawCity(sx, sy, city && city.owner !== null ? colors[city.owner] : null);
+      const before = priorOwner.has(`${mx},${my}`);
+      const shownOwner = before ? priorOwner.get(`${mx},${my}`) ?? null : city?.owner ?? null;
+      drawCity(sx, sy, shownOwner !== null ? colors[shownOwner] : null);
       // With the city strength rule the band doubles as the strength bar: each hit taken darkens a third from the right.
-      if (city && city.owner !== null && city.damage > 0 && view.rules.cityStrength) {
+      if (city && !before && city.owner !== null && city.damage > 0 && view.rules.cityStrength) {
         const bandH = t >= ICON_MIN_TILE ? t * 0.13 : t * (t < 20 ? 0.2 : 0.13);
         const full = t * 0.88;
         const lost = full * Math.min(1, city.damage / CITY_STRENGTH_HITS);

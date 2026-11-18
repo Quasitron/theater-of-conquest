@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'replay-chronology',
+    version: '0.9.98',
+    date: '2026-11-18',
+    title: 'Battle replays no longer spoil the result',
+    text: ["During the start-of-turn replay, a city that is about to be taken keeps its old owner's colour until its fight plays, then changes hands."],
+  },
+  {
     id: 'apc-rename',
     version: '0.9.97',
     date: '2026-11-18',
