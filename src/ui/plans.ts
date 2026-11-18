@@ -167,6 +167,7 @@ export function strikeLabel(chance: number): string {
 }
 
 /** "Attack (62%)", or "Attack (~62%)" when the odds are an estimate (the defender's damage is unknown). */
-export function attackLabel(chance: number | null, estimate = false): string {
-  return chance === null ? 'Attack' : `Attack (${estimate ? '~' : ''}${Math.round(chance * 100)}%)`;
+export function attackLabel(chance: number | null, estimate = false, stack = 1): string {
+  const base = chance === null ? 'Attack' : `Attack (${estimate ? '~' : ''}${Math.round(chance * 100)}%)`;
+  return stack > 1 ? `${base} · stack of ${stack}` : base;
 }

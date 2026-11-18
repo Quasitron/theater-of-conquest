@@ -60,6 +60,8 @@ interface Props {
   view: PlayerView;
   selection: Selection;
   onSelectUnit: (id: number) => void;
+  /** Picks another enemy marker from a stack list. */
+  onSelectEnemy: (markerId: number) => void;
   onProduction: (cityId: number, type: UnitType | null) => void;
   onAction: (id: ActionId) => void;
   onOpenCity: (cityId: number) => void;
@@ -205,12 +207,14 @@ function EmptyPanel({ text, readyCount, onAction }: { text: string; readyCount: 
   );
 }
 
-function SidePanelView({ view, selection, onSelectUnit, onProduction, onAction, onOpenCity, readyCount, myColor, enemyColor }: Props) {
+function SidePanelView({ view, selection, onSelectUnit, onSelectEnemy, onProduction, onAction, onOpenCity, readyCount, myColor, enemyColor }: Props) {
   if (!selection) return <EmptyPanel text="Select a unit or city." readyCount={readyCount} onAction={onAction} />;
   if (selection.kind === 'enemy') {
     const e = view.enemies.find((x) => x.markerId === selection.id);
     if (!e) return <EmptyPanel text="That unit is no longer in view." readyCount={readyCount} onAction={onAction} />;
     const seen = e.visibleNow ? 'In sight now' : `Last seen turn ${e.turnSeen}`;
+    // Everything seen on this square under the same sighting (in sight now, or last seen), the stack it is part of.
+    const stack = view.enemies.filter((x) => x.x === e.x && x.y === e.y && x.visibleNow === e.visibleNow);
     return (
       <ScrollPanel>
         <Picture src={UNIT_ICONS[e.type]?.src} color={enemyColor} />
@@ -218,6 +222,20 @@ function SidePanelView({ view, selection, onSelectUnit, onProduction, onAction, 
         <p><Flag name={view.players[e.owner].name} /> {view.players[e.owner].name}</p>
         <p>{seen}</p>
         {groundUnder(view, e) && <p>Terrain: {groundUnder(view, e)}</p>}
+        {stack.length > 1 && (
+          <div class="square-units">
+            <h4>On this square ({stack.length})</h4>
+            <ul class="cargo-list">
+              {stack.map((o) => (
+                <li key={o.markerId}>
+                  <button class={o.markerId === e.markerId ? 'current' : ''} aria-current={o.markerId === e.markerId} onClick={(ev) => { blur(ev); onSelectEnemy(o.markerId); }}>
+                    {UNIT_STATS[o.type].name}{o.rank ? ` · ${RANK_NAMES[o.rank]}` : ''} · {view.players[o.owner].name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <NextBar readyCount={readyCount} onAction={onAction} />
       </ScrollPanel>
     );

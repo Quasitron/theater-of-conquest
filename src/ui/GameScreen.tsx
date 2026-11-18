@@ -336,7 +336,7 @@ export function GameScreen({ session, onQuit }: Props) {
     // Submarine strike: "Strike" when the enemy cannot see the sub (a surprise), the ordinary odds when an escort or city next to it can.
     const surprise = !!foe && strikeIsSurprise(view, selectedUnit, foe);
     const odds = foe ? unitAttackChance(selectedUnit, foe.type, foe.rank ?? 0, { ...view.rules, submarineStrike: surprise }, viewRelief(view, hover.x, hover.y)) : null;
-    return { at: hover, label: surprise && odds !== null ? strikeLabel(odds) : attackLabel(odds, true) };
+    return { at: hover, label: surprise && odds !== null ? strikeLabel(odds) : attackLabel(odds, true, foes.length) };
   }, [selectedUnit, hover, targets, view, playing]);
 
   // Path preview under the pointer; held back right after an order was given on that square.
@@ -1395,6 +1395,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const stable = useMemo(() => ({
     onAction: (id: ActionId) => latest.current.doAction(id),
     onSelectUnit: (id: number) => latest.current.select(id),
+    onSelectEnemy: (id: number) => setSelection({ kind: 'enemy', id }),
     onOpenCity: (id: number) => latest.current.openCity(id),
     onProduction: (cityId: number, unitType: UnitType | null) => { latest.current.act({ type: 'setProduction', cityId, unitType }); },
   }), []);
@@ -1515,6 +1516,7 @@ export function GameScreen({ session, onQuit }: Props) {
           enemyColor={selection?.kind === 'enemy' ? colors[view.enemies.find((e) => e.markerId === selection.id)?.owner ?? view.me] : colors[view.me]}
           selection={selection}
           onSelectUnit={stable.onSelectUnit}
+          onSelectEnemy={stable.onSelectEnemy}
           onProduction={stable.onProduction}
           onAction={stable.onAction}
           onOpenCity={stable.onOpenCity}
