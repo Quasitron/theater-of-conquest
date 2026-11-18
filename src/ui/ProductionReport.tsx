@@ -11,7 +11,7 @@ import { UnitCard } from './UnitCard';
 export const UNIT_BLURB: Record<UnitType, string> = {
   army: 'Foot soldiers: one of two units that can take a city, but slow and helpless at sea.',
   armor: 'Heavy tanks: twice as fast and twice as tough as an army, but they fill two places on a transport.',
-  troopTransport: 'A tracked carrier for four armies or spies: armor\'s pace and terrain limits, loads and unloads on any land square, but no attack and little protection; keep it away from enemy armor.',
+  troopTransport: 'A tracked carrier for four armies or spies: armor\'s pace and terrain limits, loads and unloads on any land square, but no attack and weak defence; keep it away from enemy armor.',
   fighter: 'A fast scout and striker; it must land in a city or on a carrier before its fuel runs out.',
   bomber: 'A slower aircraft with a longer range; it sinks ships and bombs cities, but fights poorly against fighters and cannot land on a carrier.',
   spy: 'Slips into enemy cities unseen to read what they build and wreck it; no defence, so keep it hidden. A seasoned spy can even stir up a revolt.',

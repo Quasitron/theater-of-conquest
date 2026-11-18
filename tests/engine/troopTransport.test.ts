@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { apply } from '../../src/engine/apply';
 import { combatWinChance } from '../../src/engine/combat';
 import { UNIT_STATS, buildableTypes, doublesDefense, fightRatings } from '../../src/engine/units';
@@ -61,10 +61,10 @@ describe('troop transport', () => {
 
   it('is easy prey for Armor, a little less so for an Army, and can hide in a forest', () => {
     const rules = { advancedUnits: true };
-    expect(fightRatings(rules, 'army', 'troopTransport').defense).toBe(1);
-    expect(fightRatings(rules, 'armor', 'troopTransport').defense).toBe(0.5);
-    expect(fightRatings(rules, 'armor', 'troopTransport', 'forest').defense).toBe(1);
-    expect(fightRatings(rules, 'army', 'troopTransport', 'forest').defense).toBe(1); // armies see through the trees
+    expect(fightRatings(rules, 'army', 'troopTransport').defense).toBe(2);
+    expect(fightRatings(rules, 'armor', 'troopTransport').defense).toBe(1);
+    expect(fightRatings(rules, 'armor', 'troopTransport', 'forest').defense).toBe(2);
+    expect(fightRatings(rules, 'army', 'troopTransport', 'forest').defense).toBe(2); // armies see through the trees
     expect(doublesDefense('armor', 'troopTransport', 'mountain')).toBe(false);
     const win = (att: 'army' | 'armor') => {
       const r = fightRatings(rules, att, 'troopTransport');
@@ -73,7 +73,8 @@ describe('troop transport', () => {
       return combatWinChance({ attack: r.attack, shot: a.shot, hits: a.hits, damage: 0 }, { defense: r.defense, shot: d.shot, hits: d.hits, damage: 0 });
     };
     expect(win('armor')).toBeGreaterThan(win('army'));
-    expect(win('army')).toBeGreaterThan(0.6);
+    expect(win('army')).toBeCloseTo(0.5, 5); // an even fight against an Army, like one Army against another
+    expect(win('armor')).toBeGreaterThan(0.85);
   });
 
   it('its cargo dies with it', () => {
@@ -85,7 +86,7 @@ describe('troop transport', () => {
     const r = apply(s, { type: 'move', player: 0, unitId: armor.id, dir: east });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    // The attack hit: Armor fights at 0.5 defence, so with this many rolls it wins; if not, both stand.
+    // The attack hit: Armor fights at 0.5 defence, so it usually wins; if not, both stand.
     const gone = !r.state.units.some((u) => u.id === t.id);
     expect(r.state.units.some((u) => u.id === army.id)).toBe(!gone);
   });
