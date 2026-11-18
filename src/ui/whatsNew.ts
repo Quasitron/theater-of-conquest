@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'replay-double-fight',
+    version: '0.9.100',
+    date: '2026-11-18',
+    title: 'Replay: a unit that fights twice no longer appears early',
+    text: ['A unit that wins one fight and attacks again was drawn on its second battle square before its first fight played, for instance already standing on your unit\'s square. It now stays where it started until its first fight plays.'],
+  },
+  {
     id: 'enemy-stacks',
     version: '0.9.99',
     date: '2026-11-18',

@@ -448,8 +448,15 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   for (const r of running) if (r.actors.length > 0) hide(r.fight);
   // A fight still to come in a replay: its units stand as they did before it (a unit that survives one fight and dies
   // in a later one must not vanish early). One that shares a square with a fight playing now gives way to it.
+  // A unit that fights more than once stands at the start of its first fight only; where its later fights open from
+  // (often the square its first fight won) is not where it stands yet.
+  const seenAttackers = new Set<number>();
   const waiting = (o.pending ?? []).flatMap((f) => {
     const actors = fightActors(f, { shots: 0, burst: 0, slide: 0, outcome: 'hit' });
+    if (f.from) {
+      if (seenAttackers.has(f.attackerId)) actors.shift(); // the attacker is the first actor when its start square is known
+      seenAttackers.add(f.attackerId);
+    }
     const clash = hiddenSquares.has(`${f.at.x},${f.at.y}`) || (f.from !== null && hiddenSquares.has(`${f.from.x},${f.from.y}`));
     return actors.length > 0 && !clash ? [{ fight: f, actors }] : [];
   });
