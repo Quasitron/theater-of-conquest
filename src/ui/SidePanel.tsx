@@ -81,6 +81,9 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
   const inCity = u.carriedBy === null ? view.knownCities.find((c) => c.x === u.x && c.y === u.y) : undefined;
   // Fighters out on a patrol tied to this carrier are part of its group even while they are away.
   const away = st.carries.length > 0 ? patrolsFrom(view.myUnits, u) : [];
+  // Everything standing on this square (not counting cargo): yours, then teammates' units in the open.
+  const mine = u.carriedBy === null ? view.myUnits.filter((o) => o.x === u.x && o.y === u.y && o.carriedBy === null).sort((a, b) => a.id - b.id) : [];
+  const mates = u.carriedBy === null ? view.allyUnits.filter((o) => o.x === u.x && o.y === u.y) : [];
   return (
     <div>
       <div class="unit-head">
@@ -109,6 +112,23 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
               ))}
             </ul>
           )}
+        </div>
+      )}
+      {mine.length + mates.length > 1 && (
+        <div class="square-units">
+          <h4>On this square ({mine.length + mates.length})</h4>
+          <ul class="cargo-list">
+            {mine.map((o) => (
+              <li key={o.id}>
+                <button class={o.id === u.id ? 'current' : ''} aria-current={o.id === u.id} onClick={(e) => { blur(e); onSelectUnit(o.id); }}>
+                  {unitDisplayName(o)} · {ordersText(view, o)}
+                </button>
+              </li>
+            ))}
+            {mates.map((o) => (
+              <li key={`a${o.id}`}><span class="mate">{UNIT_STATS[o.type].name} · {view.players[o.owner].name}</span></li>
+            ))}
+          </ul>
         </div>
       )}
       </div>
