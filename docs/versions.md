@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.105 | 2026-11-18 | A crippled unit in an own city shows its red cross when it blinks for orders. |
 | 0.9.104 | 2026-11-18 | The red damage cross and low-fuel mark of units under the active one in a stack are hidden. |
 | 0.9.103 | 2026-11-18 | Go Home and Repair choose the nearest city of yours or a teammate's (rules 32); the Go Home button shows when only allied cities exist; standing in an allied city is "already home". |
 | 0.9.102 | 2026-11-18 | Units under the active one in a stack are drawn at 30% (was 40%). |
