@@ -530,7 +530,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   const underActive = (u: Unit) => !!activeUnit && !blinking(u) && u.carriedBy === null && activeUnit.carriedBy === null && u.x === activeUnit.x && u.y === activeUnit.y;
   for (const u of outside) {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
-    const ua = ownAlpha(u) * (underActive(u) ? 0.4 : 1);
+    const ua = ownAlpha(u) * (underActive(u) ? 0.3 : 1);
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
       unitMark(sx, sy, colors[view.me], face(u).type, ua, 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins, face(u).type));
