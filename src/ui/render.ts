@@ -538,7 +538,8 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
       if (cargo > 0) badge(sx, sy, cargo, ua);
       else if (stackSize(u.x, u.y) > 1) badge(sx, sy, stackSize(u.x, u.y), ua); // stacking rule: how many share the square
-      if (isCrippled(u)) {
+      // The units under the active one keep their pictures (faded) but not their warnings, which would read as the active unit's.
+      if (isCrippled(u) && !underActive(u)) {
         // bottom-right: the top-left holds the rank chevrons. A red cross on a white square.
         const cs = t * 0.24, cx0 = sx + t * 0.68, cy0 = sy + t * 0.68, arm = cs * 0.34;
         ctx.fillStyle = '#fff';
@@ -548,7 +549,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         ctx.fillRect(cx0 + cs * 0.12, cy0 + (cs - arm) / 2, cs * 0.76, arm);
       }
       const range = UNIT_STATS[u.type].range;
-      if (range !== null && u.fuel !== null && u.fuel <= Math.ceil(range / 4)) {
+      if (range !== null && u.fuel !== null && u.fuel <= Math.ceil(range / 4) && !underActive(u)) {
         ctx.fillStyle = '#ffb000';
         ctx.fillRect(sx + t * 0.1, sy + t * 0.72, t * 0.18, t * 0.18);
       }

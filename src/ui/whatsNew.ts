@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-under-badges',
+    version: '0.9.104',
+    date: '2026-11-18',
+    title: 'No misleading damage marks in a stack',
+    text: ['When you are giving orders to a unit in a stack, the red damage cross and low-fuel mark of the faded units underneath are hidden, so they no longer look like the active unit\'s.'],
+  },
+  {
     id: 'gohome-allies',
     version: '0.9.103',
     date: '2026-11-18',
