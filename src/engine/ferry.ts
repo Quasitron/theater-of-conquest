@@ -4,7 +4,7 @@ import { UNIT_STATS, armorBlockedBy, canCarry, canFerry } from './units';
 import { neighbors, reliefAt, terrainAt } from './map';
 import { areFriendly } from './relations';
 import { canJoinStack, cargoOf, cargoRoom, cityAt, topLevelUnitsAt } from './query';
-import { inOwnCity, unloadCargo } from './cargo';
+import { inFriendlyCity, unloadCargo } from './cargo';
 import { findPath, pathMapFromState } from './path';
 import { giveOrders } from './orders';
 
@@ -68,7 +68,7 @@ function fitsAt(s: GameState, c: Unit, n: Pos): boolean {
 export function disembark(s: GameState, t: Unit, events: GameEvent[]): boolean {
   const cargo = cargoOf(s, t).sort((a, b) => a.id - b.id);
   if (cargo.length === 0) return true;
-  if (inOwnCity(s, t)) return unloadCargo(s, t, null, events) === null && cargoOf(s, t).length === 0;
+  if (inFriendlyCity(s, t)) return unloadCargo(s, t, null, events) === null && cargoOf(s, t).length === 0;
   const landed: number[] = [];
   for (const c of cargo) {
     let best: Pos | null = null;
@@ -111,7 +111,7 @@ function validateFerry(s: GameState, u: Unit, pickup: number, drop: Pos): string
   if (s.fog[u.owner].explored[drop.y * s.width + drop.x] !== 1) return 'the drop square is not explored';
   if (drop.x === city.x && drop.y === city.y) return 'the drop square must differ from the pickup city';
   const dropCity = cityAt(s, drop.x, drop.y);
-  if (terrainAt(s, drop.x, drop.y) !== 'water' && !(dropCity && dropCity.owner === u.owner)) return 'the drop square must be a sea tile (or one of your cities)';
+  if (terrainAt(s, drop.x, drop.y) !== 'water' && !(dropCity && areFriendly(s, dropCity.owner, u.owner))) return 'the drop square must be a sea tile (or a friendly city)';
   // Own units standing about (even the carrier itself on the drop square) do not count: the route is about the sea or land between.
   if (findPath({ ...pathMapFromState(s, u.owner), own: new Map() }, { type: u.type, x: city.x, y: city.y }, drop) === null) return 'no known path between the pickup city and the drop square';
   return null;

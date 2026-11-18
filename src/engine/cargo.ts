@@ -2,9 +2,16 @@ import type { GameEvent, GameState, Unit } from './types';
 import { UNIT_STATS, canCarry, cargoUsed } from './units';
 import { cargoOf, cargoRoom, cityAt } from './query';
 import { pickUpRoute } from './routes';
+import { areFriendly } from './relations';
 
 export function inOwnCity(s: GameState, t: Unit): boolean {
   return cityAt(s, t.x, t.y)?.owner === t.owner;
+}
+
+/** In a city of the carrier's owner or a teammate's: cargo can walk out there. */
+export function inFriendlyCity(s: GameState, t: Unit): boolean {
+  const city = cityAt(s, t.x, t.y);
+  return !!city && areFriendly(s, city.owner, t.owner);
 }
 
 /** Boards the given own armies (or fighters) onto a carrier standing in its owner's city. */
@@ -35,7 +42,7 @@ export function unloadCargo(s: GameState, t: Unit, unitIds: number[] | null, eve
   const chosen = unitIds === null ? cargo : cargo.filter((c) => unitIds.includes(c.id));
   if (chosen.length === 0) return 'nothing to unload';
   if (unitIds !== null && !unitIds.every((id) => cargo.some((c) => c.id === id))) return 'unit is not aboard';
-  const release = inOwnCity(s, t);
+  const release = inFriendlyCity(s, t);
   for (const c of chosen) {
     c.orders = null;
     if (release) c.carriedBy = null;

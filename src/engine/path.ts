@@ -104,7 +104,8 @@ export function pathMapFromView(v: PlayerView, opts: { blockOwn?: boolean } = {}
   for (const e of v.enemies) if (e.turnSeen === v.turn) enemy.add(e.y * v.width + e.x);
   const m = { width: v.width, terrain: v.terrain };
   const own = buildOwn(m, v.myUnits);
-  for (const a of v.allyUnits) addFriend(own, enemy, v.rules.stacking, a.y * v.width + a.x, UNIT_STATS[a.type].domain === 'air');
+  // A city can always be shared, so allied units inside one neither block it nor count towards a stack.
+  for (const a of v.allyUnits) if (v.terrain[a.y * v.width + a.x] !== 'city') addFriend(own, enemy, v.rules.stacking, a.y * v.width + a.x, UNIT_STATS[a.type].domain === 'air');
   return {
     width: v.width, height: v.height, wrap: v.wrap, me: v.me, turn: v.turn,
     terrain: v.terrain, ...(v.relief && v.rules.advancedUnits ? { relief: v.relief } : {}), cityOwner, enemy,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { apply } from '../../src/engine/apply';
-import { pathMapFromState, findPath } from '../../src/engine/path';
+import { pathMapFromState, pathMapFromView, findPath } from '../../src/engine/path';
+import { getPlayerView } from '../../src/engine/view';
 import { attackUnit, stackDefender } from '../../src/engine/attack';
 import { STACK_LIMIT_LAND, STACK_LIMIT_SEA, topLevelUnitsAt } from '../../src/engine/query';
 import type { GameState } from '../../src/engine/types';
@@ -165,6 +166,18 @@ describe('stacking rule', () => {
       addUnit(on, 'army', 1, 3, 0);
       const b = addUnit(on, 'army', 0, 2, 0);
       expect(findPath(pathMapFromState(on, 0), b, { x: 3, y: 0 })).not.toBeNull();
+    });
+
+    it('a city holding an ally\'s units stays open to paths, in the player view too, with the stacking rule on or off', () => {
+      for (const stacking of [false, true]) {
+        const s = allied(stacking);
+        s.fog[0].explored.fill(1);
+        // Player 1's start city is at x=8.
+        addUnit(s, 'army', 1, 8, 0);
+        const a = addUnit(s, 'army', 0, 7, 0);
+        const view = getPlayerView(s, 0);
+        expect(findPath(pathMapFromView(view), a, { x: 8, y: 0 })).not.toBeNull();
+      }
     });
 
     it('an enemy attack on a mixed stack fights the best defender of either owner, and splash reaches them all', () => {
