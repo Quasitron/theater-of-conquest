@@ -55,7 +55,7 @@ export const HOUSE_RULE_OPTIONS: { key: keyof HouseRules; label: string; hint: s
   {
     key: 'stacking',
     label: 'Stackable units',
-    hint: "Up to 4 of your land units (or 3 ships) may share a square outside a city, which clears traffic jams. An attack on a stack fights its best defender (the unit most likely to beat the attacker), one unit at a time, so a stack can still be wiped out by repeated attacks. When a Bomber or a ship wins, it may also hurt each of the other units in the stack (an even chance each). Aircraft cannot join a stack, and a winner only moves in once the last defender is gone.",
+    hint: "Up to 4 of your land units (or 3 ships) may share a square outside a city, which clears traffic jams. A teammate's units can share it too, under the same limit. An attack on a stack fights its best defender (the unit most likely to beat the attacker), one unit at a time, so a stack can still be wiped out by repeated attacks. When a Bomber or a ship wins, it may also hurt each of the other units in the stack (an even chance each). Aircraft cannot join a stack, and a winner only moves in once the last defender is gone.",
   },
   {
     key: 'cityStrength',

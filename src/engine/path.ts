@@ -54,6 +54,18 @@ function buildOwn(
   return own;
 }
 
+/** A friend's unit in the open: it blocks the square, or with the stacking rule counts towards the square's stack. */
+function addFriend(own: PathMap['own'], enemy: Set<number>, stacking: boolean, i: number, air: boolean): void {
+  if (!stacking) {
+    enemy.add(i);
+    return;
+  }
+  let e = own.get(i);
+  if (!e) own.set(i, (e = { count: 0, air: 0, room: {} }));
+  e.count++;
+  if (air) e.air++;
+}
+
 export function pathMapFromState(s: GameState, pid: PlayerId, opts: { blockOwn?: boolean } = {}): PathMap {
   const fog = s.fog[pid];
   const terrain = s.terrain.map((t, i) => (fog.explored[i] ? t : null));
@@ -67,17 +79,19 @@ export function pathMapFromState(s: GameState, pid: PlayerId, opts: { blockOwn?:
   }
   const enemy = new Set<number>();
   for (const e of Object.values(fog.lastSeen)) if (e.turnSeen === s.turn) enemy.add(index(s, e.x, e.y));
-  // Allied units standing in the open block the square as an enemy would (nothing may share it); a city can be shared.
+  const m = { width: s.width, terrain };
+  const own = buildOwn(m, s.units.filter((u) => u.owner === pid));
+  // Allied units standing in the open block the square as an enemy would (nothing may share it), unless the stacking rule
+  // lets land or sea units join them (then they only count towards the square's limit); a city can always be shared.
   for (const u of s.units) {
     if (u.owner === pid || u.carriedBy !== null || !areFriendly(s, u.owner, pid)) continue;
     const i = index(s, u.x, u.y);
-    if (s.terrain[i] !== 'city') enemy.add(i);
+    if (s.terrain[i] !== 'city') addFriend(own, enemy, s.rules.stacking, i, UNIT_STATS[u.type].domain === 'air');
   }
-  const m = { width: s.width, terrain };
   return {
     width: s.width, height: s.height, wrap: s.wrap, me: pid, turn: s.turn,
     terrain, ...(relief ? { relief } : {}), cityOwner, enemy,
-    own: buildOwn(m, s.units.filter((u) => u.owner === pid)),
+    own,
     stacking: s.rules.stacking,
     blockOwn: opts.blockOwn ?? false,
   };
@@ -88,12 +102,13 @@ export function pathMapFromView(v: PlayerView, opts: { blockOwn?: boolean } = {}
   for (const c of v.knownCities) cityOwner.set(c.y * v.width + c.x, c.owner !== null && v.allies.includes(c.owner) ? v.me : c.owner);
   const enemy = new Set<number>();
   for (const e of v.enemies) if (e.turnSeen === v.turn) enemy.add(e.y * v.width + e.x);
-  for (const a of v.allyUnits) enemy.add(a.y * v.width + a.x);
   const m = { width: v.width, terrain: v.terrain };
+  const own = buildOwn(m, v.myUnits);
+  for (const a of v.allyUnits) addFriend(own, enemy, v.rules.stacking, a.y * v.width + a.x, UNIT_STATS[a.type].domain === 'air');
   return {
     width: v.width, height: v.height, wrap: v.wrap, me: v.me, turn: v.turn,
     terrain: v.terrain, ...(v.relief && v.rules.advancedUnits ? { relief: v.relief } : {}), cityOwner, enemy,
-    own: buildOwn(m, v.myUnits),
+    own,
     stacking: v.rules.stacking,
     blockOwn: opts.blockOwn ?? false,
   };

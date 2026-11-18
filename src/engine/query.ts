@@ -26,12 +26,13 @@ export const stackLimitOf = (domain: 'land' | 'sea' | 'air'): number => (domain 
 
 /**
  * Stacking rule: whether `u` may end a move on p, a square outside a city that already holds units, by joining them. All
- * of them must be the mover's own land or sea units (no aircraft on either side) and there must be a free place.
+ * of them must be land or sea units of the mover or of a friend (no aircraft on either side) and there must be a free
+ * place: the limit is for the whole square, whoever the units belong to.
  */
 export function canJoinStack(s: GameState, u: Unit, p: { x: number; y: number }): boolean {
   if (!s.rules.stacking || UNIT_STATS[u.type].domain === 'air') return false;
   const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => o !== u);
-  return here.length > 0 && here.length < stackLimitOf(UNIT_STATS[u.type].domain) && here.every((o) => o.owner === u.owner && UNIT_STATS[o.type].domain !== 'air');
+  return here.length > 0 && here.length < stackLimitOf(UNIT_STATS[u.type].domain) && here.every((o) => areFriendly(s, o.owner, u.owner) && UNIT_STATS[o.type].domain !== 'air');
 }
 
 export function cargoOf(s: GameState, carrier: Unit): Unit[] {
