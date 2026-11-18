@@ -526,15 +526,18 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // The unit that needs orders is drawn last, so it is the one that shows when several share a square (an enemy city).
   const outside = showUnits ? [...view.myUnits].sort((a, b) => Number(blinking(a)) - Number(blinking(b))) : [];
   const stackSize = (x: number, y: number) => outside.filter((o) => o.carriedBy === null && o.x === x && o.y === y).length;
+  // The units under the one you are giving orders to are drawn much fainter, so the map shows which one it is.
+  const underActive = (u: Unit) => !!activeUnit && !blinking(u) && u.carriedBy === null && activeUnit.carriedBy === null && u.x === activeUnit.x && u.y === activeUnit.y;
   for (const u of outside) {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
+    const ua = ownAlpha(u) * (underActive(u) ? 0.4 : 1);
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
-      unitMark(sx, sy, colors[view.me], face(u).type, ownAlpha(u), 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins, face(u).type));
-      sentryTag(face(u), sx + t * 0.5, sy + t * 0.5, 1, ownAlpha(u));
+      unitMark(sx, sy, colors[view.me], face(u).type, ua, 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins, face(u).type));
+      sentryTag(face(u), sx + t * 0.5, sy + t * 0.5, 1, ua);
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
-      if (cargo > 0) badge(sx, sy, cargo, ownAlpha(u));
-      else if (stackSize(u.x, u.y) > 1) badge(sx, sy, stackSize(u.x, u.y), ownAlpha(u)); // stacking rule: how many share the square
+      if (cargo > 0) badge(sx, sy, cargo, ua);
+      else if (stackSize(u.x, u.y) > 1) badge(sx, sy, stackSize(u.x, u.y), ua); // stacking rule: how many share the square
       if (isCrippled(u)) {
         // bottom-right: the top-left holds the rank chevrons. A red cross on a white square.
         const cs = t * 0.24, cx0 = sx + t * 0.68, cy0 = sy + t * 0.68, arm = cs * 0.34;

@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-under-fade',
+    version: '0.9.101',
+    date: '2026-11-18',
+    title: 'Easier to see which unit in a stack has the orders',
+    text: ['When the unit you are giving orders to shares a square with others, the other units on that square are now drawn much fainter, so the blinking unit stands out on the map.'],
+  },
+  {
     id: 'replay-double-fight',
     version: '0.9.100',
     date: '2026-11-18',
