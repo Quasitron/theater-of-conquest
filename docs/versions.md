@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.101 | 2026-11-18 | Stack readability: the units under the active (blinking) unit on a shared square are drawn at 40% of their usual opacity. |
 | 0.9.100 | 2026-11-18 | Replay fix: in the turn-start replay an attacker with several fights is drawn at the start of its first pending fight only, not at the start square of its later ones (found with the Rob - Med save, an Egyptian Armor that won and attacked again). |
 | 0.9.99 | 2026-11-18 | Enemy stack info: count badge on visible/last-seen enemy stacks, "On this square" list in the side panel for an enemy stack (click to inspect), "stack of N" in the attack odds label. |
 | 0.9.98 | 2026-11-18 | Replay chronology: while a captured city's fight is still to play (or playing), the map draws it in its previous owner's colour so the result is not given away. |
