@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'city-crippled-badge',
+    version: '0.9.105',
+    date: '2026-11-18',
+    title: 'Wounded units in a city show their damage cross',
+    text: ['A crippled unit in one of your cities now shows its red cross when it blinks for orders, as it does on open ground.'],
+  },
+  {
     id: 'stack-under-badges',
     version: '0.9.104',
     date: '2026-11-18',

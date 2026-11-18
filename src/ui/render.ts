@@ -488,6 +488,16 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     });
   }
 
+  /** Bottom-right: the top-left holds the rank chevrons. A red cross on a white square marks a crippled unit. */
+  const crippledCross = (sx: number, sy: number) => {
+    const cs = t * 0.24, cx0 = sx + t * 0.68, cy0 = sy + t * 0.68, arm = cs * 0.34;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx0, cy0, cs, cs);
+    ctx.fillStyle = '#e02020';
+    ctx.fillRect(cx0 + (cs - arm) / 2, cy0 + cs * 0.12, arm, cs * 0.76);
+    ctx.fillRect(cx0 + cs * 0.12, cy0 + (cs - arm) / 2, cs * 0.76, arm);
+  };
+
   // Own city stacks: the top unit at 60% in the top-left, a count badge when 2 or more (dot below 16px tiles).
   const inOwnCity = (x: number, y: number) => view.knownCities.some((c) => c.x === x && c.y === y && c.owner === view.me);
   for (const city of view.knownCities) {
@@ -513,6 +523,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
           ctx.fillRect(sx, sy, t, t);
           unitMark(sx, sy, colors[view.me], face(shown).type, face(shown).movesLeft > 0 ? 1 : 0.6, 1, 0.5, 0.5, left(face(shown)), rankOf(face(shown).wins, face(shown).type));
           if (stack.length >= 2) badge(sx, sy, stack.length, 1);
+          if (isCrippled(shown)) crippledCross(sx, sy); // a wounded unit in a city shows its cross when it blinks in
         }
         return;
       }
@@ -540,13 +551,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
       else if (stackSize(u.x, u.y) > 1) badge(sx, sy, stackSize(u.x, u.y), ua); // stacking rule: how many share the square
       // The units under the active one keep their pictures (faded) but not their warnings, which would read as the active unit's.
       if (isCrippled(u) && !underActive(u)) {
-        // bottom-right: the top-left holds the rank chevrons. A red cross on a white square.
-        const cs = t * 0.24, cx0 = sx + t * 0.68, cy0 = sy + t * 0.68, arm = cs * 0.34;
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(cx0, cy0, cs, cs);
-        ctx.fillStyle = '#e02020';
-        ctx.fillRect(cx0 + (cs - arm) / 2, cy0 + cs * 0.12, arm, cs * 0.76);
-        ctx.fillRect(cx0 + cs * 0.12, cy0 + (cs - arm) / 2, cs * 0.76, arm);
+        crippledCross(sx, sy);
       }
       const range = UNIT_STATS[u.type].range;
       if (range !== null && u.fuel !== null && u.fuel <= Math.ceil(range / 4) && !underActive(u)) {
