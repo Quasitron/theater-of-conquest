@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'news-close-top',
+    version: '0.9.96',
+    date: '2026-11-18',
+    title: 'Close What\'s New from the top',
+    text: ['This page now has its Close button at the top, and it stays in view while you scroll.'],
+  },
+  {
     id: 'ai-airbases',
     version: '0.9.95',
     date: '2026-11-18',

@@ -14,7 +14,10 @@ export function WhatsNewDialog({ onClose }: Props) {
   const shown = all ? WHATS_NEW : WHATS_NEW.slice(0, WHATS_NEW_RECENT);
   return (
     <PlacedDialog anchor={null} wide label="What's New" onKey={(e) => { if (e.key === 'Escape') { onClose(); return true; } return false; }}>
-      <h2>What's New</h2>
+      <div class="news-top">
+        <h2>What's New</h2>
+        <button class="primary" onClick={(e) => { blur(e); onClose(); }}>Close</button>
+      </div>
       {shown.map((e) => (
         <section key={e.id} class="news-entry">
           <h3>{e.title} <span class="muted">Version {e.version} · {e.date}</span></h3>
