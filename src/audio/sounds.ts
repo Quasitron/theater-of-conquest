@@ -1,12 +1,12 @@
 export type SoundName =
   | 'click' | 'turn' | 'chime' | 'shot' | 'explosion' | 'crash'
   | 'capture' | 'lost' | 'alert' | 'unload' | 'promote' | 'promote-elite' | 'win' | 'lose' | 'news'
-  | 'produce-army' | 'produce-armor' | 'produce-fighter' | 'produce-bomber' | 'airbase' | 'produce-transport' | 'produce-destroyer'
+  | 'produce-army' | 'produce-armor' | 'produce-troopTransport' | 'produce-fighter' | 'produce-bomber' | 'airbase' | 'produce-transport' | 'produce-destroyer'
   | 'produce-submarine' | 'produce-cruiser' | 'produce-battleship' | 'produce-carrier' | 'produce-spy';
 
 export const SOUND_NAMES: SoundName[] = [
   'click', 'turn', 'chime', 'shot', 'explosion', 'crash', 'capture', 'lost', 'alert', 'unload', 'promote', 'promote-elite', 'win', 'lose', 'news',
-  'produce-army', 'produce-armor', 'produce-fighter', 'produce-bomber', 'airbase', 'produce-transport', 'produce-destroyer',
+  'produce-army', 'produce-armor', 'produce-troopTransport', 'produce-fighter', 'produce-bomber', 'airbase', 'produce-transport', 'produce-destroyer',
   'produce-submarine', 'produce-cruiser', 'produce-battleship', 'produce-carrier', 'produce-spy',
 ];
 
@@ -41,6 +41,8 @@ export const OVERRIDES: Partial<Record<SoundName, string>> = {
   'produce-army': '/sounds/produce-army.mp3',
   // Armor (Advanced units rule), the first 4 seconds of the original recording.
   'produce-armor': '/sounds/produce-armor.mp3',
+  // Troop Transport (Advanced units rule): the engine of a tracked SMET vehicle, 2 s of a US Army video (see docs/sounds.md).
+  'produce-troopTransport': '/sounds/produce-troopTransport.mp3',
   // Spy (Advanced units rule): 4 s of a quiet surveillance-style ambience, 25 s to 29 s of the original recording (see docs/sounds.md).
   'produce-spy': '/sounds/produce-spy.mp3',
   // Explosion, seconds 1.5 to 2.5 of the original recording; short enough to repeat for a combat animation.
@@ -230,6 +232,11 @@ export const SYNTH: Record<SoundName, SynthFn> = {
     tone(c, o, t, 55, 0.9, { type: 'sawtooth', gain: 0.18, endFreq: 70 });
     noise(c, o, t, 0.9, { gain: 0.14, from: 500, to: 200, q: 2 });
     [0.15, 0.4, 0.65].forEach((d) => tone(c, o, t + d, 420, 0.05, { type: 'square', gain: 0.06, endFreq: 300 }));
+  },
+  // Troop Transport (fallback): a steadier, lighter engine rumble than Armor's.
+  'produce-troopTransport': (c, o, t) => {
+    tone(c, o, t, 70, 0.9, { type: 'sawtooth', gain: 0.14, endFreq: 85 });
+    noise(c, o, t, 0.9, { gain: 0.12, from: 600, to: 250, q: 1.5 });
   },
   // Spy (fallback): a soft, low, sneaking tone.
   'produce-spy': (c, o, t) => {
