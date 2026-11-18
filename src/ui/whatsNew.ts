@@ -16,6 +16,17 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'troop-transport',
+    version: '0.9.94',
+    date: '2026-11-18',
+    title: 'The Troop Transport',
+    text: [
+      'A new unit with the Advanced units rule: a tracked carrier for four Armies or Spies (not Armor). It moves like Armor, with the same terrain limits, and loads and unloads on any land square: walk an Army onto it, or use Load. It can run routes over land, too.',
+      'It cannot attack and is easy prey: Armor kills it almost at will, an Army has a fair chance, and it can hide in a forest. If it is destroyed, everyone aboard dies with it.',
+    ],
+    image: { src: 'troop-transport.png', alt: 'The Troop Transport card' },
+  },
+  {
     id: 'square-units',
     version: '0.9.93',
     date: '2026-11-18',

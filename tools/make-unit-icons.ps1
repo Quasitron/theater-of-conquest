@@ -1,4 +1,5 @@
-﻿# Makes the map icons: public/art/units/<unit>.webp from the pictures in Documents\Claude\art-originals\units.
+param([string[]]$Only = @())
+# Makes the map icons: public/art/units/<unit>.webp from the pictures in Documents\Claude\art-originals\units.
 # Each picture is one unit on a plain light background. The background is removed by flood-filling inward from the
 # picture's edges (so light patches inside the unit stay), the result is trimmed to the unit and scaled to at most
 # 320 px on its longest side. Run from the project folder:  powershell -File tools/make-unit-icons.ps1
@@ -63,12 +64,13 @@ $out = Join-Path (Get-Location) 'public\art\units'
 $tmp = Join-Path $env:TEMP 'unit-icons'
 New-Item -ItemType Directory -Force $out, $tmp | Out-Null
 # unit name = source file (without extension; the highest -v5 .. -v2 file wins when there is one)
-$units = [ordered]@{ army = 'Army'; destroyer = 'destroyer'; fighter = 'fighter'; bomber = 'Bomber'; transport = 'transport'; cruiser = 'Cruiser'; battleship = 'Battleship'; carrier = 'Carrier'; submarine = 'Submarine'; armor = 'Armor'; spy = 'Spy'; city = 'City' }
+$units = [ordered]@{ army = 'Army'; destroyer = 'destroyer'; fighter = 'fighter'; bomber = 'Bomber'; transport = 'transport'; cruiser = 'Cruiser'; battleship = 'Battleship'; carrier = 'Carrier'; submarine = 'Submarine'; armor = 'Armor'; spy = 'Spy'; city = 'City'; troopTransport = 'Troop Transport' }
 # pixels along the right edge to ignore (a stray line the picture generator left there)
 $ignoreRight = @{}
 # degrees to turn a picture clockwise first (negative = counter-clockwise), for pictures drawn on a slant
 $rotate = @{}
 foreach ($name in $units.Keys) {
+  if ($Only.Count -gt 0 -and $Only -notcontains $name) { continue }
   # a picture named <name>-v3 or <name>-v2 (a redo) is used in preference to the first one, the newest first
   $file = $null
   foreach ($v in 'v5', 'v4', 'v3', 'v2') {

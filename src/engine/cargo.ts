@@ -17,7 +17,8 @@ export function inFriendlyCity(s: GameState, t: Unit): boolean {
 /** Boards the given own armies (or fighters) onto a carrier standing in its owner's city. */
 export function loadUnits(s: GameState, t: Unit, unitIds: number[]): string | null {
   if (UNIT_STATS[t.type].carries.length === 0) return 'this unit cannot carry cargo';
-  if (!inOwnCity(s, t)) return 'can only load in one of your cities';
+  // A Troop Transport loads on any land square; ships and carriers only in a city of theirs.
+  if (!inOwnCity(s, t) && t.type !== 'troopTransport') return 'can only load in one of your cities';
   if (unitIds.length === 0 || new Set(unitIds).size !== unitIds.length) return 'nothing to load';
   const boarding: Unit[] = [];
   for (const id of unitIds) {

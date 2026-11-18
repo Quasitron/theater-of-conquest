@@ -1140,8 +1140,9 @@ export function GameScreen({ session, onQuit }: Props) {
         // The ship sails to the drop square, so it must be water (or a city of yours); cargo goes ashore from there.
         const ground = view.terrain[p.y * view.width + p.x];
         const friendlyCity = view.knownCities.some((c) => c.x === p.x && c.y === p.y && (c.owner === view.me || (c.owner !== null && view.allies.includes(c.owner))));
-        if (ground !== 'water' && !friendlyCity) {
-          setFerryPlan({ ...plan, note: 'The drop square must be a sea tile (or a friendly city). Pick the water beside the coast where the cargo should land.' });
+        const dropGround = selectedUnit && UNIT_STATS[selectedUnit.type].domain === 'land' ? 'land' : 'water';
+        if (ground !== dropGround && !friendlyCity) {
+          setFerryPlan({ ...plan, note: 'The drop square must be a ' + (dropGround === 'land' ? 'land tile' : 'sea tile') + ' (or a friendly city).' + (dropGround === 'land' ? '' : ' Pick the water beside the coast where the cargo should land.') });
           return;
         }
         const squares = { pickup: plan.pickup, drop: { x: p.x, y: p.y } };

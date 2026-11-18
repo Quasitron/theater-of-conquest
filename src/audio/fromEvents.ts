@@ -17,6 +17,7 @@ const PRIORITY: Record<SoundName, number> = {
 
 /** The sound for a newly built unit of this type; 'chime' for an unknown type. */
 export function produceSound(unitType: string): SoundName {
+  if (unitType === 'troopTransport') return 'produce-armor'; // no recording of its own yet: it sounds like Armor
   const s = `produce-${unitType}` as SoundName;
   return s in PRIORITY ? s : 'chime';
 }

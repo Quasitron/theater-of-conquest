@@ -53,4 +53,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 28: an Army or Armor on Explore also heads for a known neutral city when it is nearer than the unexplored edge.
 // 29: stacking rule: a unit may join a teammate's stack (one limit for the whole square).
 // 30: a ferry may drop at a teammate's city and unload there; allied units inside a city no longer block it in the path map.
-export const RULES_VERSION = 30;
+// 31: the Troop Transport (Advanced units): a land carrier for four Armies or Spies.
+export const RULES_VERSION = 31;
