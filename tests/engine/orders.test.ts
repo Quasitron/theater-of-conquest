@@ -508,6 +508,27 @@ describe('go home', () => {
     expect(chooseHome(s, a)).toMatchObject({ city: { id: 0 }, steps: 1 });
   });
 
+  it("goHome counts a teammate's city, so a bomber near only allied cities can head for one", () => {
+    const s = makeGame(['*###*###*'], { players: 3, starts: [0, 1, 2] });
+    for (const c of s.cities) c.production = null;
+    s.fog[0].explored.fill(1);
+    s.players[0].team = 1;
+    s.players[1].team = 1; // player 2 is the enemy
+    s.cities[0].owner = 1; // two allied cities, none of ours
+    s.cities[1].owner = 1;
+    s.cities[2].owner = 2;
+    const b = addUnit(s, 'army', 0, 3, 0);
+    expect(chooseHome(s, b)).toMatchObject({ city: { id: 1 }, steps: 1 });
+    const r = run(s, { type: 'goHome', player: 0, unitId: b.id });
+    expect(unitById(r.state, b.id)).toMatchObject({ x: 4 });
+    // Standing in an allied city already counts as home.
+    const here = addUnit(s, 'army', 0, 4, 0);
+    expect(apply(s, { type: 'goHome', player: 0, unitId: here.id })).toEqual({ ok: false, error: 'already home' });
+    // An enemy city never does.
+    const near = addUnit(s, 'army', 0, 7, 0);
+    expect(chooseHome(s, near)).toMatchObject({ city: { id: 1 } });
+  });
+
   it("goHome in an own city is rejected 'already home'", () => {
     const s = homeGame();
     const a = addUnit(s, 'army', 0, 4, 0);

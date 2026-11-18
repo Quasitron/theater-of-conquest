@@ -54,4 +54,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 29: stacking rule: a unit may join a teammate's stack (one limit for the whole square).
 // 30: a ferry may drop at a teammate's city and unload there; allied units inside a city no longer block it in the path map.
 // 31: the APC, Armored Personnel Carrier (Advanced units): a land carrier for four Armies or Spies.
-export const RULES_VERSION = 31;
+// 32: Go Home (and Repair) heads for the nearest city of yours or a teammate's, not only your own.
+export const RULES_VERSION = 32;

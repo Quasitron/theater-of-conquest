@@ -107,7 +107,7 @@ export function chooseHome(s: GameState, u: Unit): { city: City; steps: number }
   const st = UNIT_STATS[u.type];
   let best: { city: City; steps: number } | null = null;
   for (const city of [...s.cities].sort((a, b) => a.id - b.id)) {
-    if (city.owner !== u.owner) continue;
+    if (!areFriendly(s, city.owner, u.owner)) continue; // a teammate's city is as good as ours: refuel, repair, shelter
     if (st.domain === 'sea' && !isCoastal(s, city.x, city.y)) continue;
     const path = findPath(map, u, city);
     if (path === null) continue;

@@ -2,6 +2,7 @@ import { UNIT_STATS, canBecomeAirbase, canCarry, canFerry, rankOf, unitDisplayNa
 import type { ActionId } from './keys';
 
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
+const inAllyCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.knownCities.some((c) => c.x === u.x && c.y === u.y && c.owner !== null && v.allies.includes(c.owner));
 
 /** Own units on the transport's square that could board it, by id. */
 export function loadCandidates(view: PlayerView, t: Unit): Unit[] {
@@ -45,7 +46,8 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     disband: true,
     load: st.carries.length > 0 && (inCity || u.type === 'troopTransport') && loadCandidates(view, u).length > 0,
     unload: hasCargo,
-    goHome: view.myCities.length > 0 && !inCity && !fixed,
+    // Home is any city of yours or a teammate's (an ally's city refuels and repairs too).
+    goHome: !fixed && !inCity && !inAllyCity(view, u) && (view.myCities.length > 0 || view.knownCities.some((c) => c.owner !== null && view.allies.includes(c.owner))),
     patrol: !fixed,
     // A warship (not a transport) can escort when a transport of ours at sea has no escort yet.
     escort: st.domain === 'sea' && u.type !== 'transport' && u.carriedBy === null && escortable(view, u).length > 0,
