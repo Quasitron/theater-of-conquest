@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'unload-stack',
+    version: '0.9.116',
+    date: '2026-11-19',
+    title: 'Landings land as a stack',
+    text: ['With the stacking rule on, unloading a transport (and a ferry dropping its cargo) now puts the units ashore together on one square, up to 4, so the weaker ones are covered. Spread them out afterwards if you prefer.'],
+  },
+  {
     id: 'ferry-waitfull-fix',
     version: '0.9.114',
     date: '2026-11-19',

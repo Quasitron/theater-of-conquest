@@ -83,7 +83,9 @@ export function disembark(s: GameState, t: Unit, events: GameEvent[]): boolean {
     let bestScore = Infinity;
     for (const n of neighbors(s, t.x, t.y)) {
       if (!fitsAt(s, c, n)) continue;
-      const score = (cityAt(s, n.x, n.y) ? 0 : 10) + topLevelUnitsAt(s, n.x, n.y).length;
+      const count = topLevelUnitsAt(s, n.x, n.y).length;
+      // Stacking rule: pile onto one square (the fullest with room) so the weaker units are covered; otherwise spread out.
+      const score = (cityAt(s, n.x, n.y) ? 0 : 10) + (s.rules.stacking ? -count : count);
       if (score < bestScore) { bestScore = score; best = n; }
     }
     if (!best) continue;
