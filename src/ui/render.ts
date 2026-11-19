@@ -672,7 +672,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     });
     // Mark the attacker while the shots fly: a pulsing orange ring round it and an arrow to the defender.
     if (fr && r.frame.burst === 0) {
-      const pulse = 0.6 + 0.4 * Math.sin(r.frame.shots * Math.PI * 6);
+      const pulse = 0.6 + 0.4 * Math.sin(r.frame.shots * Math.PI * 4);
       for (const off of copies) {
         const ax = (fr.x + off - cam.x + 0.5) * t;
         const ay = (fr.y - cam.y + 0.5) * t;
