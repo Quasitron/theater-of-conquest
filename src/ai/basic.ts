@@ -546,6 +546,24 @@ function worthShelling(view: PlayerView, u: Unit, e: { type: UnitType; rank?: nu
   return cost <= hits * SHELL_MAX_COST && u.damage + cost < hits * (1 - SHELL_MIN_HEALTH);
 }
 
+/** A friendly land unit this close to a city, or a Bomber or Fighter within air reach, can follow shelling with an attack. */
+const FOLLOW_LAND = 6;
+const FOLLOW_AIR = 10;
+
+/**
+ * Whether we or a teammate have something near enough to attack city once a ship has worn it down. Without one, shelling
+ * it is wasted (the city heals), so ships turn to other work.
+ */
+function hasFollowUp(view: PlayerView, city: Pos): boolean {
+  return [...view.myUnits, ...view.allyUnits].some((a) => {
+    if (('carriedBy' in a) && a.carriedBy !== null) return false;
+    const st = UNIT_STATS[a.type];
+    const d = chebyshev(geo(view), a, city);
+    if (st.domain === 'land') return st.attack > 0 && d <= FOLLOW_LAND;
+    return st.domain === 'air' && st.attack > 0 && d <= FOLLOW_AIR;
+  });
+}
+
 /** How long ago (in turns) an enemy sighting may be and still be worth sailing to. */
 const HUNT_MEMORY = 2;
 /** Farthest (in squares) a warship goes after a sighting. */
@@ -648,7 +666,7 @@ function decideWarship(view: PlayerView, u: Unit, t: AiTuning): SessionCommand |
   // City strength rule: a healthy bombarding ship beside an enemy player's city fires on it while that can still wear it down.
   if (view.rules.cityStrength && UNIT_STATS[u.type].bombard && u.damage === 0 && u.movesLeft > 0) {
     const city = view.knownCities.find((c) => c.owner !== null && isFoe(view, c.owner)
-      && chebyshev(geo(view), u, c) === 1 && c.damage < CITY_STRENGTH_HITS - 1);
+      && chebyshev(geo(view), u, c) === 1 && c.damage < CITY_STRENGTH_HITS - 1 && hasFollowUp(view, c));
     if (city && cityBombardChance(view, u, city.damage, 0) >= t.minShipWinChance) {
       const dir = dirTo(view, u, city);
       if (dir !== null) return { type: 'move', unitId: u.id, dir };
@@ -698,7 +716,7 @@ function decideWarship(view: PlayerView, u: Unit, t: AiTuning): SessionCommand |
   if (view.rules.cityStrength && UNIT_STATS[u.type].bombard) {
     let goal: { sq: Pos; d: number } | null = null;
     for (const c of view.knownCities) {
-      if (c.owner === null || !isFoe(view, c.owner) || c.damage >= CITY_STRENGTH_HITS - 1) continue;
+      if (c.owner === null || !isFoe(view, c.owner) || c.damage >= CITY_STRENGTH_HITS - 1 || !hasFollowUp(view, c)) continue;
       for (const n of neighbors(geo(view), c.x, c.y)) {
         const d = dist.get(n.y * view.width + n.x);
         if (d !== undefined && d > 0 && d <= HUNT_RANGE * 2 && (goal === null || d < goal.d)) goal = { sq: n, d };

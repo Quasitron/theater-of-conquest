@@ -417,19 +417,22 @@ describe('AI warships', () => {
 
 describe('AI bombardment (city strength rule)', () => {
   it('a healthy battleship beside an enemy city fires on it, but not once it is worn down, nor with the rule off', () => {
-    const run = (rules: object, damage = 0) => {
+    const run = (rules: object, damage = 0, followUp = true) => {
       const s = game(['*..*'], { rules });
       const enemyCity = s.cities.find((c) => c.owner === 0)!;
       enemyCity.damage = damage;
       s.fog[1].knownCityOwner[enemyCity.id] = 0; // the AI has seen whose city it is
       s.fog[1].knownCityDamage = { [enemyCity.id]: damage }; // and how worn it is
       const ship = addUnit(s, 'battleship', 1, enemyCity.x + 1, enemyCity.y);
+      if (followUp) addUnit(s, 'army', 1, 3, 0); // an army of ours to take the city once it is worn down
       return { cmd: next(s), ship };
     };
     const on = run({ cityStrength: true });
     expect(on.cmd).toEqual({ type: 'move', unitId: on.ship.id, dir: 6 });
     expect(run({ cityStrength: true }, 2).cmd).not.toEqual({ type: 'move', unitId: expect.anything(), dir: 6 });
     expect(run({}).cmd).not.toEqual({ type: 'move', unitId: expect.anything(), dir: 6 });
+    // ...and with nothing of ours near enough to attack the city afterwards, it does not bother
+    expect(run({ cityStrength: true }, 0, false).cmd).not.toEqual({ type: 'move', unitId: expect.anything(), dir: 6 });
   });
 });
 describe('AI shore bombardment of land units', () => {
@@ -492,6 +495,7 @@ describe('AI hunting cities (city strength rule)', () => {
       s.fog[1].knownCityOwner[enemyCity.id] = 0;
       s.fog[1].knownCityDamage = { [enemyCity.id]: damage };
       addUnit(s, 'cruiser', 1, 4, 0);
+      addUnit(s, 'army', 1, 6, 0);
       return next(s);
     };
     expect(run({ cityStrength: true })).toMatchObject({ orders: { kind: 'goto', target: { x: 1, y: 0 } } });
