@@ -16,18 +16,14 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: 'ai-shell-cost',
-    version: '0.9.107',
-    date: '2026-11-18',
-    title: 'Computer warships weigh the cost of shelling',
-    text: ['Computer Cruisers and Battleships now shell the shore only when they expect to come away nearly unhurt, and a ship that is already badly damaged, or has a stronger enemy warship close by, holds fire.'],
-  },
-  {
     id: 'ai-shore-bombardment',
     version: '0.9.106',
     date: '2026-11-18',
     title: 'Computer warships shell your coast',
-    text: ['Computer Cruisers and Battleships now fire on your land units standing on the shore, and sail toward ones they saw recently when the odds are good. Expect to lose a few units on the beach if you leave them exposed.'],
+    text: [
+      'Computer Cruisers and Battleships now fire on your land units standing on the shore, and sail toward ones they saw recently. Expect to lose a few units on the beach if you leave them exposed.',
+      'They are careful about it: a ship shells only when it expects to come away nearly unhurt, and holds fire when it is badly damaged or a stronger enemy warship is close by. They also shell a city only when one of their own or a teammate\'s units is near enough to attack it afterwards.',
+    ],
   },
   {
     id: 'city-crippled-badge',
@@ -49,13 +45,6 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     date: '2026-11-18',
     title: 'Go Home also finds your teammates\' cities',
     text: ['Go Home (and Repair) now heads for the nearest city of yours or a teammate\'s, so a bomber or ship that is only near allied cities can still use it. A unit already standing in an allied city counts as home.'],
-  },
-  {
-    id: 'stack-under-fade-30',
-    version: '0.9.102',
-    date: '2026-11-18',
-    title: 'Stack fade made a little stronger',
-    text: ['The other units on the square of the unit you are giving orders to are now fainter still, so the active one is easier to spot.'],
   },
   {
     id: 'stack-under-fade',
