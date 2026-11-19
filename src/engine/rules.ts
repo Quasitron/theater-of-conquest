@@ -57,4 +57,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 32: Go Home (and Repair) heads for the nearest city of yours or a teammate's, not only your own.
 // 33: a ferry carrier sailing back from a drop city does not take the units it just put ashore.
 // 34: a Wait-until-full ferry sails when the waiting units left over cannot fit its free space (e.g. one space left, Armor needs two).
-export const RULES_VERSION = 34;
+// 35: a Wait-until-full ferry also sails with just one space free (5 of 6), not waiting for one more Army or Spy.
+export const RULES_VERSION = 35;

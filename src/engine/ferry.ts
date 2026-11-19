@@ -32,7 +32,7 @@ export function ferryHasCargo(s: GameState, u: Unit): boolean {
 }
 
 /**
- * With waiting units taken in order as the carrier leaves, whether it would be full: no room left, or a waiting unit
+ * With waiting units taken in order as the carrier leaves, whether it counts as full: at most one space free, or a waiting unit
  * is left behind because it does not fit (an Armor needs two spaces, so one free space can stay empty for ever).
  */
 export function ferryWouldBeFull(s: GameState, u: Unit): boolean {
@@ -47,7 +47,8 @@ export function ferryWouldBeFull(s: GameState, u: Unit): boolean {
       else leftBehind = true;
     }
   }
-  return room < 1 || leftBehind;
+  // One free space short of the capacity is close enough: it is not worth waiting for one more Army or Spy.
+  return room <= 1 || leftBehind;
 }
 
 /** Whether `c` could be put ashore on square n (a free square of the right kind, or one it may stack onto). */
