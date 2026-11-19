@@ -4,7 +4,7 @@ import {
 } from '../engine';
 import type { SessionCommand } from '../app/session';
 import { cityIsCoastal } from '../ui/labels';
-import { cityBombChance, cityBombardChance, landingPlan, visibleGarrison } from '../ui/plans';
+import { cityBombChance, cityBombardChance, landingPlan, unitAttackChance, viewRelief, visibleGarrison } from '../ui/plans';
 import { dirTo } from '../ui/targets';
 import { leftIdle, tuningFor, type AiTuning, type Difficulty } from './difficulty';
 
@@ -510,6 +510,20 @@ function enemyShips(view: PlayerView) {
     .sort((a, b) => b.turnSeen - a.turnSeen);
 }
 
+/** Enemy land units we know of that are not inside a city (a ship can only shell those on open ground), one per square. */
+function shoreTargets(view: PlayerView) {
+  const seen = new Set<number>();
+  return view.enemies
+    .filter((e) => UNIT_STATS[e.type].domain === 'land' && !view.knownCities.some((c) => at(c, e)))
+    .sort((a, b) => b.turnSeen - a.turnSeen)
+    .filter((e) => {
+      const k = e.y * view.width + e.x;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+}
+
 /** How long ago (in turns) an enemy sighting may be and still be worth sailing to. */
 const HUNT_MEMORY = 2;
 /** Farthest (in squares) a warship goes after a sighting. */
@@ -599,6 +613,16 @@ function decideWarship(view: PlayerView, u: Unit, t: AiTuning): SessionCommand |
     if (dir !== null) return { type: 'move', unitId: u.id, dir };
   }
 
+  // A bombarding ship beside enemy land units on the shore shells the one it is likeliest to beat (a bigger stack first).
+  if (UNIT_STATS[u.type].bombard && u.movesLeft > 0) {
+    const shore = shoreTargets(view).filter((e) => e.visibleNow && chebyshev(geo(view), u, e) === 1)
+      .map((e) => ({ e, p: unitAttackChance(u, e.type, e.rank ?? 0, view.rules, viewRelief(view, e.x, e.y)) }))
+      .filter((c) => c.p >= t.minShipWinChance)
+      .sort((a, b) => b.p - a.p)[0];
+    const dir = shore ? dirTo(view, u, shore.e) : null;
+    if (dir !== null) return { type: 'move', unitId: u.id, dir };
+  }
+
   // City strength rule: a healthy bombarding ship beside an enemy player's city fires on it while that can still wear it down.
   if (view.rules.cityStrength && UNIT_STATS[u.type].bombard && u.damage === 0 && u.movesLeft > 0) {
     const city = view.knownCities.find((c) => c.owner !== null && isFoe(view, c.owner)
@@ -633,6 +657,20 @@ function decideWarship(view: PlayerView, u: Unit, t: AiTuning): SessionCommand |
     }
   }
   if (target) return setOrders(u, { kind: 'goto', target: target.sq });
+
+  // A bombarding ship sails to the water beside enemy land units seen on the shore lately, if it should win.
+  if (UNIT_STATS[u.type].bombard) {
+    let shoreGoal: { sq: Pos; d: number } | null = null;
+    for (const e of shoreTargets(view)) {
+      if (e.turnSeen < view.turn - HUNT_MEMORY) continue;
+      if (unitAttackChance(u, e.type, e.rank ?? 0, view.rules, viewRelief(view, e.x, e.y)) < t.minShipWinChance) continue;
+      for (const n of neighbors(geo(view), e.x, e.y)) {
+        const d = dist.get(n.y * view.width + n.x);
+        if (d !== undefined && d > 0 && d <= HUNT_RANGE && (shoreGoal === null || d < shoreGoal.d)) shoreGoal = { sq: n, d };
+      }
+    }
+    if (shoreGoal) return setOrders(u, { kind: 'goto', target: shoreGoal.sq });
+  }
 
   // City strength rule: a bombarding ship with nothing else to do sails to the square beside the nearest enemy city it can still wear down.
   if (view.rules.cityStrength && UNIT_STATS[u.type].bombard) {

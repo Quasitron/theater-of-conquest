@@ -432,6 +432,25 @@ describe('AI bombardment (city strength rule)', () => {
     expect(run({}).cmd).not.toEqual({ type: 'move', unitId: expect.anything(), dir: 6 });
   });
 });
+describe('AI shore bombardment of land units', () => {
+  it('a cruiser beside an enemy army on the shore shells it, with or without the city strength rule', () => {
+    for (const rules of [{}, { cityStrength: true }]) {
+      const s = game(['*..#....*'], { rules });
+      const foe = addUnit(s, 'army', 0, 3, 0);
+      s.fog[1].lastSeen[foe.id] = { unitId: foe.id, type: 'army', owner: 0, x: 3, y: 0, turnSeen: s.turn };
+      const ship = addUnit(s, 'cruiser', 1, 2, 0);
+      expect(next(s)).toEqual({ type: 'move', unitId: ship.id, dir: 2 });
+    }
+  });
+
+  it('a ship that would likely lose does not fire, and a destroyer cannot bombard', () => {
+    const s = game(['*..#....*']);
+    const foe = addUnit(s, 'army', 0, 3, 0);
+    s.fog[1].lastSeen[foe.id] = { unitId: foe.id, type: 'army', owner: 0, x: 3, y: 0, turnSeen: s.turn };
+    const d = addUnit(s, 'destroyer', 1, 2, 0);
+    expect(next(s)).not.toEqual({ type: 'move', unitId: d.id, dir: 2 });
+  });
+});
 describe('ranks in the odds', () => {
   it('an Elite foe is harder to beat and an Elite ship fights better, in the AI and in your attack label', () => {
     const s = game(['*..*']);
