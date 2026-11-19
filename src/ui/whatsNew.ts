@@ -20,7 +20,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     version: '0.9.110',
     date: '2026-11-19',
     title: 'Replays show who is attacking',
-    text: ['In a battle replay the attacker now has a pulsing orange ring and an arrow pointing at its target, and the shots come from its side, so you can tell attacker from defender at a glance. The shots phase is also quicker, so the result arrives sooner.'],
+    text: ['In a battle replay the attacker now has a pulsing orange ring and an arrow pointing at its target, and the shots come from its side, so you can tell attacker from defender at a glance. Replays are also quicker: the shots phase is shorter, each fight plays as fast as in live play, and the pause between fights is shorter at every pace.'],
   },
   {
     id: 'ferry-no-reload',
