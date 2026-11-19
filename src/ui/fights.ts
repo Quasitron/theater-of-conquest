@@ -136,7 +136,7 @@ export interface FightFrame {
 }
 
 /** The share of the duration spent on shots before the result bursts, and where the burst ends (the slide follows). */
-export const SHOT_SHARE = 0.4;
+export const SHOT_SHARE = 0.25;
 export const BURST_END = 0.75;
 
 /** Where a fight's animation is at `ageMs` into a run of `durationMs`; null once it is over (or before it starts). */
