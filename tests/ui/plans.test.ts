@@ -102,6 +102,28 @@ describe('landingPlan', () => {
   });
 });
 
+describe('landingPlan with stacking', () => {
+  const COAST = ['*#.#*', '.#...', '#....'];
+
+  it('lands up to four armies on one square, then uses the next', () => {
+    const { s, t, armies } = boat(COAST, { x: 2, y: 1 }, 5);
+    s.rules.stacking = true;
+    const v = viewOf(s);
+    const dirs = plan(v, t.id, armies.map((a) => a.id)).map((p) => p.dir);
+    expect(dirs).toEqual([1, 1, 1, 1, 6]);
+  });
+
+  it('counts units already on the square', () => {
+    const { s, t, armies } = boat(COAST, { x: 2, y: 1 }, 2);
+    s.rules.stacking = true;
+    addUnit(s, 'army', 0, 3, 0);
+    addUnit(s, 'army', 0, 3, 0);
+    addUnit(s, 'army', 0, 3, 0);
+    const v = viewOf(s);
+    expect(plan(v, t.id, armies.map((a) => a.id)).map((p) => p.dir)).toEqual([1, 6]);
+  });
+});
+
 describe('approachSquare', () => {
   // Player 1's city at (6,0); its in-map neighbors are S (6,1), SW (5,1), W (5,0).
   const M = ['*#####*', '#######', '#######'];

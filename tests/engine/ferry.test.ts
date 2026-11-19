@@ -117,6 +117,16 @@ describe('ferry routes', () => {
     expect(s.units.find((u) => u.id === a.id)!.carriedBy === null || s.units.find((u) => u.id === b.id)!.carriedBy === null).toBe(true);
   });
 
+  it('with stacking on, the drop puts up to four units on one shore square', () => {
+    const s = game();
+    s.rules.stacking = true;
+    const t = addUnit(s, 'transport', 0, 5, 0);
+    for (let i = 0; i < 5; i++) addUnit(s, 'army', 0, 5, 0, { carriedBy: t.id });
+    const r = run(s, { type: 'setFerry', player: 0, unitId: t.id, ferry: { pickup: 0, drop: DROP } }).state;
+    expect(r.units.filter((u) => u.carriedBy === null && u.x === 6 && u.type === 'army')).toHaveLength(4);
+    expect(r.units.filter((u) => u.carriedBy === t.id)).toHaveLength(1); // the fifth waits for room
+  });
+
   it('shares a route between transports, prunes it when nobody is on it, and resumes after an interruption', () => {
     let s = game();
     const t1 = addUnit(s, 'transport', 0, 0, 0);
