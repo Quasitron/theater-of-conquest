@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ferry-no-reload',
+    version: '0.9.109',
+    date: '2026-11-18',
+    title: 'Ferry fix: no re-loading at the drop city',
+    text: ['When a ferry route\'s drop square is a city, the transport used to pick the units it had just landed back up as it left, and carry them back to the pickup. It now sails back empty.'],
+  },
+  {
     id: 'ai-shore-bombardment',
     version: '0.9.106',
     date: '2026-11-18',

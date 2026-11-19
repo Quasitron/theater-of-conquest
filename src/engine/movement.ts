@@ -29,7 +29,9 @@ export function relocate(s: GameState, u: Unit, to: Pos, events: GameEvent[]): v
     c.y = to.y;
   }
   // A transport leaving a city takes the armies there, and a carrier the fighters, up to capacity.
-  if (UNIT_STATS[u.type].carries.length > 0 && leaving && areFriendly(s, leaving.owner, u.owner)) {
+  // (Not a ferry carrier sailing back to its pickup city: it has just put its cargo ashore here and must not take it again.)
+  const returning = u.ferry !== undefined && u.orders?.kind === 'goto' && u.orders.ferry === 'pickup';
+  if (UNIT_STATS[u.type].carries.length > 0 && leaving && !returning && areFriendly(s, leaving.owner, u.owner)) {
     let room = cargoRoom(s, u);
     const waiting = s.units.filter(
       (a) =>
