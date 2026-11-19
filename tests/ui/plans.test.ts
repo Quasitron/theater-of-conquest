@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getPlayerView } from '../../src/engine/view';
 import { updateFog } from '../../src/engine/fog';
-import { approachSquare, attackLabel, cityAttackChance, landersFor, landingPlan, strikeIsSurprise, strikeLabel, unitAttackChance } from '../../src/ui/plans';
+import { approachSquare, attackLabel, cityAttackChance, landersFor, landingPlan, sharesSquare, strikeIsSurprise, strikeLabel, unitAttackChance } from '../../src/ui/plans';
 import { addUnit, makeGame } from '../helpers';
 
 function viewOf(s: ReturnType<typeof makeGame>) {
@@ -121,6 +121,23 @@ describe('landingPlan with stacking', () => {
     addUnit(s, 'army', 0, 3, 0);
     const v = viewOf(s);
     expect(plan(v, t.id, armies.map((a) => a.id)).map((p) => p.dir)).toEqual([1, 6]);
+  });
+});
+
+describe('sharesSquare', () => {
+  it('is true for an aircraft in the open on a square another unit holds, not in a city or alone', () => {
+    const s = makeGame(['*...*', '.....']);
+    const f = addUnit(s, 'fighter', 0, 2, 0);
+    const g = addUnit(s, 'fighter', 0, 2, 0);
+    const alone = addUnit(s, 'fighter', 0, 4, 1);
+    const home = addUnit(s, 'fighter', 0, 0, 0);
+    addUnit(s, 'fighter', 0, 0, 0);
+    const v = viewOf(s);
+    const of = (id: number) => v.myUnits.find((u) => u.id === id)!;
+    expect(sharesSquare(v, of(f.id))).toBe(true);
+    expect(sharesSquare(v, of(g.id))).toBe(true);
+    expect(sharesSquare(v, of(alone.id))).toBe(false);
+    expect(sharesSquare(v, of(home.id))).toBe(false); // in a city
   });
 });
 

@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'aircraft-shared-square',
+    version: '0.9.117',
+    date: '2026-11-19',
+    title: 'No more stuck End Turn from stacked aircraft',
+    text: ['If an aircraft flies over another unit and stops on its square, you now have to move it on before you can go to the next unit (Next, Standby, Hold and Sentry are held back with a reminder). This stops End Turn from being refused at the end because a plane was left sitting on top of another.'],
+  },
+  {
     id: 'unload-stack',
     version: '0.9.116',
     date: '2026-11-19',

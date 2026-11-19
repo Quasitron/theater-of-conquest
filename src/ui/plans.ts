@@ -9,6 +9,18 @@ export function viewRelief(view: PlayerView, x: number, y: number): Relief {
   return view.relief?.[y * view.width + x] ?? 'clear';
 }
 
+/**
+ * Whether an aircraft of yours is out in the open on a square that another unit also holds (it flew over it and stopped).
+ * The engine refuses End Turn while that is so, so the player has to move it on first.
+ */
+export function sharesSquare(view: PlayerView, u: Unit): boolean {
+  if (UNIT_STATS[u.type].domain !== 'air' || u.carriedBy !== null) return false;
+  if (view.myCities.some((c) => c.x === u.x && c.y === u.y)) return false;
+  if (view.knownCities.some((c) => c.x === u.x && c.y === u.y)) return false;
+  return view.myUnits.some((o) => o.id !== u.id && o.carriedBy === null && o.x === u.x && o.y === u.y)
+    || view.allyUnits.some((o) => o.x === u.x && o.y === u.y);
+}
+
 /** Geometry only: normalize and chebyshev never read terrain. */
 const geo = (v: PlayerView): MapLike => v as unknown as MapLike;
 const DIR_IDS: Dir[] = [0, 1, 2, 3, 4, 5, 6, 7];

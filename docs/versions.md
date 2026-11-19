@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.117 | 2026-11-19 | An aircraft stopped on a square another unit holds must be moved before Next, Standby, Hold or Sentry work (so End Turn is not refused later). |
 | 0.9.116 | 2026-11-19 | Rules 36: with the stacking rule, Unload (and a ferry's drop) puts the cargo ashore on one square, up to 4, instead of spreading it over several. |
 | 0.9.115 | 2026-11-19 | Rules 35: a Wait-until-full ferry counts one free space as full (5 of 6) and sails, instead of waiting for one more Army or Spy. |
 | 0.9.114 | 2026-11-19 | Fix (rules 34): a Wait-until-full ferry no longer waits for ever when the cargo left at the pickup cannot fill its last free space (e.g. Armor needs two spaces and one is left). The orders text now says what it is waiting for ("for cargo" / "for a full load"). |
