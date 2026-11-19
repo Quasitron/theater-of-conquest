@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ai-shore-bombardment',
+    version: '0.9.106',
+    date: '2026-11-18',
+    title: 'Computer warships shell your coast',
+    text: ['Computer Cruisers and Battleships now fire on your land units standing on the shore, and sail toward ones they saw recently when the odds are good. Expect to lose a few units on the beach if you leave them exposed.'],
+  },
+  {
     id: 'city-crippled-badge',
     version: '0.9.105',
     date: '2026-11-18',
