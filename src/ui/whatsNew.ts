@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'fight-rank-badges',
+    version: '0.9.119',
+    date: '2026-11-19',
+    title: 'Rank badges in fights',
+    text: ['Units in an attack replay now show their rank chevrons while they fight, and a unit promoted in the fight gets its new chevron just as the promotion chime plays, instead of only after the battle.'],
+  },
+  {
     id: 'quit-button',
     version: '0.9.118',
     date: '2026-11-19',
