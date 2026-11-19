@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.114 | 2026-11-19 | Fix (rules 34): a Wait-until-full ferry no longer waits for ever when the cargo left at the pickup cannot fill its last free space (e.g. Armor needs two spaces and one is left). The orders text now says what it is waiting for ("for cargo" / "for a full load"). |
 | 0.9.113 | 2026-11-19 | Replays backed off a little from 0.9.112: fight 1.25 s, wide intro 0.55 s, pace holds slow 2.6 s / normal 1.3 s / fast 0.75 s. |
 | 0.9.112 | 2026-11-19 | Replays are quicker: each fight plays in 1.0 s like live play (was 1.5 s), the wide-view intro is 0.45 s (was 0.65 s), and the pace holds are slow 2.2 s / normal 1.1 s / fast 0.7 s (were 3 / 1.5 / 0.8), important fights 1.5x (was 1.6x). |
 | 0.9.111 | 2026-11-19 | Replay: the shots/arrow phase is shorter (25% of a fight instead of 40%), so the result comes sooner; the explosion sound follows it. |

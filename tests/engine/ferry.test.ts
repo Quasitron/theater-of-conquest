@@ -162,6 +162,17 @@ describe('ferry routes', () => {
     expect(s.units.filter((u) => u.carriedBy === t.id).length).toBe(6);
   });
 
+  it('with wait-until-full on, it still sails when the waiting units that are left cannot fit the free space', () => {
+    let s = game();
+    const t = addUnit(s, 'transport', 0, 0, 0);
+    addUnit(s, 'army', 0, 0, 0);
+    for (let i = 0; i < 3; i++) addUnit(s, 'armor', 0, 0, 0); // 1 + 2 + 2 fill five of six spaces; the third Armor does not fit
+    s = run(s, { type: 'setFerry', player: 0, unitId: t.id, ferry: { pickup: 0, drop: DROP, waitFull: true } }).state;
+    for (let i = 0; i < 2; i++) s = round(s).state;
+    expect(s.units.find((u) => u.id === t.id)!.x).toBeGreaterThan(0);
+    expect(s.units.filter((u) => u.type === 'armor' && u.x === 0).length).toBe(1); // the one that did not fit stays behind
+  });
+
   it('refuses bad routes and units that cannot ferry', () => {
     const s = game();
     const t = addUnit(s, 'transport', 0, 0, 0);
