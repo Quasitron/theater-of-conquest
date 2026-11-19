@@ -35,7 +35,7 @@ import { keyToAction, type ActionId } from './keys';
 import { pathLabel, pluralUnit } from './labels';
 import { cityScreenPoint } from './placement';
 import { EXPLOSION_TAIL_MS } from './explosions';
-import { approachSquare, attackLabel, landersFor, bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, viewRelief, visibleGarrison } from './plans';
+import { approachSquare, attackLabel, landersFor, bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, sharesSquare, viewRelief, visibleGarrison } from './plans';
 import { ProductionReport } from './ProductionReport';
 import { MapCanvas, type ActiveFx } from './MapCanvas';
 import { getCombatMode, getReplayPace, getReportAfter, type ReplayPace } from './combatMode';
@@ -1026,6 +1026,12 @@ export function GameScreen({ session, onQuit }: Props) {
     if (id !== 'info') setInfoId(null);
     if (id === 'endTurn') {
       endTurn();
+      return;
+    }
+    // An aircraft that flew over another unit and stopped on its square must move on before anything else is done: End Turn
+    // would refuse it, so Next, Standby and Sentry are held back until it has left.
+    if (selectedUnit && (id === 'next' || id === 'skip' || id === 'hold' || id === 'sentry') && sharesSquare(view, selectedUnit)) {
+      setMessage(`${UNIT_STATS[selectedUnit.type].name} ${selectedUnit.id} is on an occupied square: move it before moving on.`);
       return;
     }
     // Space and Tab on a unit that has orders just move on, leaving its orders alone.
