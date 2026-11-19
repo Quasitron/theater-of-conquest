@@ -652,14 +652,32 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Fights being played out: the two units (the loser fading, a winner that moves sliding in), then the effect, each
   // drawn on every on-screen copy of the map.
   const copies = view.wrap ? [-view.width, 0, view.width] : [0];
+  // The rank chevrons of a fight's unit: what it holds now, except that a unit promoted in this fight gets its new rank
+  // only once the result has landed (the promotion jingle plays then), not before.
+  const actorRank = (f: Fight, actor: { side: 'attacker' | 'defender'; owner: PlayerId; type: UnitType }, resolved: boolean): number => {
+    let rank = 0;
+    if (actor.side === 'attacker') {
+      const mine = view.myUnits.find((u) => u.id === f.attackerId);
+      rank = mine ? rankOf(mine.wins, mine.type) : 0;
+    } else {
+      const here = (p: Pos) => p.x === f.at.x && p.y === f.at.y;
+      for (const u of view.myUnits) if (u.carriedBy === null && here(u) && u.type === actor.type) rank = Math.max(rank, rankOf(u.wins, u.type));
+      for (const u of [...view.allyUnits, ...view.enemies]) if (here(u) && u.type === actor.type && u.owner === actor.owner) rank = Math.max(rank, u.rank ?? 0);
+    }
+    const winnerSide = f.attackerWon ? 'attacker' : 'defender';
+    if (!resolved && f.promoted && f.promotedRank !== undefined && actor.side === winnerSide) rank = Math.min(rank, f.promotedRank - 1);
+    return rank;
+  };
   for (const w of waiting) {
     for (const actor of w.actors) {
-      for (const off of copies) unitMark((actor.x + off - cam.x) * t, (actor.y - cam.y) * t, colors[actor.owner], actor.type, actor.alpha, 1, 0.5, 0.5, actor.faceLeft);
+      const rank = actorRank(w.fight, actor, false);
+      for (const off of copies) unitMark((actor.x + off - cam.x) * t, (actor.y - cam.y) * t, colors[actor.owner], actor.type, actor.alpha, 1, 0.5, 0.5, actor.faceLeft, rank);
     }
   }
   for (const r of running) {
     for (const actor of r.actors) {
-      for (const off of copies) unitMark((actor.x + off - cam.x) * t, (actor.y - cam.y) * t, colors[actor.owner], actor.type, actor.alpha, 1, 0.5, 0.5, actor.faceLeft);
+      const rank = actorRank(r.fight, actor, r.frame.burst >= 1);
+      for (const off of copies) unitMark((actor.x + off - cam.x) * t, (actor.y - cam.y) * t, colors[actor.owner], actor.type, actor.alpha, 1, 0.5, 0.5, actor.faceLeft, rank);
     }
     // The result of a fight that destroyed something or took a city: the explosion picture over the loser (the code
     // burst stays for a plain hit, and until the picture has loaded).

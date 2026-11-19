@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.119 | 2026-11-19 | Units shown in a fight (replay or your own attack) carry their rank chevrons; a unit promoted in the fight gets its new chevron when the result lands, with the jingle, not after the fight. |
 | 0.9.118 | 2026-11-19 | A Quit button on the title menu, shown only when the game runs as an installed app (a browser tab cannot be closed by a page). |
 | 0.9.117 | 2026-11-19 | An aircraft stopped on a square another unit holds must be moved before Next, Standby, Hold or Sentry work (so End Turn is not refused later). |
 | 0.9.116 | 2026-11-19 | Rules 36: with the stacking rule, Unload (and a ferry's drop) puts the cargo ashore on one square, up to 4, instead of spreading it over several. |
