@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ai-shell-cost',
+    version: '0.9.107',
+    date: '2026-11-18',
+    title: 'Computer warships weigh the cost of shelling',
+    text: ['Computer Cruisers and Battleships now shell the shore only when they expect to come away nearly unhurt, and a ship that is already badly damaged holds fire.'],
+  },
+  {
     id: 'ai-shore-bombardment',
     version: '0.9.106',
     date: '2026-11-18',

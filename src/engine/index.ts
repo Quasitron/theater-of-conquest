@@ -14,7 +14,7 @@ export { getPlayerView } from './view';
 export type { PlayerView } from './view';
 export { ordinal, unitDisplayName, defaultCityName, cleanName, NAME_MAX } from './names';
 export { buildTime, warTornSpeedPercent, warTornTurnsLeft } from './production';
-export { combatWinChance } from './combat';
+export { combatExpectedDamage, combatWinChance } from './combat';
 export { areFriendly, teammatesOf } from './relations';
 export { Rng } from './rng';
 export type { RandomSource } from './rng';

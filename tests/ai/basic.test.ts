@@ -443,7 +443,18 @@ describe('AI shore bombardment of land units', () => {
     }
   });
 
-  it('a ship that would likely lose does not fire, and a destroyer cannot bombard', () => {
+  it('a badly hurt cruiser holds fire, a lightly hurt one still shells', () => {
+    for (const [damage, fires] of [[1, true], [5, false]] as const) {
+      const s = game(['*..#....*']);
+      const foe = addUnit(s, 'army', 0, 3, 0);
+      s.fog[1].lastSeen[foe.id] = { unitId: foe.id, type: 'army', owner: 0, x: 3, y: 0, turnSeen: s.turn };
+      const ship = addUnit(s, 'cruiser', 1, 2, 0, { damage });
+      const cmd = next(s);
+      expect(cmd !== null && cmd.type === 'move' && cmd.dir === 2).toBe(fires);
+    }
+  });
+
+  it('a destroyer cannot bombard', () => {
     const s = game(['*..#....*']);
     const foe = addUnit(s, 'army', 0, 3, 0);
     s.fog[1].lastSeen[foe.id] = { unitId: foe.id, type: 'army', owner: 0, x: 3, y: 0, turnSeen: s.turn };
