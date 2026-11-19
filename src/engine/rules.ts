@@ -55,4 +55,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 30: a ferry may drop at a teammate's city and unload there; allied units inside a city no longer block it in the path map.
 // 31: the APC, Armored Personnel Carrier (Advanced units): a land carrier for four Armies or Spies.
 // 32: Go Home (and Repair) heads for the nearest city of yours or a teammate's, not only your own.
-export const RULES_VERSION = 32;
+// 33: a ferry carrier sailing back from a drop city does not take the units it just put ashore.
+export const RULES_VERSION = 33;

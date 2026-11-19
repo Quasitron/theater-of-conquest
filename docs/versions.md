@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.109 | 2026-11-18 | Fix (rules 33): a ferry carrier whose drop is a city no longer takes the units it just put ashore back aboard as it sails to its pickup. |
 | 0.9.108 | 2026-11-18 | AI ships shell an enemy city only when a friendly land unit (within 6 squares) or Bomber/Fighter (within 10), their own or a teammate's, could attack it afterwards; otherwise the shelling is wasted. |
 | 0.9.107 | 2026-11-18 | AI shore bombardment weighs the cost: a ship shells only when it expects to take under 15% of its hits and would stay above half health; hurt ships hold fire, and so do ships with a stronger enemy warship within 4 squares. New `combatExpectedDamage`. |
 | 0.9.106 | 2026-11-18 | AI: Cruisers and Battleships shell enemy land units on the shore (any rules), sailing to the water beside ones seen lately when the odds are good enough for the difficulty. |

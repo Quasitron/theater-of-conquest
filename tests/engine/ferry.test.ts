@@ -60,6 +60,25 @@ describe('ferry routes', () => {
     expect(moved.x).toBe(6);
   });
 
+  it('sailing back from a drop city, the carrier does not take the units it just put ashore', () => {
+    const s = makeGame(['*.....**'], { players: 3, starts: [0, 1, 2] });
+    for (const c of s.cities) c.production = null;
+    s.players[0].team = 1;
+    s.players[1].team = 1;
+    s.fog[0].explored.fill(1);
+    const t = addUnit(s, 'transport', 0, 5, 0);
+    const army = addUnit(s, 'army', 0, 5, 0);
+    army.carriedBy = t.id;
+    const started = run(s, { type: 'setFerry', player: 0, unitId: t.id, ferry: { pickup: 0, drop: { x: 6, y: 0 } } });
+    expect(started.state.units.find((u) => u.id === army.id)!.carriedBy).toBeNull();
+    let next = started.state;
+    for (const p of [0, 1, 2] as const) next = run(next, { type: 'endTurn', player: p }).state;
+    expect(next.units.find((u) => u.id === t.id)!.x).toBeLessThan(6); // it has sailed back toward the pickup
+    const landed = next.units.find((u) => u.id === army.id)!;
+    expect(landed.carriedBy).toBeNull();
+    expect(landed.x).toBe(6);
+  });
+
   it('a transport on a route waits for cargo, takes it to the drop square, puts it ashore, and returns', () => {
     let s = game();
     const t = addUnit(s, 'transport', 0, 0, 0);
