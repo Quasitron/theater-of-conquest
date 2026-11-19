@@ -36,6 +36,15 @@ const randomSeed = () => Math.floor(Math.random() * 1_000_000_000);
  * that space is wide enough for its proportions (the title is under half the picture's width). Otherwise the whole picture
  * is fitted in.
  */
+/** True when the game runs as an installed app in its own window, where a page may close that window (a browser tab may not). */
+function installedApp(): boolean {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: window-controls-overlay)').matches;
+  } catch {
+    return false;
+  }
+}
+
 function artFills(): boolean {
   const menu = Math.min(420, window.innerWidth * 0.4);
   return (window.innerWidth - menu) / window.innerHeight >= 0.95;
@@ -194,6 +203,7 @@ export function TitleScreen({ store, onStart }: Props) {
               <button onClick={() => setManualOpen(true)}>Manual</button>
               <WhatsNewButton news={news} />
               <button onClick={() => setSoundOpen(true)}>Settings</button>
+              {installedApp() && <button onClick={() => window.close()}>Quit</button>}
             </div>
           </section>
         )}

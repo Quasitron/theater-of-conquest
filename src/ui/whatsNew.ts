@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'quit-button',
+    version: '0.9.118',
+    date: '2026-11-19',
+    title: 'Quit button',
+    text: ['The title menu has a Quit button when the game is installed as an app. In a browser tab it is hidden, since a page cannot close its own tab.'],
+  },
+  {
     id: 'aircraft-shared-square',
     version: '0.9.117',
     date: '2026-11-19',
