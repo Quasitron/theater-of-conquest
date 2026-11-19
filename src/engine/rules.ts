@@ -56,4 +56,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 31: the APC, Armored Personnel Carrier (Advanced units): a land carrier for four Armies or Spies.
 // 32: Go Home (and Repair) heads for the nearest city of yours or a teammate's, not only your own.
 // 33: a ferry carrier sailing back from a drop city does not take the units it just put ashore.
-export const RULES_VERSION = 33;
+// 34: a Wait-until-full ferry sails when the waiting units left over cannot fit its free space (e.g. one space left, Armor needs two).
+export const RULES_VERSION = 34;

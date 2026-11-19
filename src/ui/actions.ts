@@ -89,7 +89,7 @@ export function ordersText(view: PlayerView, u: Unit): string {
   if (route && u.orders === null) return `Ferry paused: ${ferryLabel(view, route)}`;
   if (route && u.orders?.kind === 'goto' && u.orders.ferry) {
     const here = u.x === route.pickup.x && u.y === route.pickup.y;
-    const leg = u.orders.ferry === 'drop' ? 'to drop' : here ? `waiting at ${route.pickup.name}` : `to ${route.pickup.name}`;
+    const leg = u.orders.ferry === 'drop' ? 'to drop' : here ? `waiting at ${route.pickup.name}${route.waitFull ? ' for a full load' : ' for cargo'}` : `to ${route.pickup.name}`;
     return `Ferry: ${ferryLabel(view, route)} (${leg})`;
   }
   return describeOrders(u.orders, (id) => {

@@ -31,16 +31,23 @@ export function ferryHasCargo(s: GameState, u: Unit): boolean {
   );
 }
 
-/** With waiting units taken in order as the carrier leaves, whether no further unit could fit (it would be full). */
+/**
+ * With waiting units taken in order as the carrier leaves, whether it would be full: no room left, or a waiting unit
+ * is left behind because it does not fit (an Armor needs two spaces, so one free space can stay empty for ever).
+ */
 export function ferryWouldBeFull(s: GameState, u: Unit): boolean {
   let room = cargoRoom(s, u);
+  let leftBehind = false;
   if (cityAt(s, u.x, u.y)) {
     const waiting = s.units.filter(
       (a) => a.carriedBy === null && a.owner === u.owner && a.x === u.x && a.y === u.y && canCarry(u.type, a.type) && !(s.rules.sentriedStayAsGarrison && a.orders !== null),
     );
-    for (const a of waiting) if (UNIT_STATS[a.type].slots <= room) room -= UNIT_STATS[a.type].slots;
+    for (const a of waiting) {
+      if (UNIT_STATS[a.type].slots <= room) room -= UNIT_STATS[a.type].slots;
+      else leftBehind = true;
+    }
   }
-  return room < 1;
+  return room < 1 || leftBehind;
 }
 
 /** Whether `c` could be put ashore on square n (a free square of the right kind, or one it may stack onto). */
