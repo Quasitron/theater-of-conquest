@@ -74,8 +74,8 @@ const REPLAY_TILE = 36;
 /** Each replayed fight opens at no closer than this tile size, so you can see where on the map it is. */
 const WIDE_TILE = 10;
 /** How long that wide view is held before zooming in, and the longest a fight's own animation runs. */
-const WIDE_MS = 450;
-const REPLAY_FX_MS = 1000;
+const WIDE_MS = 550;
+const REPLAY_FX_MS = 1250;
 
 /** Group mode: waiting for a box, choosing the order for the units it caught, or waiting for a Move To square. */
 type GroupState = null | { step: 'box' } | { step: 'order'; ids: number[] } | { step: 'target'; ids: number[] };

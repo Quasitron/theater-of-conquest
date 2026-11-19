@@ -186,7 +186,7 @@ export function fightActors(f: Fight, fr: FightFrame): FightActor[] {
   return out;
 }
 /** How long (ms) a fight is held at each pace; manual waits for the player. */
-export const PACE_MS: Record<ReplayPace, number | null> = { manual: null, slow: 2200, normal: 1100, fast: 700 };
+export const PACE_MS: Record<ReplayPace, number | null> = { manual: null, slow: 2600, normal: 1300, fast: 750 };
 /** Fights that matter to you (one of your units destroyed, a city taken) are held this much longer. */
 export const IMPORTANT_FACTOR = 1.5;
 
