@@ -20,7 +20,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     version: '0.9.114',
     date: '2026-11-19',
     title: 'Ferry fix: no endless waiting for a full load',
-    text: ['A ferry set to Wait until full could sit at its pickup city for ever when the units there could not fill its last space (for example, one space left and only Armor, which needs two). It now sails with what fits. Its orders also say what it is waiting for: cargo, or a full load.'],
+    text: ['A ferry set to Wait until full could sit at its pickup city for ever when the units there could not fill its last space (for example, one space left and only Armor, which needs two). It now sails with what fits, and a ferry with just one space free (5 of 6) counts as full instead of waiting for one more Army or Spy. Its orders also say what it is waiting for: cargo, or a full load.'],
   },
   {
     id: 'replay-attacker-cue',
