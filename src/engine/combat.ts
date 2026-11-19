@@ -24,6 +24,26 @@ export function resolveCombat(
   return { attackerWon: dd >= def.hits, attackerDamage: ad, defenderDamage: dd };
 }
 
+/** The average damage the attacker takes in the fight (capped at its hits, so a loss counts as all it had left), same round model. */
+export function combatExpectedDamage(
+  att: { attack: number; shot: number; hits: number; damage: number },
+  def: { defense: number; shot: number; hits: number; damage: number },
+): number {
+  const p = att.attack / (att.attack + def.defense);
+  const memo = new Map<string, number>();
+  const taken = (ad: number, dd: number): number => {
+    if (dd >= def.hits) return ad;
+    if (ad >= att.hits) return att.hits;
+    const key = `${ad},${dd}`;
+    const known = memo.get(key);
+    if (known !== undefined) return known;
+    const v = p * taken(ad, dd + att.shot) + (1 - p) * taken(ad + def.shot, dd);
+    memo.set(key, v);
+    return v;
+  };
+  return taken(att.damage, def.damage) - att.damage;
+}
+
 /** The exact chance the attacker wins, over the same round model as resolveCombat. */
 export function combatWinChance(
   att: { attack: number; shot: number; hits: number; damage: number },

@@ -1,5 +1,5 @@
 import {
-  CITY_COMBAT, CITY_STRENGTH_HITS, DIRS, attackRating, STRIKE_CHANCE, isStrikeTarget, fightRatings, garrisonBonus, hitsOf, UNIT_STATS, chebyshev, combatWinChance, findPath, normalize, pathMapFromView,
+  CITY_COMBAT, CITY_STRENGTH_HITS, DIRS, attackRating, STRIKE_CHANCE, isStrikeTarget, fightRatings, garrisonBonus, hitsOf, UNIT_STATS, chebyshev, combatExpectedDamage, combatWinChance, findPath, normalize, pathMapFromView,
   type Dir, type MapLike, type PlayerId, type PlayerView, type Pos, type Relief, type Unit, type UnitType,
 } from '../engine';
 
@@ -128,6 +128,20 @@ export function unitAttackChance(
   // Submarine strike: the salvo lands first, so the sub comes through (sinking or striking and slipping away) that often.
   // (Assumes the enemy cannot see the sub; an escort next to it spoils the surprise.)
   return rules.submarineStrike && isStrikeTarget(u.type, type) ? STRIKE_CHANCE + (1 - STRIKE_CHANCE) * fight : fight;
+}
+
+/** The damage (hits) `u` is expected to take attacking a unit of `type`; same assumptions as unitAttackChance. */
+export function unitAttackDamage(
+  u: Unit, type: UnitType, foeRank = 0, rules: { advancedUnits: boolean; submarineStrike?: boolean; armorNoRiverCover?: boolean } = { advancedUnits: false }, ground: Relief = 'clear',
+): number {
+  const a = UNIT_STATS[u.type];
+  const d = UNIT_STATS[type];
+  const bombard = a.domain === 'sea' && d.domain === 'land';
+  const rating = fightRatings(rules, u.type, type, ground);
+  return combatExpectedDamage(
+    { attack: attackRating(rules, u, rating.attack), shot: a.shot, hits: hitsOf(u), damage: u.damage },
+    { defense: bombard ? rating.defense / 2 : rating.defense, shot: d.shot, hits: d.hits + (foeRank === 3 ? 1 : 0), damage: 0 },
+  );
 }
 
 /** Chance that a Bomber u beats the city it bombs (a win costs the city its production or a unit; the city is never taken). */

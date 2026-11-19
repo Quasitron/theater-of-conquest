@@ -4,7 +4,7 @@ import {
 } from '../engine';
 import type { SessionCommand } from '../app/session';
 import { cityIsCoastal } from '../ui/labels';
-import { cityBombChance, cityBombardChance, landingPlan, unitAttackChance, viewRelief, visibleGarrison } from '../ui/plans';
+import { cityBombChance, cityBombardChance, landingPlan, unitAttackChance, unitAttackDamage, viewRelief, visibleGarrison } from '../ui/plans';
 import { dirTo } from '../ui/targets';
 import { leftIdle, tuningFor, type AiTuning, type Difficulty } from './difficulty';
 
@@ -524,6 +524,28 @@ function shoreTargets(view: PlayerView) {
     });
 }
 
+/** A ship will take at most this share of its hits, on average, from one shelling... */
+const SHELL_MAX_COST = 0.15;
+/** ...and will not shell once its health (after the expected damage) would fall to this share of its hits or less. */
+const SHELL_MIN_HEALTH = 0.5;
+/** An enemy warship within this many squares of the ship counts as a threat while it shells. */
+const SHELL_THREAT = 4;
+
+/**
+ * Whether shelling this shore unit is worth it: the ship should win, and expect to come away nearly unhurt, so strong
+ * defenders (Armor, Elite units) are left alone and a ship that is already hurt holds fire.
+ */
+function worthShelling(view: PlayerView, u: Unit, e: { type: UnitType; rank?: number; x: number; y: number }, t: AiTuning): boolean {
+  // An enemy warship close by that we would not comfortably beat: do not get caught shelling the beach.
+  if (enemyShips(view).some((s) => s.visibleNow && isWarship(s.type) && chebyshev(geo(view), u, s) <= SHELL_THREAT
+    && winChance(view, u, s.type, s.rank ?? 0) < t.minShipWinChance)) return false;
+  const ground = viewRelief(view, e.x, e.y);
+  if (unitAttackChance(u, e.type, e.rank ?? 0, view.rules, ground) < t.minShipWinChance) return false;
+  const hits = hitsOf(u);
+  const cost = unitAttackDamage(u, e.type, e.rank ?? 0, view.rules, ground);
+  return cost <= hits * SHELL_MAX_COST && u.damage + cost < hits * (1 - SHELL_MIN_HEALTH);
+}
+
 /** How long ago (in turns) an enemy sighting may be and still be worth sailing to. */
 const HUNT_MEMORY = 2;
 /** Farthest (in squares) a warship goes after a sighting. */
@@ -616,8 +638,8 @@ function decideWarship(view: PlayerView, u: Unit, t: AiTuning): SessionCommand |
   // A bombarding ship beside enemy land units on the shore shells the one it is likeliest to beat (a bigger stack first).
   if (UNIT_STATS[u.type].bombard && u.movesLeft > 0) {
     const shore = shoreTargets(view).filter((e) => e.visibleNow && chebyshev(geo(view), u, e) === 1)
+      .filter((e) => worthShelling(view, u, e, t))
       .map((e) => ({ e, p: unitAttackChance(u, e.type, e.rank ?? 0, view.rules, viewRelief(view, e.x, e.y)) }))
-      .filter((c) => c.p >= t.minShipWinChance)
       .sort((a, b) => b.p - a.p)[0];
     const dir = shore ? dirTo(view, u, shore.e) : null;
     if (dir !== null) return { type: 'move', unitId: u.id, dir };
@@ -663,7 +685,7 @@ function decideWarship(view: PlayerView, u: Unit, t: AiTuning): SessionCommand |
     let shoreGoal: { sq: Pos; d: number } | null = null;
     for (const e of shoreTargets(view)) {
       if (e.turnSeen < view.turn - HUNT_MEMORY) continue;
-      if (unitAttackChance(u, e.type, e.rank ?? 0, view.rules, viewRelief(view, e.x, e.y)) < t.minShipWinChance) continue;
+      if (!worthShelling(view, u, e, t)) continue;
       for (const n of neighbors(geo(view), e.x, e.y)) {
         const d = dist.get(n.y * view.width + n.x);
         if (d !== undefined && d > 0 && d <= HUNT_RANGE && (shoreGoal === null || d < shoreGoal.d)) shoreGoal = { sq: n, d };
