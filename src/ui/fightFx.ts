@@ -6,7 +6,7 @@ const COLORS = { capture: '#ffd24a', explosion: '#ff7a2e', hit: '#cfd8e3' } as c
  * Draws one frame of a fight on a square whose centre is (cx, cy) and whose side is t pixels.
  * Deliberately plain (rings, tracers, a burst) and self-contained: the later art pass replaces just this function.
  */
-export function drawFightFx(ctx: CanvasRenderingContext2D, cx: number, cy: number, t: number, f: FightFrame): void {
+export function drawFightFx(ctx: CanvasRenderingContext2D, cx: number, cy: number, t: number, f: FightFrame, from?: number): void {
   ctx.save();
   ctx.setLineDash([]);
   ctx.lineCap = 'round';
@@ -22,7 +22,8 @@ export function drawFightFx(ctx: CanvasRenderingContext2D, cx: number, cy: numbe
     ctx.strokeStyle = '#fff3b0';
     ctx.lineWidth = Math.max(1.5, t * 0.06);
     for (let i = 0; i < 3; i++) {
-      const a = 0.6 + i * 2.1;
+      // From the attacker's side when known (a narrow fan), otherwise from all round.
+      const a = from !== undefined ? from + (i - 1) * 0.28 : 0.6 + i * 2.1;
       const near = (1.3 - 1.0 * f.shots) * t;
       const far = near + 0.35 * t;
       ctx.beginPath();

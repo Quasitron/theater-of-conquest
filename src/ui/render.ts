@@ -665,9 +665,56 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     // burst stays for a plain hit, and until the picture has loaded).
     const variant = explosionVariant(r.fight);
     const blast = r.frame.burst > 0 && r.frame.outcome !== 'hit' && explosionReady(variant);
+    const fr = r.fight.from;
+    const angle = fr ? Math.atan2(fr.y - r.fight.at.y, fr.x - r.fight.at.x) : undefined; // the direction the shots come from
     each((mx, my, sx, sy) => {
-      if (mx === r.fight.at.x && my === r.fight.at.y && !blast) drawFightFx(ctx, sx + t / 2, sy + t / 2, t, r.frame);
+      if (mx === r.fight.at.x && my === r.fight.at.y && !blast) drawFightFx(ctx, sx + t / 2, sy + t / 2, t, r.frame, angle);
     });
+    // Mark the attacker while the shots fly: a pulsing orange ring round it and an arrow to the defender.
+    if (fr && r.frame.burst === 0) {
+      const pulse = 0.6 + 0.4 * Math.sin(r.frame.shots * Math.PI * 6);
+      for (const off of copies) {
+        const ax = (fr.x + off - cam.x + 0.5) * t;
+        const ay = (fr.y - cam.y + 0.5) * t;
+        const dx = (r.fight.at.x + off - cam.x + 0.5) * t - ax;
+        const dy = (r.fight.at.y - cam.y + 0.5) * t - ay;
+        const len = Math.hypot(dx, dy) || 1;
+        const ux = dx / len;
+        const uy = dy / len;
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#ffa028';
+        ctx.fillStyle = '#ffa028';
+        ctx.globalAlpha = pulse;
+        ctx.lineWidth = Math.max(2, t * 0.1);
+        ctx.beginPath();
+        ctx.arc(ax, ay, t * 0.62, 0, Math.PI * 2);
+        ctx.stroke();
+        // The arrow runs from the ring's edge to just short of the defender's own ring, with an arrowhead.
+        const sx0 = ax + ux * t * 0.66;
+        const sy0 = ay + uy * t * 0.66;
+        const ex = ax + ux * (len - t * 0.8);
+        const ey = ay + uy * (len - t * 0.8);
+        if (len > t * 1.6) {
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.moveTo(sx0, sy0);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+        }
+        const hx = len > t * 1.6 ? ex : ax + ux * t * 0.75;
+        const hy = len > t * 1.6 ? ey : ay + uy * t * 0.75;
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath();
+        ctx.moveTo(hx + ux * t * 0.22, hy + uy * t * 0.22);
+        ctx.lineTo(hx - ux * t * 0.1 - uy * t * 0.2, hy - uy * t * 0.1 + ux * t * 0.2);
+        ctx.lineTo(hx - ux * t * 0.1 + uy * t * 0.2, hy - uy * t * 0.1 - ux * t * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
     if (blast) {
       const lost = r.fight.attackerWon ? r.fight.at : (r.fight.from ?? r.fight.at);
       each((mx, my, sx, sy) => {

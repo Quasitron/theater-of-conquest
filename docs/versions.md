@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.110 | 2026-11-19 | Replay: the attacker is marked while its shots fly (a pulsing orange ring on it and an arrow to the defender), and the tracers come from the attacker's side. |
 | 0.9.109 | 2026-11-18 | Fix (rules 33): a ferry carrier whose drop is a city no longer takes the units it just put ashore back aboard as it sails to its pickup. |
 | 0.9.108 | 2026-11-18 | AI ships shell an enemy city only when a friendly land unit (within 6 squares) or Bomber/Fighter (within 10), their own or a teammate's, could attack it afterwards; otherwise the shelling is wasted. |
 | 0.9.107 | 2026-11-18 | AI shore bombardment weighs the cost: a ship shells only when it expects to take under 15% of its hits and would stay above half health; hurt ships hold fire, and so do ships with a stronger enemy warship within 4 squares. New `combatExpectedDamage`. |

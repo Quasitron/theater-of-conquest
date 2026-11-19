@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'replay-attacker-cue',
+    version: '0.9.110',
+    date: '2026-11-19',
+    title: 'Replays show who is attacking',
+    text: ['In a battle replay the attacker now has a pulsing orange ring and an arrow pointing at its target, and the shots come from its side, so you can tell attacker from defender at a glance.'],
+  },
+  {
     id: 'ferry-no-reload',
     version: '0.9.109',
     date: '2026-11-18',
