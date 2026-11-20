@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.125 | 2026-11-19 | Patrol is now always a waypoint route: P, click waypoints, then the start (or Done) to close it; out and back is one waypoint then the start. Aircraft circuits start at a city or carrier and must fit in one tank (waypoints that do not are refused while clicking). |
 | 0.9.124 | 2026-11-19 | An aircraft may patrol from (or to) a teammate's city: it refuels there like in its own. Before, a patrol had to start or end at one of your own cities or carriers. |
 | 0.9.123 | 2026-11-19 | Capturing a city now logs each enemy unit that was inside and lost ("Computer's Army was lost when its city fell"). Before, only the city's owner saw those lines. |
 | 0.9.122 | 2026-11-19 | Stacking rule: the count badge on a stack includes allied units on the square (they count towards the limit), and pointing at a full stack says "stack full (4)" instead of "No known path". |

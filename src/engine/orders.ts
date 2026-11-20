@@ -36,6 +36,13 @@ export function patrolTarget(o: Extract<Orders, { kind: 'patrol' }>): Pos {
   return o.toB ? o.b : o.a;
 }
 
+/** The flying distance along `stops` (straight lines) from stop `from` to the last one. */
+export function circuitLength(s: GameState, stops: readonly Pos[], from: number): number {
+  let n = 0;
+  for (let i = Math.max(from, 0) + 1; i < stops.length; i++) n += chebyshev(s, stops[i - 1], stops[i]);
+  return n;
+}
+
 /** The most corners a circuit may have. */
 export const MAX_PATROL_LEGS = 12;
 
@@ -86,12 +93,23 @@ export function validateOrders(s: GameState, u: Unit, o: Orders): string | null 
     }
     case 'patrol': {
       if (o.loop !== undefined) {
-        if (air) return 'aircraft patrol between two squares only';
         if (!Array.isArray(o.loop) || o.loop.length < 1 || o.loop.length > MAX_PATROL_LEGS) return `a circuit needs 1 to ${MAX_PATROL_LEGS} corners`;
         if (!validSquare(s, u, o.a) || !o.loop.every((p) => validSquare(s, u, p))) return 'target is not an explored square';
         if (!Number.isInteger(o.leg ?? 0) || (o.leg ?? 0) < 0 || (o.leg ?? 0) > o.loop.length) return 'unknown orders';
         const stops = [o.a, ...o.loop, o.a];
         const lmap = pathMapFromState(s, u.owner);
+        if (air) {
+          // Aircraft fly straight: the circuit must start and end at a base, fit in one tank, and be flyable from where it is now.
+          if (!isRefuelBase(s, u, o.a)) return NO_PATROL_BASE;
+          for (let i = 1; i < stops.length; i++) {
+            if (stops[i].x === stops[i - 1].x && stops[i].y === stops[i - 1].y) return 'patrol corners must differ from the one before';
+          }
+          const range = UNIT_STATS[u.type].range ?? 0;
+          if (circuitLength(s, stops, 0) > range) return 'out of range';
+          const here = patrolTarget(o);
+          const toTarget = chebyshev(s, u, here);
+          return toTarget + circuitLength(s, stops, (o.leg ?? 0) + 1) > (u.fuel ?? 0) ? 'out of range' : null;
+        }
         for (let i = 1; i < stops.length; i++) {
           if (stops[i].x === stops[i - 1].x && stops[i].y === stops[i - 1].y) return 'patrol corners must differ from the one before';
           // The square the unit itself stands on counts as free (the map shows it as held by an own unit).
@@ -269,10 +287,14 @@ export function executeOrders(
     }
     if (o.kind === 'patrol' && u.fuel !== null) {
       // Aircraft: the base may be gone, or the fuel too low for the next leg plus the way back.
-      const base = patrolBase(s, u, o);
+      const circuit = o.loop !== undefined && o.loop.length > 0;
+      const base = circuit ? (isRefuelBase(s, u, o.a) ? o.a : null) : patrolBase(s, u, o);
       const toTarget = findPath(map, u, target);
       let need = Infinity;
-      if (base !== null && toTarget !== null) {
+      if (circuit) {
+        // The rest of the circuit from the corner it is heading for, back to the base.
+        if (base !== null && toTarget !== null) need = toTarget.length + circuitLength(s, [o.a, ...o.loop!, o.a], (o.leg ?? 0) + 1);
+      } else if (base !== null && toTarget !== null) {
         const far = base === o.a ? o.b : o.a;
         const leg = target === far ? findPath(map, { type: u.type, x: base.x, y: base.y }, far) : [];
         if (leg !== null) need = toTarget.length + leg.length;
@@ -447,7 +469,7 @@ function tieToCarrier(s: GameState, u: Unit, o: Extract<Orders, { kind: 'patrol'
     cityAt(s, p.x, p.y) ? undefined
       : topLevelUnitsAt(s, p.x, p.y).find((c) => c.owner === u.owner && canCarry(c.type, u.type));
   const hostA = hostAt(o.a);
-  const hostB = hostAt(o.b);
+  const hostB = o.loop ? undefined : hostAt(o.b); // a circuit's last corner is not a base
   if (hostA) o.carrier = { id: hostA.id, end: 'a' };
   else if (hostB) o.carrier = { id: hostB.id, end: 'b' };
 }

@@ -40,8 +40,8 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     id: 'patrol-circuits',
     version: '0.9.121',
     date: '2026-11-19',
-    title: 'Patrols with legs',
-    text: ['Ships and land units can now patrol a circuit. In Patrol mode press "Add legs (circuit)", click each corner in turn (a triangle, a stretch of coast), then press Done or click the start square. The unit sails the corners in order, returns to where it started, and goes round again. The route you are drawing and other circuits show as dashed lines. Aircraft keep the two-point patrol.'],
+    title: 'Patrols with waypoints',
+    text: ['Press P, then click each waypoint in turn (a triangle, a stretch of coast), then click the start (the city, carrier or square the unit stands on) or press Done. The unit visits the waypoints in order, returns to the start and goes round again; for out and back, click the far square and then the start. The route you are drawing and other patrols show as dashed lines. Aircraft can do this too: they must start at a city or carrier, and a waypoint is refused when the whole route back to the base would not fit in their fuel.'],
   },
   {
     id: 'news-shows-version',

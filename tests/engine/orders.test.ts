@@ -142,12 +142,29 @@ describe('patrol and explore', () => {
     expect(legs.indexOf(0, legs.indexOf(2))).toBeGreaterThan(-1); // it came back to the first corner after going home
   });
 
-  it('a circuit is refused for aircraft, with a repeated corner, or with too many corners', () => {
+  it('an aircraft flies a circuit from its base, within one tank, and keeps going', () => {
+    let s = game(['*.........*', '...........', '...........', '...........', '...........']);
+    const f = addUnit(s, 'fighter', 0, 0, 0);
+    const home = { x: 0, y: 0 };
+    const ok: Orders = { kind: 'patrol', a: home, b: { x: 6, y: 4 }, toB: true, loop: [{ x: 6, y: 0 }, { x: 6, y: 4 }], leg: 0 }; // 6 + 4 + 6 = 16 of 20
+    expect(setOrders(s, f.id, { ...ok, loop: [{ x: 9, y: 0 }, { x: 9, y: 4 }] }).ok).toBe(false); // 9 + 4 + 9 = 22: out of range
+    expect(setOrders(s, f.id, { ...ok, a: { x: 3, y: 3 } }).ok).toBe(false); // not a base
+    s = run(s, { type: 'setOrders', player: 0, unitId: f.id, orders: ok }).state;
+    const legs = new Set<number>();
+    for (let i = 0; i < 12; i++) {
+      const r = fullRound(s);
+      s = r.state;
+      expect(ended(r.events).filter((e) => e.reason === 'lowFuel')).toHaveLength(0);
+      const o = unitById(s, f.id)!.orders;
+      if (o?.kind === 'patrol') legs.add(o.leg ?? -1);
+    }
+    expect(legs).toEqual(new Set([0, 1, 2]));
+  });
+
+  it('a circuit is refused with a repeated corner or with too many corners', () => {
     const s = game(['*.......*', '.........', '.........']);
     const d = addUnit(s, 'destroyer', 0, 1, 0);
-    const f = addUnit(s, 'fighter', 0, 0, 0);
     const a = { x: 1, y: 0 };
-    expect(setOrders(s, f.id, { kind: 'patrol', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, toB: true, loop: [{ x: 3, y: 0 }] }).ok).toBe(false);
     expect(setOrders(s, d.id, { kind: 'patrol', a, b: { x: 4, y: 0 }, toB: true, loop: [{ x: 4, y: 0 }, { x: 4, y: 0 }] }).ok).toBe(false);
     expect(setOrders(s, d.id, { kind: 'patrol', a, b: a, toB: true, loop: [{ ...a }] }).ok).toBe(false);
     const many = Array.from({ length: 13 }, (_, i) => ({ x: 2 + (i % 2), y: 1 }));
