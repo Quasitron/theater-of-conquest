@@ -776,10 +776,35 @@ export function GameScreen({ session, onQuit }: Props) {
     setMessage(null);
     setDialogError(null);
     if (cmd.type !== 'endTurn' && cmd.type !== 'resign') {
+      startGlide(cmd);
       afterOwnAct();
       showOwnFights();
     }
     return true;
+  };
+
+  /**
+   * After an order that sent a unit off (explore, go-to, patrol, go home...): it glides along the squares it went through, so
+   * you can see where it went before the next unit comes up. Single manual steps are not animated.
+   */
+  const [glide, setGlide] = useState<{ unitId: number; type: UnitType; points: Pos[]; start: number; duration: number } | null>(null);
+  const glideEnd = useRef(0);
+  const glideTimer = useRef<number | undefined>(undefined);
+  const startGlide = (cmd: SessionCommand) => {
+    if (cmd.type === 'endTurn' || cmd.type === 'resign' || cmd.type === 'move') return;
+    const id = (cmd as { unitId?: number }).unitId;
+    if (id === undefined) return;
+    const steps: { from: Pos; to: Pos }[] = [];
+    for (const e of session.lastEvents) if (e.type === 'unitMoved' && e.unitId === id) steps.push({ from: e.from, to: e.to });
+    if (steps.length === 0) return;
+    const unit = session.view().myUnits.find((u) => u.id === id) ?? view.myUnits.find((u) => u.id === id);
+    if (!unit) return;
+    const duration = Math.max(260, Math.min(650, steps.length * 110));
+    const start = performance.now();
+    setGlide({ unitId: id, type: unit.type, points: [steps[0].from, ...steps.map((s) => s.to)], start, duration });
+    glideEnd.current = start + duration;
+    window.clearTimeout(glideTimer.current);
+    glideTimer.current = window.setTimeout(() => setGlide(null), duration + 40);
   };
 
   /** Starts the fight effects for ights and clears them when the run is over. */
@@ -848,7 +873,19 @@ export function GameScreen({ session, onQuit }: Props) {
   const order = (u: Unit, cmd: SessionCommand) => {
     const pre = ready;
     // A unit that is gone has already been replaced in the selection by `act`.
-    if (act(cmd) && session.view().myUnits.some((x) => x.id === u.id)) settle(u.id, pre);
+    const moved = session.view().myUnits.find((x) => x.id === u.id);
+    if (!act(cmd) || !session.view().myUnits.some((x) => x.id === u.id)) return;
+    // A unit that has just gone somewhere glides there first (see startGlide); the next unit comes up after that.
+    const wait = glideEnd.current - performance.now();
+    const now = session.view().myUnits.find((x) => x.id === u.id);
+    if (wait > 20 && now && moved && (now.x !== moved.x || now.y !== moved.y)) {
+      keepVisible(now);
+      cancelAdvance();
+      advanceTimer.current = window.setTimeout(() => {
+        advanceTimer.current = undefined;
+        settle(u.id, pre);
+      }, wait + 60);
+    } else settle(u.id, pre);
   };
   const setOrders = (u: Unit, orders: Orders | null) => order(u, { type: 'setOrders', unitId: u.id, orders });
 
@@ -1511,6 +1548,24 @@ export function GameScreen({ session, onQuit }: Props) {
         <span class="topbar-right">
           {target === 'patrol' && <button class="primary" disabled={!patrolLegs || patrolLegs.length === 0} onClick={(e) => { blur(e); finishCircuit(); }}>Done: return to start</button>}
           {target === 'patrol' && <span class="message" role="status">{!patrolLegs || patrolLegs.length === 0 ? 'Patrol: click the first waypoint (Esc cancels).' : `Patrol: ${patrolLegs.length} waypoint${patrolLegs.length === 1 ? '' : 's'}. Click the next one, or the start (or Done) to finish. It returns to the start and repeats (Esc cancels).`}{selectedUnit?.fuel != null ? ` Fuel ${selectedUnit.fuel}.` : ''}</span>}
+          {!target && playing && selectedUnit && selectedUnit.orders === null && selectedUnit.lastPatrol && (() => {
+            // An interrupted patrol: say why (from the log) and offer to carry on, right here instead of in the side panel.
+            const log = session.log(view.me);
+            let why = 'interrupted';
+            for (let i = log.length - 1; i >= 0 && i >= log.length - 200; i--) {
+              const e = log[i].event;
+              if (e.type === 'ordersEnded' && e.unitId === selectedUnit.id) {
+                why = e.reason === 'enemySighted' ? 'enemy sighted' : e.reason === 'blocked' ? 'path blocked' : e.reason === 'returning' ? 'low on fuel' : 'interrupted';
+                break;
+              }
+            }
+            return (
+              <>
+                <span class="message" role="status">{unitDisplayName(selectedUnit)}: patrol stopped ({why}).</span>
+                <button class="primary" onClick={(e) => { blur(e); doAction('resumePatrol'); }}>Resume Patrol (K)</button>
+              </>
+            );
+          })()}
           {target && target !== 'patrol' && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
@@ -1552,7 +1607,7 @@ export function GameScreen({ session, onQuit }: Props) {
           onSquare={onSquare} onDouble={onDouble} onHover={onHover} onContext={onContext}
           activeId={playing ? selectedUnit?.id ?? null : null} blinkActive={playing}
           path={preview?.path ?? null} pathOk={preview?.ok ?? true} pathLabel={preview?.label ?? null} pathTarget={preview ? hover : null}
-          route={route?.path ?? null} routeLabel={route?.label ?? null} patrols={patrols} productionMap={prodMap} flash={flash} sightings={newSightings} fx={fx} pending={pendingFights} headingLeft={headingLeft} cityRoutes={cityRoutes} ferryRoutes={ferryRoutes} attack={attack}
+          route={route?.path ?? null} routeLabel={route?.label ?? null} patrols={patrols} productionMap={prodMap} flash={flash} sightings={newSightings} fx={fx} glide={glide} pending={pendingFights} headingLeft={headingLeft} cityRoutes={cityRoutes} ferryRoutes={ferryRoutes} attack={attack}
           onZoom={() => { fitOf(view.me).auto = false; }}
           boxMode={playing && group?.step === 'box'} groupBox={groupBox} onBox={setGroupBox} onBoxDone={onBoxDone}
         />

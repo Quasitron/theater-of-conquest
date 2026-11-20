@@ -37,6 +37,8 @@ interface Props {
   sightings?: readonly Pos[];
   /** Fights to play out: `start` is a performance.now() time. The map repaints every frame while any is running. */
   fx?: ActiveFx[];
+  /** A unit gliding along the squares it has just moved through; `start` is a performance.now() time. */
+  glide?: { unitId: number; type: UnitType; points: Pos[]; start: number; duration: number } | null;
   /** Fights of a replay still to come, drawn as they were before the fight. */
   pending?: Fight[];
   /** Own units heading left, so their pictures are mirrored. */
@@ -69,7 +71,7 @@ export function MapCanvas(p: Props) {
   const blinkOn = useBlink(p.blinkActive);
   // While fights are playing, repaint every animation frame; the loop stops as soon as there are none.
   const [, setFrame] = useState(0);
-  const animating = !!p.fx && p.fx.length > 0;
+  const animating = (!!p.fx && p.fx.length > 0) || !!p.glide;
   // A unit picture that finishes loading is drawn at once.
   useEffect(() => onIconsLoaded(() => setFrame((n) => n + 1)), []);
   useEffect(() => {
@@ -114,6 +116,7 @@ export function MapCanvas(p: Props) {
       activeId: p.activeId, blinkOn, path: p.path, pathOk: p.pathOk, pathLabel: p.pathLabel, pathTarget: p.pathTarget,
       route: p.route, routeLabel: p.routeLabel, patrols: p.patrols, productionMap: p.productionMap, flash: p.flash, sightings: p.sightings,
       fx: p.fx?.map((a) => ({ fight: a.fight, age: performance.now() - a.start, duration: a.duration })),
+      glide: p.glide ? { unitId: p.glide.unitId, type: p.glide.type, points: p.glide.points, age: performance.now() - p.glide.start, duration: p.glide.duration } : null,
       pending: p.pending, headingLeft: p.headingLeft, cityRoutes: p.cityRoutes, ferryRoutes: p.ferryRoutes, attack: p.attack,
       groupBox: p.groupBox,
     });
