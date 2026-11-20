@@ -546,7 +546,8 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     const ua = ownAlpha(u) * (underActive(u) ? 0.3 : 1);
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
-      unitMark(sx, sy, colors[view.me], face(u).type, ua, 1, 0.5, 0.5, left(face(u)), rankOf(face(u).wins, face(u).type));
+      // The units under the active one are faded and carry no rank chevrons, which would read as the active unit's.
+      unitMark(sx, sy, colors[view.me], face(u).type, ua, 1, 0.5, 0.5, left(face(u)), underActive(u) ? 0 : rankOf(face(u).wins, face(u).type));
       sentryTag(face(u), sx + t * 0.5, sy + t * 0.5, 1, ua);
       const cargo = view.myUnits.filter((c) => c.carriedBy === u.id).length;
       if (cargo > 0) badge(sx, sy, cargo, ua);
