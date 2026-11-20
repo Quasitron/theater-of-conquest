@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ai-no-lake-ships',
+    version: '0.9.132',
+    date: '2026-11-20',
+    title: 'Computer stops building ships on lakes',
+    text: ['A computer player no longer builds ships in a city whose only water is a small lake, where they could never go anywhere.'],
+  },
+  {
     id: 'resume-patrol-blink',
     version: '0.9.131',
     date: '2026-11-20',

@@ -45,9 +45,44 @@ function bump(memo: AiMemo, key: string): boolean {
 
 const at = (a: Pos, b: Pos) => a.x === b.x && a.y === b.y;
 
+/** A body of water with fewer squares than this (all of them known) is a lake: ships built there would be stuck. */
+const LAKE_SQUARES = 40;
+
+/**
+ * Whether the city touches a real sea: its water connects to at least LAKE_SQUARES squares, or to anything not yet
+ * explored (given the benefit of the doubt). A city on a small lake does not build ships.
+ */
+export function cityOnSea(view: PlayerView, city: Pos): boolean {
+  if (!cityIsCoastal(view, city)) return false;
+  const w = view.width;
+  const seen = new Set<number>();
+  const queue: Pos[] = [];
+  for (const n of neighbors(geo(view), city.x, city.y)) {
+    const t = view.terrain[n.y * w + n.x];
+    if (t === null) return true;
+    if (t === 'water') { seen.add(n.y * w + n.x); queue.push(n); }
+  }
+  while (queue.length > 0) {
+    const p = queue.pop()!;
+    for (const n of neighbors(geo(view), p.x, p.y)) {
+      const i = n.y * w + n.x;
+      if (seen.has(i)) continue;
+      const t = view.terrain[i];
+      if (t === null) return true;
+      if (t !== 'water') continue;
+      seen.add(i);
+      if (seen.size >= LAKE_SQUARES) return true;
+      queue.push(n);
+    }
+  }
+  // A small, fully known body of water: a lake, unless it is most of the water there is (a tiny map).
+  const water = view.terrain.reduce((n, t) => n + (t === 'water' ? 1 : 0), 0);
+  return seen.size * 2 >= water;
+}
+
 /** The own coastal city with the lowest id: where armies gather and transports sail from. */
 export function portCity(view: PlayerView): City | null {
-  const coastal = view.myCities.filter((c) => cityIsCoastal(view, c)).sort((a, b) => a.id - b.id);
+  const coastal = view.myCities.filter((c) => cityOnSea(view, c)).sort((a, b) => a.id - b.id);
   return coastal[0] ?? null;
 }
 
@@ -171,7 +206,7 @@ export function wantedProduction(view: PlayerView, city: City, port: City | null
   }
   if (t.scouts && isScoutCity(view, city, port)) return 'fighter';
   if (t.bombers && view.rules.advancedUnits && isBomberCity(view, city, port)) return 'bomber';
-  if (cityIsCoastal(view, city)) {
+  if (cityOnSea(view, city)) {
     const ships = warshipsOwnedOrBuilding(view) - (isFleet(city.production) ? 1 : 0);
     const portReady = city.id !== port?.id || view.myUnits.some((u) => u.type === 'transport');
     if (portReady && ships < wantedWarships(view, t)) return warshipFor(view, t, ships, city);
@@ -239,7 +274,7 @@ function foreignCities(view: PlayerView, from: Pos) {
 
 function nearestOwnCity(view: PlayerView, from: Pos, coastalOnly: boolean): City | null {
   return view.myCities
-    .filter((c) => !coastalOnly || cityIsCoastal(view, c))
+    .filter((c) => !coastalOnly || cityOnSea(view, c))
     .sort((a, b) => chebyshev(geo(view), from, a) - chebyshev(geo(view), from, b) || a.id - b.id)[0] ?? null;
 }
 
