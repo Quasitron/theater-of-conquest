@@ -1548,6 +1548,24 @@ export function GameScreen({ session, onQuit }: Props) {
         <span class="topbar-right">
           {target === 'patrol' && <button class="primary" disabled={!patrolLegs || patrolLegs.length === 0} onClick={(e) => { blur(e); finishCircuit(); }}>Done: return to start</button>}
           {target === 'patrol' && <span class="message" role="status">{!patrolLegs || patrolLegs.length === 0 ? 'Patrol: click the first waypoint (Esc cancels).' : `Patrol: ${patrolLegs.length} waypoint${patrolLegs.length === 1 ? '' : 's'}. Click the next one, or the start (or Done) to finish. It returns to the start and repeats (Esc cancels).`}{selectedUnit?.fuel != null ? ` Fuel ${selectedUnit.fuel}.` : ''}</span>}
+          {!target && playing && selectedUnit && selectedUnit.orders === null && selectedUnit.lastPatrol && (() => {
+            // An interrupted patrol: say why (from the log) and offer to carry on, right here instead of in the side panel.
+            const log = session.log(view.me);
+            let why = 'interrupted';
+            for (let i = log.length - 1; i >= 0 && i >= log.length - 200; i--) {
+              const e = log[i].event;
+              if (e.type === 'ordersEnded' && e.unitId === selectedUnit.id) {
+                why = e.reason === 'enemySighted' ? 'enemy sighted' : e.reason === 'blocked' ? 'path blocked' : e.reason === 'returning' ? 'low on fuel' : 'interrupted';
+                break;
+              }
+            }
+            return (
+              <>
+                <span class="message" role="status">{unitDisplayName(selectedUnit)}: patrol stopped ({why}).</span>
+                <button class="primary" onClick={(e) => { blur(e); doAction('resumePatrol'); }}>Resume Patrol (K)</button>
+              </>
+            );
+          })()}
           {target && target !== 'patrol' && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}

@@ -55,7 +55,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     version: '0.9.121',
     date: '2026-11-19',
     title: 'Patrols with waypoints',
-    text: ['A patrol that is interrupted (an enemy comes near, the way is blocked, or fuel runs low) is no longer lost: the Orders line says "patrol interrupted" and a Resume Patrol button (K) picks it up again.','Press P, then click each waypoint in turn (a triangle, a stretch of coast), then click the start (the city, carrier or square the unit stands on) or press Done. The unit visits the waypoints in order, returns to the start and goes round again; for out and back, click the far square and then the start. The route you are drawing and other patrols show as dashed lines. Aircraft can do this too: they must start at a city or carrier, and a waypoint is refused when the whole route back to the base would not fit in their fuel.'],
+    text: ['A patrol that is interrupted (an enemy comes near, the way is blocked, or fuel runs low) is no longer lost: the top bar says "patrol stopped (enemy sighted)" with a Resume Patrol button (also K, and in the unit panel) that picks it up again.','Press P, then click each waypoint in turn (a triangle, a stretch of coast), then click the start (the city, carrier or square the unit stands on) or press Done. The unit visits the waypoints in order, returns to the start and goes round again; for out and back, click the far square and then the start. The route you are drawing and other patrols show as dashed lines. Aircraft can do this too: they must start at a city or carrier, and a waypoint is refused when the whole route back to the base would not fit in their fuel.'],
   },
   {
     id: 'news-shows-version',
