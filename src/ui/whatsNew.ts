@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-under-rank',
+    version: '0.9.126',
+    date: '2026-11-19',
+    title: 'Selected stack unit shows its own rank',
+    text: ['In a stack, the faded units under the one you have selected no longer show rank chevrons, so the chevrons you see are the selected unit\'s own.'],
+  },
+  {
     id: 'patrol-from-ally-city',
     version: '0.9.124',
     date: '2026-11-19',
