@@ -536,7 +536,9 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Own top-level units outside own cities.
   // The unit that needs orders is drawn last, so it is the one that shows when several share a square (an enemy city).
   const outside = showUnits ? [...view.myUnits].sort((a, b) => Number(blinking(a)) - Number(blinking(b))) : [];
-  const stackSize = (x: number, y: number) => outside.filter((o) => o.carriedBy === null && o.x === x && o.y === y).length;
+  // Allies' units on the square count towards the stack limit too, so the badge shows them.
+  const stackSize = (x: number, y: number) => outside.filter((o) => o.carriedBy === null && o.x === x && o.y === y).length
+    + (view.rules.stacking ? view.allyUnits.filter((a) => a.x === x && a.y === y).length : 0);
   // The units under the one you are giving orders to are drawn much fainter, so the map shows which one it is.
   const underActive = (u: Unit) => !!activeUnit && !blinking(u) && u.carriedBy === null && activeUnit.carriedBy === null && u.x === activeUnit.x && u.y === activeUnit.y;
   for (const u of outside) {
