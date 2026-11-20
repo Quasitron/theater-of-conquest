@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.128 | 2026-11-20 | After an order that sends a unit off (explore, go-to, patrol, go home...) it glides along the squares it went through with a dotted trail (0.3 to 0.65 s) before the next unit comes up. Single manual steps are not animated. |
 | 0.9.127 | 2026-11-19 | Rules 37: a patrol interrupted by an enemy, a block or low fuel is remembered (Unit.lastPatrol); "Resume Patrol (K)" takes it up again, and the Orders line says the patrol was interrupted. |
 | 0.9.126 | 2026-11-19 | In a stack, the faded units under the selected one no longer show their rank chevrons (they read as the selected unit's). |
 | 0.9.125 | 2026-11-19 | Patrol is now always a waypoint route: P, click waypoints, then the start (or Done) to close it; out and back is one waypoint then the start. Aircraft circuits start at a city or carrier and must fit in one tank (waypoints that do not are refused while clicking). |

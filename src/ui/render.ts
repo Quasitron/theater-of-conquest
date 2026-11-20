@@ -45,6 +45,8 @@ export interface DrawOptions {
   sightings?: readonly Pos[];
   /** Fights playing out now: `age` ms into a run of `duration` ms. */
   fx?: { fight: Fight; age: number; duration: number }[];
+  /** An own unit gliding along the squares it has just moved through (after an order); the real unit waits at the end until it is over. */
+  glide?: { unitId: number; type: UnitType; points: Pos[]; age: number; duration: number } | null;
   /** Ids of own units heading left (see unitsHeadingLeft), so their pictures are mirrored; others face right. */
   headingLeft?: ReadonlySet<number>;
   /** Fights of a replay still to come: their units are drawn as they were before the fight, so none vanishes early. */
@@ -541,8 +543,10 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     + (view.rules.stacking ? view.allyUnits.filter((a) => a.x === x && a.y === y).length : 0);
   // The units under the one you are giving orders to are drawn much fainter, so the map shows which one it is.
   const underActive = (u: Unit) => !!activeUnit && !blinking(u) && u.carriedBy === null && activeUnit.carriedBy === null && u.x === activeUnit.x && u.y === activeUnit.y;
+  const gliding = o.glide && o.glide.age >= 0 && o.glide.age < o.glide.duration ? o.glide : null;
   for (const u of outside) {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
+    if (gliding && u.id === gliding.unitId) continue; // drawn sliding along its path instead
     const ua = ownAlpha(u) * (underActive(u) ? 0.3 : 1);
     each((mx, my, sx, sy) => {
       if (mx !== u.x || my !== u.y || hidden(mx, my)) return;
@@ -655,6 +659,37 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Fights being played out: the two units (the loser fading, a winner that moves sliding in), then the effect, each
   // drawn on every on-screen copy of the map.
   const copies = view.wrap ? [-view.width, 0, view.width] : [0];
+  if (gliding && gliding.points.length >= 2) {
+    // Unwrap the path so a step across the seam of a wrapping map stays one square long.
+    const pts: Pos[] = [{ ...gliding.points[0] }];
+    for (let i = 1; i < gliding.points.length; i++) {
+      const prev = pts[i - 1];
+      let dx = gliding.points[i].x - gliding.points[i - 1].x;
+      if (view.wrap && Math.abs(dx) > view.width / 2) dx -= Math.sign(dx) * view.width;
+      pts.push({ x: prev.x + dx, y: gliding.points[i].y });
+    }
+    const segs = pts.length - 1;
+    const f = Math.min(segs, (gliding.age / gliding.duration) * segs);
+    const i = Math.min(segs - 1, Math.floor(f));
+    const frac = f - i;
+    const gx = pts[i].x + (pts[i + 1].x - pts[i].x) * frac;
+    const gy = pts[i].y + (pts[i + 1].y - pts[i].y) * frac;
+    const left = pts[i + 1].x < pts[i].x;
+    for (const off of copies) {
+      // The trail so far, then the unit at its head.
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = Math.max(2, t * 0.08);
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo((pts[0].x + off - cam.x + 0.5) * t, (pts[0].y - cam.y + 0.5) * t);
+      for (let k = 1; k <= i; k++) ctx.lineTo((pts[k].x + off - cam.x + 0.5) * t, (pts[k].y - cam.y + 0.5) * t);
+      ctx.lineTo((gx + off - cam.x + 0.5) * t, (gy - cam.y + 0.5) * t);
+      ctx.stroke();
+      ctx.restore();
+      unitMark((gx + off - cam.x) * t, (gy - cam.y) * t, colors[view.me], gliding.type, 1, 1, 0.5, 0.5, left);
+    }
+  }
   // The rank chevrons of a fight's unit: what it holds now, except that a unit promoted in this fight gets its new rank
   // only once the result has landed (the promotion jingle plays then), not before.
   const actorRank = (f: Fight, actor: { side: 'attacker' | 'defender'; owner: PlayerId; type: UnitType }, resolved: boolean): number => {

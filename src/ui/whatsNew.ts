@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'move-glide',
+    version: '0.9.128',
+    date: '2026-11-20',
+    title: 'See where a unit went',
+    text: ['After an order that sends a unit off (Explore, Move To, Patrol, Go Home), the unit now glides along the squares it went through, leaving a dotted trail, before the next unit comes up. You can see whether it went and which way without scrolling back. Single steps you take by hand are not animated.'],
+  },
+  {
     id: 'stack-under-rank',
     version: '0.9.126',
     date: '2026-11-19',
