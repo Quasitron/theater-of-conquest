@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-count-allies',
+    version: '0.9.122',
+    date: '2026-11-19',
+    title: 'Stack counts include allies',
+    text: ['A stack\'s number badge now counts allied units on the square too, since they use up places in the limit of 4 (an allied unit could hide under your stack and make it look as if there was room). Pointing at a full stack now says "stack full" instead of "No known path".'],
+  },
+  {
     id: 'patrol-circuits',
     version: '0.9.121',
     date: '2026-11-19',

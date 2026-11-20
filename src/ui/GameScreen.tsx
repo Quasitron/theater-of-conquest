@@ -358,7 +358,14 @@ export function GameScreen({ session, onQuit }: Props) {
     if (landersFor(view, selectedUnit, hover).length > 0 && dirTo(view, selectedUnit, hover) !== null) {
       return { path: [{ x: hover.x, y: hover.y }], ok: true, label: 'land here' };
     }
-    return planPath(view, selectedUnit, hover);
+    const plan = planPath(view, selectedUnit, hover);
+    // Stacking rule: a square that already holds the most units (yours and your allies') cannot be joined.
+    if (!plan.path && view.rules.stacking && UNIT_STATS[selectedUnit.type].domain !== 'air') {
+      const here = view.myUnits.filter((u) => u.carriedBy === null && u.x === hover.x && u.y === hover.y).length
+        + view.allyUnits.filter((a) => a.x === hover.x && a.y === hover.y).length;
+      if (here >= stackLimitOf(UNIT_STATS[selectedUnit.type].domain) && view.terrain[hover.y * view.width + hover.x] !== 'city') return { ...plan, label: `stack full (${here})` };
+    }
+    return plan;
   }, [selectedUnit?.id, hover, view, frozen, noPath, attack]);
 
   // The committed route of the selected unit's go-to or patrol, from where it stands to its current target.
