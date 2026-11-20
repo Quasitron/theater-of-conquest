@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { blur } from './blur';
 import { PlacedDialog } from './LeaderLine';
+import { VERSION } from './version';
 import { WHATS_NEW, WHATS_NEW_RECENT, markNewsSeen } from './whatsNew';
 
 interface Props {
@@ -15,7 +16,7 @@ export function WhatsNewDialog({ onClose }: Props) {
   return (
     <PlacedDialog anchor={null} wide label="What's New" onKey={(e) => { if (e.key === 'Escape') { onClose(); return true; } return false; }}>
       <div class="news-top">
-        <h2>What's New</h2>
+        <h2>What's New <span class="muted news-current">You are on Version {VERSION}</span></h2>
         <button class="primary" onClick={(e) => { blur(e); onClose(); }}>Close</button>
       </div>
       {shown.map((e) => (

@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'news-shows-version',
+    version: '0.9.120',
+    date: '2026-11-19',
+    title: 'Version shown in What\'s New',
+    text: ['The What\'s New window now says which version you are running, right under its title.'],
+  },
+  {
     id: 'fight-rank-badges',
     version: '0.9.119',
     date: '2026-11-19',
