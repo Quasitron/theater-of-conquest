@@ -40,6 +40,18 @@ describe('eventsFor', () => {
     expect(eventsFor(s, events, 1).filter((e) => e.type === 'unitDestroyed')).toHaveLength(4);
   });
 
+  it('tells the player who took a city which units inside it were lost', () => {
+    const s = makeGame(['*#*'], { starts: [0, 1] });
+    const army = addUnit(s, 'army', 0, 1, 0);
+    const inside = addUnit(s, 'army', 1, 2, 0);
+    const events: GameEvent[] = [];
+    expect(moveUnit(s, attackerAlwaysHits(), army, 2, events)).toBeNull();
+    expect(events.some((e) => e.type === 'cityCaptured')).toBe(true);
+    const lost = (pid: number) => eventsFor(s, events, pid).filter((e) => e.type === 'unitDestroyed' && e.reason === 'cityCaptured');
+    expect(lost(0)).toEqual([expect.objectContaining({ unitId: inside.id, unitType: 'army' })]);
+    expect(lost(1)).toHaveLength(1); // its owner always hears of it
+  });
+
   it('hides combat between other players far from you', () => {
     const s = makeGame(M, { players: 3 });
     addUnit(s, 'destroyer', 1, 5, 1);

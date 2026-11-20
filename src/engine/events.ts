@@ -15,6 +15,7 @@ export function eventsFor(s: GameState, events: readonly GameEvent[], pid: Playe
   for (const e of events) if (e.type === 'unitDestroyed') owners.set(e.unitId, e.owner);
   const mine = (owner: PlayerId | null | undefined) => owner !== undefined && owner !== null && areFriendly(s, owner, pid);
   const combatUnits = new Set<number>();
+  const capturedByMine = events.some((e) => e.type === 'cityCaptured' && mine(e.by));
   const out: GameEvent[] = [];
 
   for (const e of events) {
@@ -36,7 +37,8 @@ export function eventsFor(s: GameState, events: readonly GameEvent[], pid: Playe
         }
         break;
       case 'unitDestroyed':
-        if (mine(e.owner) || (e.reason !== 'cargoLost' && combatUnits.has(e.unitId))) out.push(e);
+        // The units inside a city that fell are reported to whoever took it, though they could not be seen before.
+        if (mine(e.owner) || (e.reason !== 'cargoLost' && combatUnits.has(e.unitId)) || (e.reason === 'cityCaptured' && capturedByMine)) out.push(e);
         break;
       case 'cityCaptured': {
         const c = s.cities.find((x) => x.id === e.cityId);

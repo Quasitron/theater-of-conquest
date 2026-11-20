@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'capture-lists-losses',
+    version: '0.9.123',
+    date: '2026-11-19',
+    title: 'Captured cities list what was lost',
+    text: ['When you capture a city, the log now names each enemy unit that was inside and went down with it (for example "Computer\'s Army was lost when its city fell"), so you can see what the capture cost them.'],
+  },
+  {
     id: 'stack-count-allies',
     version: '0.9.122',
     date: '2026-11-19',
