@@ -314,6 +314,20 @@ describe('AI warships', () => {
     return e;
   };
 
+  it('a city on a small lake builds no ships and is never the port; a city on the sea does', () => {
+    const s = game(['#####........', '#.*.#.......*', '#####........']);
+    for (const c of s.cities) c.owner = 1;
+    s.turn = 20;
+    const e = addUnit(s, 'transport', 0, 8, 1);
+    s.fog[1].lastSeen[e.id] = { unitId: e.id, type: 'transport', owner: 0, x: 8, y: 1, turnSeen: s.turn };
+    const v = view(s);
+    const lake =v.myCities.find((c) => c.x === 2)!;
+    const shore = v.myCities.find((c) => c.x === 12)!;
+    expect(portCity(v)!.id).toBe(shore.id);
+    expect(wantedProduction(v, lake, portCity(v))).toBe('army');
+    expect(wantedProduction(v, shore, null)).toBe('destroyer');
+  });
+
   it('coastal cities other than the port build warships once the fleet is due, the port only after a transport', () => {
     const s = sea();
     s.turn = 20;
