@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { UNIT_STATS, UNIT_TYPES, type PlayerView, type Pos } from '../engine';
 import type { Fight } from './fights';
 import { blur } from './blur';
+import { FightIcons } from './FightIcons';
 import { UNIT_GLYPH } from './colors';
 import { PlacedDialog } from './LeaderLine';
 import type { BattleLine, Sighting, SentryLine } from './reportLines';
@@ -64,9 +65,10 @@ export function Reports({ view, colors, tab: first, battles, sightings, sentries
         battles.length === 0
           ? <p class="muted">No battles against you since your last turn.</p>
           : (
-            <ul class="report-list">
+            <ul class="report-list fights">
               {battles.map((b, i) => (
                 <li key={i}>
+                  {b.fight && <FightIcons fight={b.fight} colors={colors} />}
                   <span class={b.outcome === 'good' ? 'won-battle' : b.outcome === 'bad' ? 'lost-battle' : undefined}>{b.text}</span>
                   <span class="muted">at {b.at.x},{b.at.y}</span>
                   <button onClick={(e) => { blur(e); onShow(b.at, b.fight); }}>Show</button>

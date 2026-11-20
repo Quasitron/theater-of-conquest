@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'report-fight-icons',
+    version: '0.9.130',
+    date: '2026-11-20',
+    title: 'Pictures in the Combat report',
+    text: ['Each line of the Combat report now starts with the two units that fought: the attacker\'s picture, an arrow, and the defender\'s, each in its owner\'s colour. The unit that was lost is crossed out, and a city that was taken carries a flag, so the report reads at a glance.'],
+  },
+  {
     id: 'move-glide',
     version: '0.9.128',
     date: '2026-11-20',
