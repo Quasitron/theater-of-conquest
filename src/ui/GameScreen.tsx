@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { GameSession, SessionCommand } from '../app/session';
 import { landOnSquare, unloadAndLand } from '../app/unloadAndLand';
 import {
-  UNIT_STATS, isCrippled, step, aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
+  UNIT_STATS, isCrippled, patrolTarget, step, aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
@@ -365,7 +365,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const route = useMemo(() => {
     const o = selectedUnit?.orders;
     if (!selectedUnit || !playing || !o || (o.kind !== 'goto' && o.kind !== 'patrol')) return null;
-    const to = o.kind === 'goto' ? o.target : o.toB ? o.b : o.a;
+    const to = o.kind === 'goto' ? o.target : patrolTarget(o);
     const r = planPath(view, selectedUnit, to);
     return r.path && r.path.length > 0 ? r : null;
   }, [selectedUnit, view, playing]);
@@ -394,11 +394,20 @@ export function GameScreen({ session, onQuit }: Props) {
   }, [routesMap, view, target, ferryPlan, hover]);
 
   // While choosing a patrol destination, the player's other patrols, so covered stretches are visible.
+  const [patrolLegs, setPatrolLegs] = useState<Pos[] | null>(null);
+  useEffect(() => { if (target !== 'patrol') setPatrolLegs(null); }, [target]);
   const patrols = useMemo(() => {
     if (target !== 'patrol') return undefined;
-    return view.myUnits.flatMap((u): [Pos, Pos][] =>
-      u.orders?.kind === 'patrol' && u.id !== selectedUnit?.id ? [[u.orders.a, u.orders.b]] : []);
-  }, [target, view, selectedUnit?.id]);
+    const segs = (stops: Pos[]): [Pos, Pos][] => stops.slice(1).map((p, i) => [stops[i], p]);
+    const others = view.myUnits.flatMap((u): [Pos, Pos][] => {
+      const o = u.orders;
+      if (o?.kind !== 'patrol' || u.id === selectedUnit?.id) return [];
+      return o.loop ? segs([o.a, ...o.loop, o.a]) : [[o.a, o.b]];
+    });
+    // The circuit being drawn, with a segment following the pointer.
+    const draft = selectedUnit && patrolLegs ? segs([{ x: selectedUnit.x, y: selectedUnit.y }, ...patrolLegs, ...(hover ? [hover] : [])]) : [];
+    return [...others, ...draft];
+  }, [target, view, selectedUnit?.id, patrolLegs, hover]);
 
   /** The unit cycle for the current state of the game (not the last render). */
   const readyNow = (h: ReadonlySet<number> = held, s: readonly number[] = skipped): Unit[] => {
@@ -1109,6 +1118,15 @@ export function GameScreen({ session, onQuit }: Props) {
     }
   };
 
+  /** Closes the circuit being drawn: the unit sails the corners in order, then back to where it started, and round again. */
+  const finishCircuit = () => {
+    if (!selectedUnit || !patrolLegs || patrolLegs.length === 0) return;
+    const legs = patrolLegs;
+    const last = legs[legs.length - 1];
+    setTarget(null);
+    giveRoute(selectedUnit, { kind: 'patrol', a: { x: selectedUnit.x, y: selectedUnit.y }, b: last, toB: true, loop: legs, leg: 0 }, last);
+  };
+
   const onSquare = (p: Pos) => {
     if (!playing || dialogOpen) return;
     const explored = view.terrain[p.y * view.width + p.x] !== null;
@@ -1172,6 +1190,14 @@ export function GameScreen({ session, onQuit }: Props) {
         const info = `${unitDisplayName(unit)} escorts ${unitDisplayName(tr)}.`;
         setOrders(unit, { kind: 'escort', transportId: tr.id });
         if (session.view().myUnits.find((x) => x.id === unit.id)?.orders?.kind === 'escort') setMessage(info);
+        return;
+      }
+      if (mode === 'patrol' && patrolLegs !== null) {
+        // Circuit: every click is a corner; the start square (or Done) closes it.
+        if (p.x === selectedUnit.x && p.y === selectedUnit.y) return finishCircuit();
+        const last = patrolLegs[patrolLegs.length - 1];
+        if (last && last.x === p.x && last.y === p.y) return;
+        setPatrolLegs([...patrolLegs, { x: p.x, y: p.y }]);
         return;
       }
       setTarget(null);
@@ -1445,7 +1471,13 @@ export function GameScreen({ session, onQuit }: Props) {
         >Resign</button>
         <button onClick={(e) => { blur(e); onQuit(); }}>Quit</button>
         <span class="topbar-right">
-          {target && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target === 'patrol' && selectedUnit && UNIT_STATS[selectedUnit.type].domain !== 'air' && (
+            patrolLegs === null
+              ? <button onClick={(e) => { blur(e); setPatrolLegs([]); setMessage(null); }}>Add legs (circuit)</button>
+              : <button class="primary" disabled={patrolLegs.length === 0} onClick={(e) => { blur(e); finishCircuit(); }}>Done: return to start</button>
+          )}
+          {target === 'patrol' && patrolLegs !== null && <span class="message" role="status">{patrolLegs.length === 0 ? 'Circuit: click the first corner, then each next one. Click the start square or Done to close it (Esc cancels).' : `Circuit: ${patrolLegs.length} corner${patrolLegs.length === 1 ? '' : 's'} set. Click the next corner, or the start square / Done to return there (Esc cancels).`}</span>}
+          {target && !(target === 'patrol' && patrolLegs !== null) && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}

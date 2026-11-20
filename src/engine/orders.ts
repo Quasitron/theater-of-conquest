@@ -26,6 +26,18 @@ function isRefuelBase(s: GameState, u: Unit, p: Pos): boolean {
   );
 }
 
+/** Where a patrol is heading now: the corner it is on for a circuit, else b or a. */
+export function patrolTarget(o: Extract<Orders, { kind: 'patrol' }>): Pos {
+  if (o.loop && o.loop.length > 0) {
+    const stops = [...o.loop, o.a];
+    return stops[Math.min(Math.max(o.leg ?? 0, 0), stops.length - 1)];
+  }
+  return o.toB ? o.b : o.a;
+}
+
+/** The most corners a circuit may have. */
+export const MAX_PATROL_LEGS = 12;
+
 /** The patrol end an aircraft refuels at: a if it holds an own city or usable own carrier, else b, else null. */
 export function patrolBase(s: GameState, u: Unit, o: { a: Pos; b: Pos }): Pos | null {
   if (isRefuelBase(s, u, o.a)) return o.a;
@@ -72,6 +84,22 @@ export function validateOrders(s: GameState, u: Unit, o: Orders): string | null 
       return null;
     }
     case 'patrol': {
+      if (o.loop !== undefined) {
+        if (air) return 'aircraft patrol between two squares only';
+        if (!Array.isArray(o.loop) || o.loop.length < 1 || o.loop.length > MAX_PATROL_LEGS) return `a circuit needs 1 to ${MAX_PATROL_LEGS} corners`;
+        if (!validSquare(s, u, o.a) || !o.loop.every((p) => validSquare(s, u, p))) return 'target is not an explored square';
+        if (!Number.isInteger(o.leg ?? 0) || (o.leg ?? 0) < 0 || (o.leg ?? 0) > o.loop.length) return 'unknown orders';
+        const stops = [o.a, ...o.loop, o.a];
+        const lmap = pathMapFromState(s, u.owner);
+        for (let i = 1; i < stops.length; i++) {
+          if (stops[i].x === stops[i - 1].x && stops[i].y === stops[i - 1].y) return 'patrol corners must differ from the one before';
+          // The square the unit itself stands on counts as free (the map shows it as held by an own unit).
+          const home = stops[i].x === u.x && stops[i].y === u.y;
+          if (!home && findPath(lmap, { ...u, x: stops[i - 1].x, y: stops[i - 1].y }, stops[i]) === null) return 'no known path';
+        }
+        const to = patrolTarget(o);
+        return to.x === u.x && to.y === u.y ? null : findPath(lmap, u, to) === null ? 'no known path' : null;
+      }
       if (!validSquare(s, u, o.a) || !validSquare(s, u, o.b)) return 'target is not an explored square';
       if (o.a.x === o.b.x && o.a.y === o.b.y) return 'patrol ends must differ';
       const map = pathMapFromState(s, u.owner);
@@ -220,7 +248,7 @@ export function executeOrders(
       if (!dest || dest.owner !== u.owner) return endOrders(u, 'destinationLost', events);
     }
     const map = pathMapFromState(s, u.owner);
-    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? (o.toB ? o.b : o.a) : findFrontier(map, u, canTakeCities(u));
+    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? patrolTarget(o) : findFrontier(map, u, canTakeCities(u));
     if (target === null) return endOrders(u, 'nothingToExplore', events);
     if (u.x === target.x && u.y === target.y) {
       if (o.kind === 'goto') {
@@ -232,7 +260,10 @@ export function executeOrders(
         }
         return;
       }
-      if (o.kind === 'patrol') o.toB = !o.toB;
+      if (o.kind === 'patrol') {
+        if (o.loop && o.loop.length > 0) o.leg = ((o.leg ?? 0) + 1) % (o.loop.length + 1); // on to the next corner, then home
+        else o.toB = !o.toB;
+      }
       continue;
     }
     if (o.kind === 'patrol' && u.fuel !== null) {
