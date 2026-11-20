@@ -165,6 +165,8 @@ export function chooseHome(s: GameState, u: Unit): { city: City; steps: number }
 }
 
 function endOrders(u: Unit, reason: OrdersEndReason, events: GameEvent[]): void {
+  // An interrupted patrol is remembered, so the player can resume it.
+  if (u.orders?.kind === 'patrol' && (reason === 'enemySighted' || reason === 'blocked')) u.lastPatrol = structuredClone(u.orders);
   u.orders = null;
   u.blockedTurns = 0;
   events.push({ type: 'ordersEnded', unitId: u.id, owner: u.owner, reason });
@@ -302,6 +304,7 @@ export function executeOrders(
       if (need > u.fuel) {
         const home = chooseHome(s, u);
         if (home === null) return endOrders(u, 'lowFuel', events);
+        u.lastPatrol = structuredClone(o); // low on fuel: it goes home, and the patrol can be resumed from there
         u.orders = { kind: 'goto', target: { x: home.city.x, y: home.city.y } };
         u.blockedTurns = 0;
         // A patrol tied to a carrier says why it gave up: the carrier is gone or full, or it sailed out of range.
@@ -481,6 +484,7 @@ export function giveOrders(
   const error = validateOrders(s, u, orders);
   if (error) return error;
   u.orders = structuredClone(orders);
+  delete u.lastPatrol;
   if (u.orders.kind === 'patrol') tieToCarrier(s, u, u.orders);
   u.blockedTurns = 0;
   u.unloadNextTurn = false;

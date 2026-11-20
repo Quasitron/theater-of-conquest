@@ -161,6 +161,24 @@ describe('patrol and explore', () => {
     expect(legs).toEqual(new Set([0, 1, 2]));
   });
 
+  it('a patrol stopped by a sighted enemy is remembered, and cleared by new orders', () => {
+    let s = game(['*..........*', '............', '............']);
+    const d = addUnit(s, 'destroyer', 0, 1, 0);
+    const orders: Orders = { kind: 'patrol', a: { x: 1, y: 0 }, b: { x: 9, y: 0 }, toB: true, loop: [{ x: 9, y: 0 }], leg: 0 };
+    s = run(s, { type: 'setOrders', player: 0, unitId: d.id, orders }).state;
+    addUnit(s, 'destroyer', 1, 6, 1); // an enemy ship appears beside its way
+    let stopped = false;
+    for (let i = 0; i < 6 && !stopped; i++) {
+      s = fullRound(s).state;
+      stopped = unitById(s, d.id)!.orders === null;
+    }
+    const u = unitById(s, d.id)!;
+    expect(u.orders).toBeNull();
+    expect(u.lastPatrol).toMatchObject({ kind: 'patrol', loop: [{ x: 9, y: 0 }] });
+    s = run(s, { type: 'setOrders', player: 0, unitId: d.id, orders: null }).state;
+    expect(unitById(s, d.id)!.lastPatrol).toBeUndefined();
+  });
+
   it('a circuit is refused with a repeated corner or with too many corners', () => {
     const s = game(['*.......*', '.........', '.........']);
     const d = addUnit(s, 'destroyer', 0, 1, 0);
