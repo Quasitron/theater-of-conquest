@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'resume-patrol-blink',
+    version: '0.9.131',
+    date: '2026-11-20',
+    title: 'Resume Patrol blinks',
+    text: ['The Resume Patrol button in the top bar now flashes like End Turn does, so an interrupted patrol is hard to miss.'],
+  },
+  {
     id: 'report-fight-icons',
     version: '0.9.130',
     date: '2026-11-20',
