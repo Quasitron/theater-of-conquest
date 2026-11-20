@@ -39,7 +39,7 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   sentry: 'Sentry: the unit sleeps until an enemy comes into sight.',
   repair: 'Repair: the unit stays put to heal (in a friendly city a unit that does not move heals 1 hit a turn).',
   moveTo: 'Move To: then click a square; the unit goes there by the shortest known way, over as many turns as it takes.',
-  patrol: 'Patrol back and forth between two squares: click the first, then the second. For ships and land units, "Add legs (circuit)" lets you click several corners instead (a triangle, a coastline) and then Done or the start square: the unit sails them in order, returns to where it started, and goes round again.',
+  patrol: 'Patrol a route: press P, click each waypoint in turn (a triangle, a stretch of coast), then click the start (the city, carrier or square the unit stands on) or press Done. The unit visits the waypoints in order, returns to the start and goes round again. For out and back, click the far square, then the start. Aircraft must start at a city or carrier and can only add waypoints while the whole route, back to the base, fits in their fuel.',
   goHome: 'Go Home: head for the nearest friendly city.',
   explore: 'Explore: the unit wanders out to uncover the nearest unexplored squares by itself. An Army or Armor also heads for a known neutral city when it is nearer, and stops beside it so you can decide.',
   escort: 'Escort: a warship follows a Transport and guards it, fighting what it is likely to beat.',

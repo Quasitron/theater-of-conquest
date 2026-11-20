@@ -402,7 +402,7 @@ export function GameScreen({ session, onQuit }: Props) {
 
   // While choosing a patrol destination, the player's other patrols, so covered stretches are visible.
   const [patrolLegs, setPatrolLegs] = useState<Pos[] | null>(null);
-  useEffect(() => { if (target !== 'patrol') setPatrolLegs(null); }, [target]);
+  useEffect(() => { setPatrolLegs(target === 'patrol' ? [] : null); }, [target]);
   const patrols = useMemo(() => {
     if (target !== 'patrol') return undefined;
     const segs = (stops: Pos[]): [Pos, Pos][] => stops.slice(1).map((p, i) => [stops[i], p]);
@@ -1125,6 +1125,25 @@ export function GameScreen({ session, onQuit }: Props) {
     }
   };
 
+  /**
+   * Why the next patrol waypoint `p` cannot be added, or null. Aircraft must start at a base and keep enough fuel to
+   * fly every leg and get back to it; other units need a known way to it.
+   */
+  const patrolWaypointProblem = (u: Unit, start: Pos, legs: readonly Pos[], p: Pos): string | null => {
+    const g = view as unknown as MapLike;
+    const prev = legs.length > 0 ? legs[legs.length - 1] : start;
+    if (UNIT_STATS[u.type].domain === 'air') {
+      const atBase = u.carriedBy !== null || view.knownCities.some((c) => c.x === start.x && c.y === start.y && (c.owner === view.me || (c.owner !== null && view.allies.includes(c.owner))));
+      if (!atBase) return 'An aircraft patrol must start in a city or on a carrier.';
+      const stops = [start, ...legs, p, start];
+      let total = 0;
+      for (let i = 1; i < stops.length; i++) total += chebyshev(g, stops[i - 1], stops[i]);
+      const fuel = u.fuel ?? 0;
+      return total > fuel ? `Out of range: that waypoint needs ${total} fuel to fly the route and get back (it has ${fuel}).` : null;
+    }
+    return findPath(pathMapFromView(view), { type: u.type, x: prev.x, y: prev.y }, p) === null ? 'No known way to that square.' : null;
+  };
+
   /** Closes the circuit being drawn: the unit sails the corners in order, then back to where it started, and round again. */
   const finishCircuit = () => {
     if (!selectedUnit || !patrolLegs || patrolLegs.length === 0) return;
@@ -1199,17 +1218,28 @@ export function GameScreen({ session, onQuit }: Props) {
         if (session.view().myUnits.find((x) => x.id === unit.id)?.orders?.kind === 'escort') setMessage(info);
         return;
       }
-      if (mode === 'patrol' && patrolLegs !== null) {
-        // Circuit: every click is a corner; the start square (or Done) closes it.
-        if (p.x === selectedUnit.x && p.y === selectedUnit.y) return finishCircuit();
-        const last = patrolLegs[patrolLegs.length - 1];
+      if (mode === 'patrol') {
+        // Every click is a waypoint; the start (the city, carrier or square the unit stands on) or Done closes the route.
+        const legs = patrolLegs ?? [];
+        const start: Pos = { x: selectedUnit.x, y: selectedUnit.y };
+        if (p.x === start.x && p.y === start.y) {
+          if (legs.length === 0) setMessage('Click a waypoint first; the patrol returns to its start by itself.');
+          else finishCircuit();
+          return;
+        }
+        const last = legs[legs.length - 1];
         if (last && last.x === p.x && last.y === p.y) return;
-        setPatrolLegs([...patrolLegs, { x: p.x, y: p.y }]);
+        const check = patrolWaypointProblem(selectedUnit, start, legs, p);
+        if (check) {
+          setMessage(check);
+          return;
+        }
+        setMessage(null);
+        setPatrolLegs([...legs, { x: p.x, y: p.y }]);
         return;
       }
       setTarget(null);
-      if (mode === 'moveTo') giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
-      else giveRoute(selectedUnit, { kind: 'patrol', a: { x: selectedUnit.x, y: selectedUnit.y }, b: p, toB: true }, p);
+      giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
       return;
     }
     if (selectedUnit) {
@@ -1478,13 +1508,9 @@ export function GameScreen({ session, onQuit }: Props) {
         >Resign</button>
         <button onClick={(e) => { blur(e); onQuit(); }}>Quit</button>
         <span class="topbar-right">
-          {target === 'patrol' && selectedUnit && UNIT_STATS[selectedUnit.type].domain !== 'air' && (
-            patrolLegs === null
-              ? <button onClick={(e) => { blur(e); setPatrolLegs([]); setMessage(null); }}>Add legs (circuit)</button>
-              : <button class="primary" disabled={patrolLegs.length === 0} onClick={(e) => { blur(e); finishCircuit(); }}>Done: return to start</button>
-          )}
-          {target === 'patrol' && patrolLegs !== null && <span class="message" role="status">{patrolLegs.length === 0 ? 'Circuit: click the first corner, then each next one. Click the start square or Done to close it (Esc cancels).' : `Circuit: ${patrolLegs.length} corner${patrolLegs.length === 1 ? '' : 's'} set. Click the next corner, or the start square / Done to return there (Esc cancels).`}</span>}
-          {target && !(target === 'patrol' && patrolLegs !== null) && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target === 'patrol' && <button class="primary" disabled={!patrolLegs || patrolLegs.length === 0} onClick={(e) => { blur(e); finishCircuit(); }}>Done: return to start</button>}
+          {target === 'patrol' && <span class="message" role="status">{!patrolLegs || patrolLegs.length === 0 ? 'Patrol: click the first waypoint (Esc cancels).' : `Patrol: ${patrolLegs.length} waypoint${patrolLegs.length === 1 ? '' : 's'}. Click the next one, or the start (or Done) to finish. It returns to the start and repeats (Esc cancels).`}{selectedUnit?.fuel != null ? ` Fuel ${selectedUnit.fuel}.` : ''}</span>}
+          {target && target !== 'patrol' && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
