@@ -47,6 +47,8 @@ export interface Unit {
   hunted?: number;
   /** A carrier on a ferry route: the route's id. It stays when the orders end (paused), so the route can be resumed. */
   ferry?: number;
+  /** A patrol that was interrupted (an enemy came near, the way was blocked, fuel ran low): kept so it can be resumed. */
+  lastPatrol?: Extract<Orders, { kind: 'patrol' }>;
 }
 
 export type Orders =

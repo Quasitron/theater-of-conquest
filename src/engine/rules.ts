@@ -59,4 +59,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 34: a Wait-until-full ferry sails when the waiting units left over cannot fit its free space (e.g. one space left, Armor needs two).
 // 35: a Wait-until-full ferry also sails with just one space free (5 of 6), not waiting for one more Army or Spy.
 // 36: stacking rule: a ferry drops its cargo onto one square (up to 4) instead of spreading it out.
-export const RULES_VERSION = 36;
+// 37: a patrol interrupted by an enemy, a block or low fuel is remembered on the unit (lastPatrol) so it can be resumed.
+export const RULES_VERSION = 37;

@@ -105,6 +105,7 @@ export function apply(state: GameState, cmd: Command, inPlace = false): ApplyRes
       else if (u.owner !== actor) error = 'not your unit';
       else if (cmd.orders === null) {
         u.orders = null;
+        delete u.lastPatrol;
         u.blockedTurns = 0;
         u.unloadNextTurn = false;
       } else error = giveOrders(s, rng, u, cmd.orders, events);

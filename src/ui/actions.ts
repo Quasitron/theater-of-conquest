@@ -19,7 +19,7 @@ export function escortable(view: PlayerView, u: Unit): Unit[] {
 }
 
 export const UNIT_BUTTONS: ActionId[] = [
-  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'explore', 'load', 'unload', 'patrol', 'escort', 'ferry', 'resumeFerry', 'airbase', 'sabotage', 'hurt', 'incite', 'goHome', 'clearOrders', 'center', 'info', 'disband',
+  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'explore', 'load', 'unload', 'patrol', 'escort', 'ferry', 'resumeFerry', 'resumePatrol', 'airbase', 'sabotage', 'hurt', 'incite', 'goHome', 'clearOrders', 'center', 'info', 'disband',
 ];
 
 /** True when a spy's own report on the city it stands in shows no garrison at all. */
@@ -54,6 +54,8 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     ferry: canFerry(u.type) && u.carriedBy === null,
     // A carrier whose route was interrupted (an enemy came near, say) carries on with it.
     resumeFerry: u.ferry !== undefined && u.orders === null && view.ferryRoutes.some((r) => r.id === u.ferry),
+    // A patrol that was interrupted (an enemy sighted, a block, low fuel) can be picked up again.
+    resumePatrol: u.orders === null && u.lastPatrol !== undefined && !fixed,
     info: true,
     fit: true,
     explore: !air && !fixed,
@@ -92,6 +94,7 @@ export function ordersText(view: PlayerView, u: Unit): string {
     const leg = u.orders.ferry === 'drop' ? 'to drop' : here ? `waiting at ${route.pickup.name}${route.waitFull ? ' for a full load' : ' for cargo'}` : `to ${route.pickup.name}`;
     return `Ferry: ${ferryLabel(view, route)} (${leg})`;
   }
+  if (u.orders === null && u.lastPatrol) return 'None (patrol interrupted: Resume Patrol)';
   return describeOrders(u.orders, (id) => {
     const t = view.myUnits.find((x) => x.id === id);
     return t ? unitDisplayName(t) : undefined;

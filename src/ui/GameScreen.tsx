@@ -1118,6 +1118,7 @@ export function GameScreen({ session, onQuit }: Props) {
         setPicker('ferry');
         return;
       case 'resumeFerry': return order(u, { type: 'resumeFerry', unitId: u.id });
+      case 'resumePatrol': return u.lastPatrol ? setOrders(u, u.lastPatrol) : undefined;
       case 'load':
       case 'unload':
         setPicker(id);

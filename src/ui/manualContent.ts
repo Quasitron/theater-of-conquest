@@ -28,7 +28,7 @@ function unitLine(t: UnitType): string {
 }
 
 const KEY_ORDER = [
-  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'patrol', 'goHome', 'explore', 'escort', 'ferry', 'resumeFerry', 'load', 'unload',
+  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'patrol', 'goHome', 'explore', 'escort', 'ferry', 'resumeFerry', 'resumePatrol', 'load', 'unload',
   'clearOrders', 'disband', 'airbase', 'sabotage', 'hurt', 'incite', 'center', 'fit', 'info', 'endTurn',
 ] as const;
 
@@ -45,6 +45,7 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   escort: 'Escort: a warship follows a Transport and guards it, fighting what it is likely to beat.',
   ferry: 'Ferry Route: a Transport (or any other carrier except a Carrier) runs a standing route: it loads at a pickup city, sails to a drop square, puts everything ashore, and goes back, over and over. Routes are shared: pick an existing one to put another carrier on it. A route can wait at the pickup until the carrier is full. When an enemy comes near, or the pickup city is lost, the carrier waits for orders.',
   resumeFerry: 'Resume Route: a carrier whose ferry route was interrupted carries on with it.',
+  resumePatrol: 'Resume Patrol: a unit whose patrol was interrupted (an enemy came near, the way was blocked, or it went home for fuel) takes it up again.',
   load: 'Load the unit onto a ship or aircraft carrier beside it.',
   unload: 'Unload what is aboard onto land or into a city.',
   clearOrders: 'Clear the unit\'s orders so it waits for you again.',
