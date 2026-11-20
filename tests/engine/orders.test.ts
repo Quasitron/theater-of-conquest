@@ -539,6 +539,21 @@ describe('go home', () => {
     expect(chooseHome(s, a)).toMatchObject({ city: { id: 0 }, steps: 1 });
   });
 
+  it("an aircraft may patrol from a teammate's city", () => {
+    const s = makeGame(['*###*###*'], { players: 3, starts: [0, 1, 2] });
+    for (const c of s.cities) c.production = null;
+    s.fog[0].explored.fill(1);
+    s.players[0].team = 1;
+    s.players[1].team = 1;
+    s.cities[1].owner = 1;
+    const f = addUnit(s, 'fighter', 0, 4, 0); // in the ally's city
+    const r = setOrders(s, f.id, { kind: 'patrol', a: { x: 4, y: 0 }, b: { x: 6, y: 0 }, toB: true });
+    expect(r.ok).toBe(true);
+    // Not from an enemy's city or open ground.
+    const g = addUnit(s, 'fighter', 0, 6, 0);
+    expect(setOrders(s, g.id, { kind: 'patrol', a: { x: 6, y: 0 }, b: { x: 5, y: 0 }, toB: true }).ok).toBe(false);
+  });
+
   it("goHome counts a teammate's city, so a bomber near only allied cities can head for one", () => {
     const s = makeGame(['*###*###*'], { players: 3, starts: [0, 1, 2] });
     for (const c of s.cities) c.production = null;
