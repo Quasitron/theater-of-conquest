@@ -124,6 +124,37 @@ describe('patrol and explore', () => {
     expect(ended(r2.events)).toHaveLength(0);
   });
 
+  it('a circuit patrol sails its corners in order, back to the start, and round again', () => {
+    let s = game(['*.......*', '.........', '.........']);
+    const d = addUnit(s, 'destroyer', 0, 1, 0);
+    const start = { x: 1, y: 0 };
+    const orders: Orders = { kind: 'patrol', a: start, b: { x: 3, y: 2 }, toB: true, loop: [{ x: 6, y: 0 }, { x: 3, y: 2 }], leg: 0 };
+    s = run(s, { type: 'setOrders', player: 0, unitId: d.id, orders }).state;
+    const legs: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const r = fullRound(s);
+      s = r.state;
+      expect(ended(r.events)).toHaveLength(0);
+      const o = unitById(s, d.id)!.orders;
+      if (o?.kind === 'patrol') legs.push(o.leg ?? -1);
+    }
+    expect(new Set(legs)).toEqual(new Set([0, 1, 2])); // corner 1, corner 2, home, then round again
+    expect(legs.indexOf(0, legs.indexOf(2))).toBeGreaterThan(-1); // it came back to the first corner after going home
+  });
+
+  it('a circuit is refused for aircraft, with a repeated corner, or with too many corners', () => {
+    const s = game(['*.......*', '.........', '.........']);
+    const d = addUnit(s, 'destroyer', 0, 1, 0);
+    const f = addUnit(s, 'fighter', 0, 0, 0);
+    const a = { x: 1, y: 0 };
+    expect(setOrders(s, f.id, { kind: 'patrol', a: { x: 0, y: 0 }, b: { x: 3, y: 0 }, toB: true, loop: [{ x: 3, y: 0 }] }).ok).toBe(false);
+    expect(setOrders(s, d.id, { kind: 'patrol', a, b: { x: 4, y: 0 }, toB: true, loop: [{ x: 4, y: 0 }, { x: 4, y: 0 }] }).ok).toBe(false);
+    expect(setOrders(s, d.id, { kind: 'patrol', a, b: a, toB: true, loop: [{ ...a }] }).ok).toBe(false);
+    const many = Array.from({ length: 13 }, (_, i) => ({ x: 2 + (i % 2), y: 1 }));
+    expect(setOrders(s, d.id, { kind: 'patrol', a, b: many[12], toB: true, loop: many }).ok).toBe(false);
+    expect(setOrders(s, d.id, { kind: 'patrol', a, b: { x: 4, y: 0 }, toB: true, loop: [{ x: 4, y: 0 }, { x: 3, y: 2 }] }).ok).toBe(true);
+  });
+
   it('patrol with a === b is rejected', () => {
     const s = game(['*.......*']);
     const d = addUnit(s, 'destroyer', 0, 1, 0);

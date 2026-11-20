@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.121 | 2026-11-19 | Patrol circuits: ships and land units may patrol several corners (up to 12) and return to the start, then go round again ("Add legs" in Patrol mode). Aircraft keep two-point patrols. |
 | 0.9.120 | 2026-11-19 | The What's New dialog shows the version you are running under its title. |
 | 0.9.119 | 2026-11-19 | Units shown in a fight (replay or your own attack) carry their rank chevrons; a unit promoted in the fight gets its new chevron when the result lands, with the jingle, not after the fight. |
 | 0.9.118 | 2026-11-19 | A Quit button on the title menu, shown only when the game runs as an installed app (a browser tab cannot be closed by a page). |

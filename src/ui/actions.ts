@@ -103,7 +103,9 @@ export function describeOrders(o: Orders | null, nameOf?: (id: number) => string
   switch (o.kind) {
     case 'sentry': return 'Sentry';
     case 'goto': return `Go-to ${o.target.x},${o.target.y}`;
-    case 'patrol': return `Patrol ${o.a.x},${o.a.y} ↔ ${o.b.x},${o.b.y}`;
+    case 'patrol':
+      if (o.loop && o.loop.length > 0) return `Patrol circuit of ${o.loop.length + 1} legs from ${o.a.x},${o.a.y}`;
+      return `Patrol ${o.a.x},${o.a.y} ↔ ${o.b.x},${o.b.y}`;
     case 'explore': return 'Explore';
     case 'repair': return 'Repair';
     case 'escort': { const n = nameOf?.(o.transportId); return n ? `Escort ${n}` : 'Escort'; }

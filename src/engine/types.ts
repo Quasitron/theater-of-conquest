@@ -70,6 +70,13 @@ export type Orders =
       toB: boolean;
       /** Aircraft patrols: the carrier that one end of the patrol is tied to; that end moves with it. */
       carrier?: { id: number; end: 'a' | 'b' };
+      /**
+       * A circuit instead of out-and-back (not for aircraft): the corners to sail to in order, after which the unit
+       * returns to a and starts round again. b is the last corner; toB is unused.
+       */
+      loop?: Pos[];
+      /** Which stop of a circuit it is heading for: an index into loop, then loop.length for a. */
+      leg?: number;
     }
   | { kind: 'explore' }
   /** Sits in a friendly city until its damage is repaired, then wakes up. */

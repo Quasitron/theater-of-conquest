@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'patrol-circuits',
+    version: '0.9.121',
+    date: '2026-11-19',
+    title: 'Patrols with legs',
+    text: ['Ships and land units can now patrol a circuit. In Patrol mode press "Add legs (circuit)", click each corner in turn (a triangle, a stretch of coast), then press Done or click the start square. The unit sails the corners in order, returns to where it started, and goes round again. The route you are drawing and other circuits show as dashed lines. Aircraft keep the two-point patrol.'],
+  },
+  {
     id: 'news-shows-version',
     version: '0.9.120',
     date: '2026-11-19',
