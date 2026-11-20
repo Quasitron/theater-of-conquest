@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'load-full-transport',
+    version: '0.9.133',
+    date: '2026-11-20',
+    title: 'No Load on a full transport',
+    text: ['Load (L) is no longer offered to a transport or APC with no room left, and the load list shows only units that still fit.'],
+  },
+  {
     id: 'ai-no-lake-ships',
     version: '0.9.132',
     date: '2026-11-20',

@@ -69,6 +69,16 @@ describe('availableActions', () => {
     expect(acts.sentry).toBe(true);
   });
 
+  it('does not offer load to a full transport', () => {
+    const s = makeGame(M);
+    const t = addUnit(s, 'transport', 0, 0, 0);
+    for (let i = 0; i < 8; i++) addUnit(s, 'army', 0, 0, 0, { carriedBy: t.id, orders: { kind: 'sentry' } });
+    addUnit(s, 'army', 0, 0, 0);
+    const { v, u } = viewOf(s, t.id);
+    expect(loadCandidates(v, u)).toEqual([]);
+    expect(availableActions(v, u).load).toBe(false);
+  });
+
   it('offers a fighter in the field go home but not patrol, explore or sentry', () => {
     const s = makeGame(M);
     const f = addUnit(s, 'fighter', 0, 1, 1);
