@@ -1562,7 +1562,7 @@ export function GameScreen({ session, onQuit }: Props) {
             return (
               <>
                 <span class="message" role="status">{unitDisplayName(selectedUnit)}: patrol stopped ({why}).</span>
-                <button class="primary" onClick={(e) => { blur(e); doAction('resumePatrol'); }}>Resume Patrol (K)</button>
+                <button class="primary blink" onClick={(e) => { blur(e); doAction('resumePatrol'); }}>Resume Patrol (K)</button>
               </>
             );
           })()}

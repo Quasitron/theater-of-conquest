@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.131 | 2026-11-20 | The top-bar Resume Patrol button blinks like End Turn. |
 | 0.9.130 | 2026-11-20 | Combat report: each line starts with the two units of the fight (attacker picture, arrow, defender picture, each in its owner's colour); the unit lost is crossed out, a captured city carries a flag. |
 | 0.9.129 | 2026-11-20 | A unit whose patrol was interrupted shows "patrol stopped (enemy sighted)" with a Resume Patrol button in the top bar, next to End Turn. |
 | 0.9.128 | 2026-11-20 | After an order that sends a unit off (explore, go-to, patrol, go home...) it glides along the squares it went through with a dotted trail (0.3 to 0.65 s) before the next unit comes up. Single manual steps are not animated. |
