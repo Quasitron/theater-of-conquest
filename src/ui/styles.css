@@ -229,6 +229,7 @@ svg.leader circle { fill: #ffd24a; }
 .prod-layout .unit-card { flex: 0 0 280px; margin: 0; }
 @media (max-width: 760px) { .prod-layout .unit-card { display: none; } }
 .whatsnew-button { position: relative; }
+.news-current { display: block; font-size: 0.8rem; font-weight: normal; margin-top: 2px; }
 .news-dot { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #ffb020; vertical-align: middle; }
 .news-entry { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid #333c48; }
 .news-entry h3 { margin: 0; }
