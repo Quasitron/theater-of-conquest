@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.124 | 2026-11-19 | An aircraft may patrol from (or to) a teammate's city: it refuels there like in its own. Before, a patrol had to start or end at one of your own cities or carriers. |
 | 0.9.123 | 2026-11-19 | Capturing a city now logs each enemy unit that was inside and lost ("Computer's Army was lost when its city fell"). Before, only the city's owner saw those lines. |
 | 0.9.122 | 2026-11-19 | Stacking rule: the count badge on a stack includes allied units on the square (they count towards the limit), and pointing at a full stack says "stack full (4)" instead of "No known path". |
 | 0.9.121 | 2026-11-19 | Patrol circuits: ships and land units may patrol several corners (up to 12) and return to the start, then go round again ("Add legs" in Patrol mode). Aircraft keep two-point patrols. |

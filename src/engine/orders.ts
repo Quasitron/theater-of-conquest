@@ -16,9 +16,10 @@ import { ferryArrive, ferryRouteOf, pruneFerryRoutes } from './ferry';
 const NO_AIR_EXPLORE = 'aircraft cannot explore yet';
 const NO_PATROL_BASE = 'patrol must start or end at a city or carrier';
 
-/** True when `p` holds an own city, or an own carrier with room for one more aircraft (or u aboard it). */
+/** True when `p` holds a city of yours or a teammate's, or an own carrier with room for one more aircraft (or u aboard it). */
 function isRefuelBase(s: GameState, u: Unit, p: Pos): boolean {
-  if (cityAt(s, p.x, p.y)?.owner === u.owner) return true;
+  const city = cityAt(s, p.x, p.y);
+  if (city && areFriendly(s, city.owner, u.owner)) return true; // a teammate's city refuels too
   return topLevelUnitsAt(s, p.x, p.y).some(
     (c) =>
       c.owner === u.owner && canCarry(c.type, u.type) &&

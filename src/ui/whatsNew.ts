@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'patrol-from-ally-city',
+    version: '0.9.124',
+    date: '2026-11-19',
+    title: 'Patrols from an ally\'s city',
+    text: ['Bombers and fighters can now patrol from (or to) a teammate\'s city. It counts as a base for refuelling, as it already did for Go Home and Sentry. Before, the game said "patrol must start or end at a city or carrier" unless the city was your own.'],
+  },
+  {
     id: 'capture-lists-losses',
     version: '0.9.123',
     date: '2026-11-19',
