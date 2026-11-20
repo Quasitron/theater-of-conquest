@@ -166,6 +166,19 @@ button.linklike { border: 0; background: none; padding: 0; text-align: left; col
 /* A unit's name on the Sentry tab is a link above its details, not a second button in the right-hand column. */
 .report-list li button.linklike { grid-column: 1; grid-row: 1; justify-self: start; }
 .report-list li button.linklike + .muted { grid-row: 2; }
+/* Combat report: the two units of each fight (attacker, arrow, defender) before the text; the one lost is crossed out. */
+.report-list.fights li { grid-template-columns: auto 1fr auto; }
+.report-list.fights li > span:not(.fight-icons) { grid-column: 2; }
+.report-list.fights li .muted { grid-column: 2; }
+.report-list.fights li button { grid-column: 3; }
+.fight-icons { grid-column: 1; grid-row: 1 / span 2; display: flex; align-items: center; gap: 3px; }
+.fight-arrow { color: #cfd6e0; font-size: 1.1rem; }
+.fi { position: relative; width: 38px; height: 38px; box-sizing: border-box; border: 3px solid; border-radius: 3px; background: rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.fi img { max-height: 84%; object-fit: contain; }
+.fi .glyph { font-weight: 700; }
+.fi.lost img, .fi.lost .glyph { opacity: 0.6; }
+.fi.lost::after { content: '\2715'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #ff3b30; font-size: 30px; font-weight: 700; line-height: 1; text-shadow: 0 0 3px #000, 0 0 3px #000; opacity: 0.9; }
+.fi-flag { position: absolute; right: 1px; bottom: -1px; font-size: 0.85rem; color: #f2c230; text-shadow: 0 0 2px #000, 0 0 2px #000; }
 .report-list .lost-battle { color: #ff8a80; }
 .report-list .won-battle { color: #9be7a5; }
 .status-facts { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; margin: 0; }
