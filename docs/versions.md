@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.133 | 2026-11-20 | Load (L) is not offered to a full transport or APC, and the load picker lists only units that still fit (no more stuck picker). |
 | 0.9.132 | 2026-11-20 | AI: a city on a small lake (under 40 known water squares, unless that is most of the water on the map) builds no ships and is never the port. |
 | 0.9.131 | 2026-11-20 | The top-bar Resume Patrol button blinks like End Turn. |
 | 0.9.130 | 2026-11-20 | Combat report: each line starts with the two units of the fight (attacker picture, arrow, defender picture, each in its owner's colour); the unit lost is crossed out, a captured city carries a flag. |

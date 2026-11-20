@@ -1,4 +1,4 @@
-import { UNIT_STATS, canBecomeAirbase, canCarry, canFerry, rankOf, unitDisplayName, type Orders, type PlayerView, type Unit } from '../engine';
+import { UNIT_STATS, canBecomeAirbase, canFerry, hostHasRoom, rankOf, unitDisplayName, type Orders, type PlayerView, type Unit } from '../engine';
 import type { ActionId } from './keys';
 
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
@@ -7,8 +7,10 @@ const inAllyCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.knownCities.so
 /** Own units on the transport's square that could board it, by id. */
 export function loadCandidates(view: PlayerView, t: Unit): Unit[] {
   if (UNIT_STATS[t.type].carries.length === 0) return [];
+  const aboard = view.myUnits.filter((c) => c.carriedBy === t.id);
+  // Only units that still fit: a full transport has nothing to pick (so Load is not offered).
   return view.myUnits
-    .filter((u) => u.id !== t.id && canCarry(t.type, u.type) && u.carriedBy === null && u.x === t.x && u.y === t.y)
+    .filter((u) => u.id !== t.id && u.carriedBy === null && u.x === t.x && u.y === t.y && hostHasRoom(t, aboard, u.type))
     .sort((a, b) => a.id - b.id);
 }
 
