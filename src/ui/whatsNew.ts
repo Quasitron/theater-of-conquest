@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'sub-strike-slower',
+    version: '0.9.138',
+    date: '2026-11-20',
+    title: 'Sub strikes play slower',
+    text: ['A submarine strike now plays out more slowly and the view holds a little longer before the next unit comes up, so you can see what happened.'],
+  },
+  {
     id: 'sub-strike-promotion',
     version: '0.9.137',
     date: '2026-11-20',
