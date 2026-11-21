@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'replay-back',
+    version: '0.9.135',
+    date: '2026-11-20',
+    title: 'Step back through battles',
+    text: ['During the battle replay at the start of your turn, Back goes to the previous battle and Replay plays the current one again. If you used Back, the replay waits at the last battle until you press Done.'],
+  },
+  {
     id: 'reload-saves',
     version: '0.9.134',
     date: '2026-11-20',
