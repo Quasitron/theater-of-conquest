@@ -143,7 +143,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const whatsNew = useWhatsNew();
   // Fights playing out on the map, and the turn-start replay of what the other players did (null when none).
   const [fx, setFx] = useState<ActiveFx[]>([]);
-  const [replay, setReplay] = useState<{ steps: Fight[]; more: number; index: number } | null>(null);
+  const [replay, setReplay] = useState<{ steps: Fight[]; more: number; index: number; run?: number; held?: boolean } | null>(null);
   const fxTimer = useRef<number | undefined>(undefined);
   const [replayPaused, setReplayPaused] = useState(false);
   // The last replay step whose fight has started playing (-1 before any); later steps' units still stand as they were.
@@ -655,10 +655,20 @@ export function GameScreen({ session, onQuit }: Props) {
     if (rp && (rp.more > 0 || getReportAfter())) openCombatAfter.current = true;
     beginTurn();
   };
-  const advanceReplay = () => {
+  // `auto` is the replay moving on by itself: once the player has stepped back it then stops at the last battle
+  // (waiting for Done) instead of carrying on to the turn.
+  const advanceReplay = (auto = false) => {
     if (!replay) return;
     if (replay.index + 1 < replay.steps.length) setReplay({ ...replay, index: replay.index + 1 });
-    else finishReplay();
+    else if (!(auto && replay.held)) finishReplay();
+  };
+  /** Back to the previous battle, or (to = same) the current one again; either plays from its start. */
+  const stepReplay = (back: boolean) => {
+    if (!replay || (back && replay.index === 0)) return;
+    window.clearTimeout(fxTimer.current);
+    setFx([]);
+    setReplayPaused(false);
+    setReplay({ ...replay, index: replay.index - (back ? 1 : 0), run: (replay.run ?? 0) + 1, held: replay.held || back });
   };
   const replayCam = useRef<Camera | null>(null);
   const stepStart = useRef(0);
@@ -693,16 +703,16 @@ export function GameScreen({ session, onQuit }: Props) {
     // A promotion earned in this fight is announced once the result has landed.
     const promo = window.setTimeout(() => { if (step.promoted) play(step.promotedRank === 3 ? 'promote-elite' : 'promote'); }, wideMs + fxMs * BURST_END + 250);
     return () => { window.clearTimeout(zoom); window.clearTimeout(boom); window.clearTimeout(promo); };
-  }, [replay?.index, replay !== null]);
+  }, [replay?.index, replay?.run, replay !== null]);
   useEffect(() => {
     if (!replay || replayPaused) return;
     const pace = getReplayPace();
     const total = stepDuration(pace, replay.steps[replay.index], view.me);
     if (total === null) return; // manual: waits for Next
     const due = stepStart.current + wideMsFor(pace) + total + 150;
-    const timer = window.setTimeout(() => advanceRef.current(), Math.max(400, due - performance.now()));
+    const timer = window.setTimeout(() => advanceRef.current(true), Math.max(400, due - performance.now()));
     return () => window.clearTimeout(timer);
-  }, [replay?.index, replay !== null, replayPaused]);
+  }, [replay?.index, replay?.run, replay !== null, replayPaused]);
   /** Selects the first ready unit of a fresh turn (built-this-turn first), else looks at a city. */
   const startCycle = () => {
     holdNews.current = false;
@@ -1622,6 +1632,8 @@ export function GameScreen({ session, onQuit }: Props) {
               })()}
             </span>
             <span class="muted">{replay.index + 1} of {replay.steps.length + replay.more}</span>
+            <button disabled={replay.index === 0} title="The previous battle" onClick={(e) => { blur(e); stepReplay(true); }}>Back</button>
+            <button title="Play this battle again" onClick={(e) => { blur(e); stepReplay(false); }}>Replay</button>
             {getReplayPace() !== 'manual' && (
               <button onClick={(e) => { blur(e); setReplayPaused(!replayPaused); }}>{replayPaused ? 'Resume' : 'Pause'}</button>
             )}
