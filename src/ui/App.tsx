@@ -24,7 +24,7 @@ export function App() {
       ) : (
         <TitleScreen store={store} onStart={setSession} />
       )}
-      <UpdateBanner />
+      <UpdateBanner session={session} />
     </>
   );
 }
