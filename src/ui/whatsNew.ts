@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'update-check-15',
+    version: '0.9.136',
+    date: '2026-11-20',
+    title: 'Faster update checks',
+    text: ['A game left running now checks for a new version every 15 minutes, so the "new version is ready" bar shows up sooner.'],
+  },
+  {
     id: 'replay-back',
     version: '0.9.135',
     date: '2026-11-20',

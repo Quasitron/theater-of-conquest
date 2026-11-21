@@ -58,11 +58,11 @@ async function newVersionWaiting(): Promise<boolean> {
   }
 }
 
-const RECHECK_MS = 60 * 60 * 1000;
+const RECHECK_MS = 15 * 60 * 1000;
 
 /**
  * Registers the offline worker (production builds only: the development server has no worker file), asks it to check
- * for a new version when the app comes back to the foreground and once an hour, and reports when one has arrived.
+ * for a new version when the app comes back to the foreground and every 15 minutes (an app window never changes tabs), and reports when one has arrived.
  * A worker taking over a page that had none (the very first visit) is not an update.
  */
 export function registerOfflineWorker(): void {
