@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'sub-strike-promotion',
+    version: '0.9.137',
+    date: '2026-11-20',
+    title: 'Subs earn rank from strikes',
+    text: ['A submarine whose torpedo salvo hits (even if the target survives and the sub slips away) now earns a win towards promotion, when promotions are on.'],
+  },
+  {
     id: 'update-check-15',
     version: '0.9.136',
     date: '2026-11-20',

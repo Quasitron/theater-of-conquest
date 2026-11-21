@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.137 | 2026-11-20 | Promotions: a submarine's torpedo salvo that hits without sinking its target now counts as a win towards the sub's rank (rules 38). |
 | 0.9.136 | 2026-11-20 | A running game checks for a new version every 15 minutes instead of every hour (an installed app window never gets a tab-change check). |
 | 0.9.135 | 2026-11-20 | Turn-start battle replay: Back steps to the previous battle (greyed on the first) and Replay plays the current one again, both with sounds. After using Back the replay waits at the last battle for Done instead of carrying on to the turn by itself. |
 | 0.9.134 | 2026-11-20 | The "new version is ready" Reload button saves the game in progress first (autosave), so orders given this turn survive the reload. |

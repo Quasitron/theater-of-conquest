@@ -60,4 +60,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 35: a Wait-until-full ferry also sails with just one space free (5 of 6), not waiting for one more Army or Spy.
 // 36: stacking rule: a ferry drops its cargo onto one square (up to 4) instead of spreading it out.
 // 37: a patrol interrupted by an enemy, a block or low fuel is remembered on the unit (lastPatrol) so it can be resumed.
-export const RULES_VERSION = 37;
+// 38: a submarine's torpedo salvo that hits without sinking its target counts as a win towards the sub's promotion.
+export const RULES_VERSION = 38;

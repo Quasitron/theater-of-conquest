@@ -146,6 +146,7 @@ export function attackUnit(s: GameState, rng: RandomSource, att: Unit, requested
   if (struck) {
     // The salvo hurt the target but did not sink it: the sub slips one square away and is done for the turn.
     trimCargo(s, def, events);
+    recordWin(s, att, events); // a successful strike counts as a win towards promotion
     att.movesLeft = 0;
     const away = withdrawSquare(s, att, def);
     if (away) relocate(s, att, away, events);
