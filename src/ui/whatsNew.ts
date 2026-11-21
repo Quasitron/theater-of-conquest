@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'reload-saves',
+    version: '0.9.134',
+    date: '2026-11-20',
+    title: 'Reload saves your game first',
+    text: ['When a new version is ready, the Reload button now saves your game in progress before reloading, so nothing you did this turn is lost.'],
+  },
+  {
     id: 'load-full-transport',
     version: '0.9.133',
     date: '2026-11-20',
