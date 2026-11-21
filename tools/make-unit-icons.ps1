@@ -64,7 +64,7 @@ $out = Join-Path (Get-Location) 'public\art\units'
 $tmp = Join-Path $env:TEMP 'unit-icons'
 New-Item -ItemType Directory -Force $out, $tmp | Out-Null
 # unit name = source file (without extension; the highest -v5 .. -v2 file wins when there is one)
-$units = [ordered]@{ army = 'Army'; destroyer = 'destroyer'; fighter = 'fighter'; bomber = 'Bomber'; transport = 'transport'; cruiser = 'Cruiser'; battleship = 'Battleship'; carrier = 'Carrier'; submarine = 'Submarine'; armor = 'Armor'; spy = 'Spy'; city = 'City'; troopTransport = 'Troop Transport' }
+$units = [ordered]@{ army = 'Army'; destroyer = 'destroyer'; fighter = 'fighter'; bomber = 'Bomber'; transport = 'transport'; cruiser = 'Cruiser'; battleship = 'Battleship'; carrier = 'Carrier'; submarine = 'Submarine'; armor = 'Armor'; spy = 'Spy'; city = 'City'; troopTransport = 'Troop Transport'; airCargo = 'Air_Transport' }
 # pixels along the right edge to ignore (a stray line the picture generator left there)
 $ignoreRight = @{}
 # degrees to turn a picture clockwise first (negative = counter-clockwise), for pictures drawn on a slant
