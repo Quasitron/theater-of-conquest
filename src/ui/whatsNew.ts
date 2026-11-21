@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'sub-strike-slip',
+    version: '0.9.140',
+    date: '2026-11-20',
+    title: 'See the sub slip away',
+    text: ['After a submarine strike you now see the sub glide to the square it slipped to, and the view holds a moment so you can follow it.'],
+  },
+  {
     id: 'orders-city-names',
     version: '0.9.139',
     date: '2026-11-20',

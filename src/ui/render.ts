@@ -543,7 +543,8 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     + (view.rules.stacking ? view.allyUnits.filter((a) => a.x === x && a.y === y).length : 0);
   // The units under the one you are giving orders to are drawn much fainter, so the map shows which one it is.
   const underActive = (u: Unit) => !!activeUnit && !blinking(u) && u.carriedBy === null && activeUnit.carriedBy === null && u.x === activeUnit.x && u.y === activeUnit.y;
-  const gliding = o.glide && o.glide.age >= 0 && o.glide.age < o.glide.duration ? o.glide : null;
+  // A glide that has not started yet (a sub waiting for its fight to play) already hides the real unit.
+  const gliding = o.glide && o.glide.age < o.glide.duration ? o.glide : null;
   for (const u of outside) {
     if (u.carriedBy !== null || inOwnCity(u.x, u.y)) continue;
     if (gliding && u.id === gliding.unitId) continue; // drawn sliding along its path instead
@@ -659,7 +660,7 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
   // Fights being played out: the two units (the loser fading, a winner that moves sliding in), then the effect, each
   // drawn on every on-screen copy of the map.
   const copies = view.wrap ? [-view.width, 0, view.width] : [0];
-  if (gliding && gliding.points.length >= 2) {
+  if (gliding && gliding.age >= 0 && gliding.points.length >= 2) {
     // Unwrap the path so a step across the seam of a wrapping map stays one square long.
     const pts: Pos[] = [{ ...gliding.points[0] }];
     for (let i = 1; i < gliding.points.length; i++) {

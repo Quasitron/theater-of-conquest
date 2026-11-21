@@ -66,8 +66,7 @@ const ROUTE_PAUSE_MS = 700;
 /** After an attack, how long the battle stays on screen before the cycle moves on to the next unit. */
 const BATTLE_PAUSE_MS = 1000;
 /** A submarine's torpedo salvo (the sub slips away at once) holds longer and plays slower, so it can be followed. */
-const STRIKE_PAUSE_MS = 2400;
-const STRIKE_FX_MS = 1900;
+const STRIKE_SLIP_MS = 750;
 /** After a step that uses up a unit's last move, how long it stays selected so the ground around it can be seen. */
 const STEP_PAUSE_MS = 500;
 /** How long a newly sighted enemy is shown at turn start before the battle replay, production reports and unit cycle begin. */
@@ -453,7 +452,7 @@ export function GameScreen({ session, onQuit }: Props) {
     advanceTimer.current = window.setTimeout(() => {
       advanceTimer.current = undefined;
       fn();
-    }, struck ? STRIKE_PAUSE_MS : BATTLE_PAUSE_MS);
+    }, struck ? (getCombatMode() === 'animated' ? FIGHT_MS : 0) + STRIKE_SLIP_MS + 800 : BATTLE_PAUSE_MS);
   };
   /**
    * After a step by hand: an attack waits BATTLE_PAUSE_MS (see afterBattle); a step that used the unit's last move waits
@@ -806,20 +805,25 @@ export function GameScreen({ session, onQuit }: Props) {
   const glideEnd = useRef(0);
   const glideTimer = useRef<number | undefined>(undefined);
   const startGlide = (cmd: SessionCommand) => {
-    if (cmd.type === 'endTurn' || cmd.type === 'resign' || cmd.type === 'move') return;
+    if (cmd.type === 'endTurn' || cmd.type === 'resign') return;
     const id = (cmd as { unitId?: number }).unitId;
     if (id === undefined) return;
+    // A submarine's salvo: after the fight has played, the sub is seen slipping away to its new square.
+    const slip = session.lastEvents.some((e) => e.type === 'combat' && e.attackerOwner === view.me && e.attackerId === id && e.strike);
+    if (cmd.type === 'move' && !slip) return;
     const steps: { from: Pos; to: Pos }[] = [];
     for (const e of session.lastEvents) if (e.type === 'unitMoved' && e.unitId === id) steps.push({ from: e.from, to: e.to });
     if (steps.length === 0) return;
     const unit = session.view().myUnits.find((u) => u.id === id) ?? view.myUnits.find((u) => u.id === id);
     if (!unit) return;
-    const duration = Math.max(260, Math.min(650, steps.length * 110));
-    const start = performance.now();
+    const duration = slip ? STRIKE_SLIP_MS : Math.max(260, Math.min(650, steps.length * 110));
+    // The slip waits for the fight to finish playing (the sub is hidden meanwhile: the fight draws it).
+    const delay = slip && getCombatMode() === 'animated' ? FIGHT_MS : 0;
+    const start = performance.now() + delay;
     setGlide({ unitId: id, type: unit.type, points: [steps[0].from, ...steps.map((s) => s.to)], start, duration });
     glideEnd.current = start + duration;
     window.clearTimeout(glideTimer.current);
-    glideTimer.current = window.setTimeout(() => setGlide(null), duration + 40);
+    glideTimer.current = window.setTimeout(() => setGlide(null), delay + duration + 40);
   };
 
   /** Starts the fight effects for ights and clears them when the run is over. */
@@ -834,8 +838,7 @@ export function GameScreen({ session, onQuit }: Props) {
     if (getCombatMode() !== 'animated') return;
     const mine = fightsFromEvents(session.lastEvents, (e) => describeEvent(e, view.me, names, lookup))
       .filter((f) => f.attackerOwner === view.me);
-    // A submarine's salvo plays slower than other fights (see STRIKE_FX_MS).
-    if (mine.length > 0) runFx(mine, mine.some((f) => f.struck) ? STRIKE_FX_MS : FIGHT_MS);
+    if (mine.length > 0) runFx(mine, FIGHT_MS);
   };
 
   /**

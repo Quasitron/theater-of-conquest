@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.140 | 2026-11-20 | Sub strike: the firing is back to normal speed; after it the sub is seen gliding to the square it slips to (0.75 s), and the view holds a moment before the next unit. |
 | 0.9.139 | 2026-11-20 | Orders text names a city instead of its coordinates (Go-to Darnah, Patrol Alexandria ↔ Tubruq) in the info pane, unit lists and city screen; other squares still show x,y. |
 | 0.9.138 | 2026-11-20 | A submarine's torpedo salvo plays slower (1.9 s instead of 1 s) and the screen holds 2.4 s before the next unit comes up (was 1 s), so it can be followed. |
 | 0.9.137 | 2026-11-20 | Promotions: a submarine's torpedo salvo that hits without sinking its target now counts as a win towards the sub's rank (rules 38). |
