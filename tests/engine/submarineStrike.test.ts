@@ -45,6 +45,14 @@ describe('Submarine strike (house rule)', () => {
     expect(ev.some((e) => e.type === 'unitMoved' && e.unitId === sub.id)).toBe(true);
   });
 
+  it('a salvo that hits but does not sink counts as a win towards promotion', () => {
+    const { s, sub, foe } = setup('battleship', { submarineStrike: true, promotions: true });
+    const ev: GameEvent[] = [];
+    attackUnit(s, fixedRng(0), sub, foe, ev);
+    expect(sub.wins).toBe(1);
+    expect(ev.some((e) => e.type === 'unitPromoted' && e.unitId === sub.id)).toBe(true);
+  });
+
   it('a salvo on a carrier costs it deck space', () => {
     const { s, sub, foe } = setup('carrier');
     attackUnit(s, fixedRng(0), sub, foe, []);
