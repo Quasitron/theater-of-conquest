@@ -132,6 +132,10 @@ describe('describeOrders', () => {
     expect(describeOrders(null)).toBe('None');
     expect(describeOrders({ kind: 'sentry' })).toBe('Sentry');
     expect(describeOrders({ kind: 'goto', target: { x: 34, y: 12 } })).toBe('Go-to 34,12');
+    const city = (p: { x: number; y: number }) => (p.x === 34 && p.y === 12 ? 'Darnah' : undefined);
+    expect(describeOrders({ kind: 'goto', target: { x: 34, y: 12 } }, undefined, city)).toBe('Go-to Darnah');
+    expect(describeOrders({ kind: 'goto', target: { x: 5, y: 5 } }, undefined, city)).toBe('Go-to 5,5');
+    expect(describeOrders({ kind: 'patrol', a: { x: 3, y: 4 }, b: { x: 34, y: 12 }, toB: true }, undefined, city)).toBe('Patrol 3,4 ↔ Darnah');
     expect(describeOrders({ kind: 'patrol', a: { x: 3, y: 4 }, b: { x: 10, y: 12 }, toB: true })).toBe('Patrol 3,4 ↔ 10,12');
     expect(describeOrders({ kind: 'explore' })).toBe('Explore');
   });

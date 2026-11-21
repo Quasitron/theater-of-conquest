@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'orders-city-names',
+    version: '0.9.139',
+    date: '2026-11-20',
+    title: 'Orders name the city',
+    text: ['A unit going to a city now shows "Go-to Darnah" instead of coordinates, and patrols name their cities too.'],
+  },
+  {
     id: 'sub-strike-slower',
     version: '0.9.138',
     date: '2026-11-20',
