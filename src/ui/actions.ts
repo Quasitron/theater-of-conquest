@@ -1,4 +1,4 @@
-import { UNIT_STATS, canBecomeAirbase, canFerry, hostHasRoom, rankOf, unitDisplayName, type Orders, type PlayerView, type Unit } from '../engine';
+import { UNIT_STATS, canBecomeAirbase, canFerry, hostHasRoom, rankOf, unitDisplayName, type Orders, type PlayerView, type Pos, type Unit } from '../engine';
 import type { ActionId } from './keys';
 
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
@@ -100,17 +100,23 @@ export function ordersText(view: PlayerView, u: Unit): string {
   return describeOrders(u.orders, (id) => {
     const t = view.myUnits.find((x) => x.id === id);
     return t ? unitDisplayName(t) : undefined;
-  });
+  }, (p) => view.knownCities.find((c) => c.x === p.x && c.y === p.y)?.name);
 }
 
-export function describeOrders(o: Orders | null, nameOf?: (id: number) => string | undefined): string {
+export function describeOrders(
+  o: Orders | null,
+  nameOf?: (id: number) => string | undefined,
+  /** A city's name when the square is one, so orders read "Go-to Darnah" rather than coordinates. */
+  cityAt?: (p: Pos) => string | undefined,
+): string {
   if (o === null) return 'None';
+  const where = (p: Pos) => cityAt?.(p) ?? `${p.x},${p.y}`;
   switch (o.kind) {
     case 'sentry': return 'Sentry';
-    case 'goto': return `Go-to ${o.target.x},${o.target.y}`;
+    case 'goto': return `Go-to ${where(o.target)}`;
     case 'patrol':
-      if (o.loop && o.loop.length > 0) return `Patrol circuit of ${o.loop.length + 1} legs from ${o.a.x},${o.a.y}`;
-      return `Patrol ${o.a.x},${o.a.y} ↔ ${o.b.x},${o.b.y}`;
+      if (o.loop && o.loop.length > 0) return `Patrol circuit of ${o.loop.length + 1} legs from ${where(o.a)}`;
+      return `Patrol ${where(o.a)} ↔ ${where(o.b)}`;
     case 'explore': return 'Explore';
     case 'repair': return 'Repair';
     case 'escort': { const n = nameOf?.(o.transportId); return n ? `Escort ${n}` : 'Escort'; }
