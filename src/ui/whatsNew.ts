@@ -20,7 +20,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     version: '0.9.140',
     date: '2026-11-20',
     title: 'See the sub slip away',
-    text: ['After a submarine strike you now see the sub glide to the square it slipped to, and the view holds a moment so you can follow it.'],
+    text: ['After a submarine strike you now see the sub glide to the square it slipped to, and the view holds a moment so you can follow it. The sub fires from where it was, and the selection frame waits for it at its new square.'],
   },
   {
     id: 'orders-city-names',

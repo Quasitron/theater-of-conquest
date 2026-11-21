@@ -989,8 +989,9 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     });
   }
 
-  // Selection.
-  if (o.selected) {
+  // Selection. Not while the selected unit is still gliding (or waiting to, as a submarine does for its fight to play):
+  // the frame would sit on the square it is going to, as if the unit were there already.
+  if (o.selected && !gliding) {
     const sel = o.selected;
     each((mx, my, sx, sy) => {
       if (mx !== sel.x || my !== sel.y) return;
