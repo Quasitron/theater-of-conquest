@@ -65,6 +65,9 @@ const MENU_H = 400;
 const ROUTE_PAUSE_MS = 700;
 /** After an attack, how long the battle stays on screen before the cycle moves on to the next unit. */
 const BATTLE_PAUSE_MS = 1000;
+/** A submarine's torpedo salvo (the sub slips away at once) holds longer and plays slower, so it can be followed. */
+const STRIKE_PAUSE_MS = 2400;
+const STRIKE_FX_MS = 1900;
 /** After a step that uses up a unit's last move, how long it stays selected so the ground around it can be seen. */
 const STEP_PAUSE_MS = 500;
 /** How long a newly sighted enemy is shown at turn start before the battle replay, production reports and unit cycle begin. */
@@ -445,10 +448,12 @@ export function GameScreen({ session, onQuit }: Props) {
   const afterBattle = (fn: () => void) => {
     if (!session.lastEvents.some((e) => e.type === 'combat' && e.attackerOwner === view.me)) return fn();
     cancelAdvance();
+    // A submarine's salvo is over in a flash, so it stays on screen longer.
+    const struck = session.lastEvents.some((e) => e.type === 'combat' && e.attackerOwner === view.me && e.strike);
     advanceTimer.current = window.setTimeout(() => {
       advanceTimer.current = undefined;
       fn();
-    }, BATTLE_PAUSE_MS);
+    }, struck ? STRIKE_PAUSE_MS : BATTLE_PAUSE_MS);
   };
   /**
    * After a step by hand: an attack waits BATTLE_PAUSE_MS (see afterBattle); a step that used the unit's last move waits
@@ -829,7 +834,8 @@ export function GameScreen({ session, onQuit }: Props) {
     if (getCombatMode() !== 'animated') return;
     const mine = fightsFromEvents(session.lastEvents, (e) => describeEvent(e, view.me, names, lookup))
       .filter((f) => f.attackerOwner === view.me);
-    if (mine.length > 0) runFx(mine, FIGHT_MS);
+    // A submarine's salvo plays slower than other fights (see STRIKE_FX_MS).
+    if (mine.length > 0) runFx(mine, mine.some((f) => f.struck) ? STRIKE_FX_MS : FIGHT_MS);
   };
 
   /**
