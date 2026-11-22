@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'follow-us',
+    version: '0.9.145',
+    date: '2026-11-22',
+    title: 'Follow us on Facebook',
+    text: ['The main menu now has a Follow us on Facebook button at the bottom left, for news about the game, feedback and ideas.'],
+  },
+  {
     id: 'stack-count-over-name',
     version: '0.9.144',
     date: '2026-11-22',
