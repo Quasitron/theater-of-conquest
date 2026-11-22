@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.148 | 2026-11-22 | Escort: clicking a square with several transports takes the first one that has no escort yet (it used to take the first transport, even an escorted one, and the refusal was silent). The refusal now shows in the top bar ("That transport already has an escort"). |
 | 0.9.147 | 2026-11-22 | Side panel: in the "On this square" list each of your units shows its moves left in brackets after its orders, e.g. "2342nd Fighter · None (5)". |
 | 0.9.146 | 2026-11-22 | Main menu: the "Buy us a" coffee button is on, linking to the game's Ko-fi page (https://ko-fi.com/theaterofconquest), with a hover note that the game will always be free. |
 | 0.9.145 | 2026-11-22 | Title screen (main menu): a "Follow us on" Facebook button at the bottom left, linking to the game's Facebook page (a plain link, no Facebook scripts load). A "Buy us a" coffee button is built but hidden until `COFFEE_URL` in `src/ui/TitleLinks.tsx` is set. |

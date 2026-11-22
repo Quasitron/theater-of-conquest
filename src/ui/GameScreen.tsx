@@ -1323,9 +1323,12 @@ export function GameScreen({ session, onQuit }: Props) {
       }
       if (mode === 'escort') {
         // The click must land on one of your transports (at sea or in a city); anything else keeps waiting.
-        const tr = view.myUnits.find((t) => t.type === 'transport' && t.carriedBy === null && t.x === p.x && t.y === p.y);
+        // With several transports on the square, the first one that has no escort yet is taken.
+        const here = view.myUnits.filter((t) => t.type === 'transport' && t.carriedBy === null && t.x === p.x && t.y === p.y);
+        const free = escortable(view, selectedUnit);
+        const tr = here.find((t) => free.some((f) => f.id === t.id));
         if (!tr) {
-          setMessage('Click one of your transports to escort (Esc cancels).');
+          setMessage(here.length > 0 ? 'That transport already has an escort. Click another one (Esc cancels).' : 'Click one of your transports to escort (Esc cancels).');
           return;
         }
         setTarget(null);
@@ -1645,7 +1648,7 @@ export function GameScreen({ session, onQuit }: Props) {
               </>
             );
           })()}
-          {target && target !== 'patrol' && <span class="message" role="status">{target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target && target !== 'patrol' && <span class="message" role="status">{target === 'escort' && message ? message : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
