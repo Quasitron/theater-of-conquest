@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-moves-left',
+    version: '0.9.147',
+    date: '2026-11-22',
+    title: 'Moves left in the stack list',
+    text: ['When several units share a square, the "On this square" list now shows each unit\'s moves left in brackets after its orders, so you can see which ones still have moves without selecting them.'],
+  },
+  {
     id: 'coffee-jar',
     version: '0.9.146',
     date: '2026-11-22',
