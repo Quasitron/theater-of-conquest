@@ -61,6 +61,8 @@ export interface DrawOptions {
   productionMap?: boolean;
   /** Attack hover: a red crosshair with the label, drawn instead of the hover preview. */
   attack: { at: Pos; label: string } | null;
+  /** Unload: the free squares the units can land on, shown as bright green squares (in place of the small move dots). */
+  landing?: readonly Pos[];
 }
 
 const mod = (a: number, n: number) => ((a % n) + n) % n;
@@ -298,6 +300,18 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
       if (mx !== target.x || my !== target.y) return;
       ctx.fillStyle = target.attack ? TERRAIN_COLORS.attackTarget : TERRAIN_COLORS.moveTarget;
       ctx.fillRect(sx + t * 0.3, sy + t * 0.3, t * 0.4, t * 0.4);
+    });
+  }
+
+  // Unload: the squares to land on, filled and outlined so the choice is obvious.
+  for (const sq of o.landing ?? []) {
+    each((mx, my, sx, sy) => {
+      if (mx !== sq.x || my !== sq.y) return;
+      ctx.fillStyle = 'rgba(80, 220, 120, 0.38)';
+      ctx.fillRect(sx, sy, t, t);
+      ctx.strokeStyle = 'rgba(120, 255, 160, 0.95)';
+      ctx.lineWidth = Math.max(2, t * 0.06);
+      ctx.strokeRect(sx + ctx.lineWidth / 2, sy + ctx.lineWidth / 2, t - ctx.lineWidth, t - ctx.lineWidth);
     });
   }
 
