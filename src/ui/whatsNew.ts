@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'air-free-square',
+    version: '0.9.150',
+    date: '2026-11-22',
+    title: 'Fighters find a free square',
+    text: ['A fighter or bomber flying to a target no longer gets stuck on a crowded square when it has just one move left: it steps to a free square beside it that keeps it on course.'],
+  },
+  {
     id: 'unload-pick-square',
     version: '0.9.149',
     date: '2026-11-22',
