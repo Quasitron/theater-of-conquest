@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'unload-highlight',
+    version: '0.9.151',
+    date: '2026-11-22',
+    title: 'Landing squares lit up',
+    text: ['When you choose where to unload, the squares the troops can land on are now lit up in green, so it is obvious what to click.'],
+  },
+  {
     id: 'air-free-square',
     version: '0.9.150',
     date: '2026-11-22',

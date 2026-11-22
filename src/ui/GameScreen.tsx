@@ -318,9 +318,16 @@ export function GameScreen({ session, onQuit }: Props) {
   };
   // The info dialog belongs to one unit: it closes when the selection moves elsewhere.
   const info = infoId !== null && infoId === selectedUnit?.id;
+  // Choosing where to unload: the free squares the units can land on are lit up instead of the usual move dots.
+  const landing = useMemo(() => {
+    if (target !== 'unloadTo' || !unloadTo || !selectedUnit || !playing) return undefined;
+    const first = unloadTo.ids?.[0] ?? view.myUnits.find((u) => u.carriedBy === selectedUnit.id)?.id;
+    if (first === undefined) return undefined;
+    return landingDirs(view, selectedUnit, first).map((d) => step(view as unknown as MapLike, selectedUnit.x, selectedUnit.y, d)).filter((p): p is Pos => p !== null);
+  }, [target, unloadTo, selectedUnit, view, playing]);
   const targets = useMemo(
-    () => (selectedUnit && playing ? stepTargets(view, selectedUnit) : []),
-    [selectedUnit, view, playing],
+    () => (selectedUnit && playing && target !== 'unloadTo' ? stepTargets(view, selectedUnit) : []),
+    [selectedUnit, view, playing, target],
   );
 
   // Attack hover: a crosshair and the odds instead of the path preview.
@@ -350,7 +357,7 @@ export function GameScreen({ session, onQuit }: Props) {
 
   // Path preview under the pointer; held back right after an order was given on that square.
   const preview = useMemo(() => {
-    if (!selectedUnit || !hover || !playing || attack) return null;
+    if (!selectedUnit || !hover || !playing || attack || target === 'unloadTo') return null;
     if (hover.x === selectedUnit.x && hover.y === selectedUnit.y) return null;
     if (samePos(frozen, hover)) return null;
     if (samePos(noPath, hover)) return { path: null, ok: false, label: 'no known path' };
@@ -1354,7 +1361,7 @@ export function GameScreen({ session, onQuit }: Props) {
         }) as Dir;
         const first = job.ids?.[0] ?? view.myUnits.find((u) => u.carriedBy === ship.id)?.id;
         if (dir < 0 || first === undefined || !landingDirs(view, ship, first).includes(dir)) {
-          setMessage('The units cannot land there. Click a free land square next to the carrier (Esc cancels).');
+          setMessage('The units cannot land there. Click one of the green squares (Esc cancels).');
           return;
         }
         setTarget(null);
@@ -1689,7 +1696,7 @@ export function GameScreen({ session, onQuit }: Props) {
               </>
             );
           })()}
-          {target && target !== 'patrol' && <span class="message" role="status">{(target === 'escort' || target === 'unloadTo') && message ? message : target === 'unloadTo' ? 'Unload: click the free land square next to the carrier to land on (Esc cancels).' : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target && target !== 'patrol' && <span class="message" role="status">{(target === 'escort' || target === 'unloadTo') && message ? message : target === 'unloadTo' ? 'Unload: click one of the green squares to land on (Esc cancels).' : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
@@ -1734,7 +1741,7 @@ export function GameScreen({ session, onQuit }: Props) {
           onSquare={onSquare} onDouble={onDouble} onHover={onHover} onContext={onContext}
           activeId={playing ? selectedUnit?.id ?? null : null} blinkActive={playing}
           path={preview?.path ?? null} pathOk={preview?.ok ?? true} pathLabel={preview?.label ?? null} pathTarget={preview ? hover : null}
-          route={route?.path ?? null} routeLabel={route?.label ?? null} patrols={patrols} productionMap={prodMap} flash={flash} sightings={newSightings} fx={fx} glide={glide} pending={pendingFights} headingLeft={headingLeft} cityRoutes={cityRoutes} ferryRoutes={ferryRoutes} attack={attack}
+          route={route?.path ?? null} routeLabel={route?.label ?? null} patrols={patrols} productionMap={prodMap} flash={flash} sightings={newSightings} fx={fx} glide={glide} pending={pendingFights} headingLeft={headingLeft} cityRoutes={cityRoutes} ferryRoutes={ferryRoutes} attack={attack} landing={landing}
           onZoom={() => { fitOf(view.me).auto = false; }}
           boxMode={playing && group?.step === 'box'} groupBox={groupBox} onBox={setGroupBox} onBoxDone={onBoxDone}
         />

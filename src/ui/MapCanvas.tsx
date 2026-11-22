@@ -46,6 +46,8 @@ interface Props {
   cityRoutes?: { from: Pos; to: Pos; types: UnitType[] }[];
   ferryRoutes?: { from: Pos; to: Pos; paused: boolean }[];
   attack: { at: Pos; label: string } | null;
+  /** Unload: the squares the units can land on, highlighted. */
+  landing?: readonly Pos[];
   /** The user zoomed with the wheel or a pinch (turns auto-fit off). */
   onZoom?: () => void;
   /** Group mode is waiting for a box: a drag draws it instead of panning (Shift+drag does too, with a mouse). */
@@ -117,7 +119,7 @@ export function MapCanvas(p: Props) {
       route: p.route, routeLabel: p.routeLabel, patrols: p.patrols, productionMap: p.productionMap, flash: p.flash, sightings: p.sightings,
       fx: p.fx?.map((a) => ({ fight: a.fight, age: performance.now() - a.start, duration: a.duration })),
       glide: p.glide ? { unitId: p.glide.unitId, type: p.glide.type, points: p.glide.points, age: performance.now() - p.glide.start, duration: p.glide.duration } : null,
-      pending: p.pending, headingLeft: p.headingLeft, cityRoutes: p.cityRoutes, ferryRoutes: p.ferryRoutes, attack: p.attack,
+      pending: p.pending, headingLeft: p.headingLeft, cityRoutes: p.cityRoutes, ferryRoutes: p.ferryRoutes, attack: p.attack, landing: p.landing,
       groupBox: p.groupBox,
     });
   });
