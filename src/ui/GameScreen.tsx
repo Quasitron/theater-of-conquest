@@ -1654,7 +1654,7 @@ export function GameScreen({ session, onQuit }: Props) {
           {ff && <span class="message working" role="status"><span class="spinner" aria-hidden="true" /> Advancing to the next event… turn {view.turn} <button onClick={(e) => { blur(e); stopFf(); }}>Stop (Esc)</button></span>}
           {endingTurn && !ff && <span class="message working" role="status"><span class="spinner" aria-hidden="true" /> Computer players are moving…</span>}
           {playing && !ff && !endingTurn && ready.length === 0 && (
-            <button title="End turns for you until something happens: a unit is produced, an enemy comes into sight, a fight, or a unit needs orders" onClick={(e) => { blur(e); waitForSomething(); }}>Wait</button>
+            <button title="End turns for you until something happens: a unit is produced, an enemy comes into sight, a fight, or a unit needs orders" onClick={(e) => { blur(e); waitForSomething(); }}>Advance Time</button>
           )}
           <button class={endTurnBlinks && !endingTurn ? 'primary blink' : 'primary'} onClick={(e) => { blur(e); play('click'); endTurn(); }} disabled={!playing || endingTurn}>End Turn</button>
         </span>
