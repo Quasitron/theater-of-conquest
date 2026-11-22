@@ -15,6 +15,7 @@ import { THEATERS, loadTheater, maxTheaterPlayers, theaterById, theaterWorld, ty
 import { MapPreview } from './MapPreview';
 import { HOUSE_RULE_OPTIONS } from './houseRules';
 import { getSkipOpening, setSkipOpening } from './fastForward';
+import { TitleLinks } from './TitleLinks';
 import { TEAM_PLAY_MIN_PLAYERS, assignTeams, cleanTeamSetup, loadTeamSetup, saveTeamSetup, seededRandom, teamCounts, type TeamSetup } from './teams';
 
 interface Props {
@@ -433,6 +434,7 @@ export function TitleScreen({ store, onStart }: Props) {
         )}
         {error && <p class="error" role="alert">{error}</p>}
       </div>
+      {panel === 'menu' && <TitleLinks />}
       <p class="title-version">{VERSION_LABEL} · Anonymous visit counts, no cookies</p>
       {soundOpen && <SettingsDialog onClose={() => setSoundOpen(false)} />}
       {manualOpen && <ManualDialog onClose={() => setManualOpen(false)} />}
