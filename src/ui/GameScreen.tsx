@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { GameSession, SessionCommand } from '../app/session';
 import { landOnSquare, unloadAndLand } from '../app/unloadAndLand';
 import {
-  UNIT_STATS, isCrippled, patrolTarget, step, aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
+  UNIT_STATS, DIRS, normalize, isCrippled, patrolTarget, step,aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
@@ -35,7 +35,7 @@ import { keyToAction, type ActionId } from './keys';
 import { pathLabel, pluralUnit } from './labels';
 import { cityScreenPoint } from './placement';
 import { EXPLOSION_TAIL_MS } from './explosions';
-import { approachSquare, attackLabel, landersFor, bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, sharesSquare, viewRelief, visibleGarrison } from './plans';
+import { approachSquare, attackLabel, landersFor, landingDirs,bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, sharesSquare, viewRelief, visibleGarrison } from './plans';
 import { ProductionReport } from './ProductionReport';
 import { MapCanvas, type ActiveFx } from './MapCanvas';
 import { getCombatMode, getReplayPace, getReportAfter, type ReplayPace } from './combatMode';
@@ -57,7 +57,7 @@ interface Props {
   onQuit: () => void;
 }
 
-type TargetMode = null | 'moveTo' | 'patrol' | 'escort' | 'ferryPickup' | 'ferryDrop';
+type TargetMode = null | 'moveTo' | 'patrol' | 'escort' | 'ferryPickup' | 'ferryDrop' | 'unloadTo';
 
 // Rough size of the context menu, used to keep it on screen.
 const MENU_W = 220;
@@ -180,6 +180,8 @@ export function GameScreen({ session, onQuit }: Props) {
   const [ferryError, setFerryError] = useState<string | null>(null);
   // A loaded transport sent onto a land square: which unit to put ashore there.
   const [landAt, setLandAt] = useState<null | { transportId: number; dir: Dir }>(null);
+  /** An Unload waiting for the player to click the square the units should land on. */
+  const [unloadTo, setUnloadTo] = useState<null | { transportId: number; ids: number[] | null }>(null);
   const [infoId, setInfoId] = useState<number | null>(null);
   // The square whose hover preview is frozen after an order was given there, until the pointer leaves it.
   const [frozen, setFrozen] = useState<Pos | null>(null);
@@ -935,6 +937,27 @@ export function GameScreen({ session, onQuit }: Props) {
   };
   const setOrders = (u: Unit, orders: Orders | null) => order(u, { type: 'setOrders', unitId: u.id, orders });
 
+  /** Unloads `ids` (null = everything aboard) from `carrier`, landing on the square in `dir` when one was chosen, and says what happened. */
+  const finishUnload = (carrier: Unit, ids: number[] | null, dir?: Dir) => {
+    const aboard = view.myUnits.filter((c) => c.carriedBy === carrier.id);
+    const count = ids === null ? aboard.length : ids.length;
+    const r = unloadAndLand(session, carrier.id, ids, dir);
+    // Same refresh as act(), also after a partial run (orders cleared, unload done, a later move failed).
+    afterOwnAct();
+    if (typeof r === 'string') {
+      setMessage(r);
+      return;
+    }
+    const cargoType = aboard.find((c) => ids === null || ids.includes(c.id))?.type ?? 'army';
+    if (UNIT_STATS[carrier.type].carries.includes('army')) {
+      const kind = pluralUnit(cargoType, r.landed);
+      setMessage(`${unitDisplayName(carrier)} landed ${r.landed} ${kind}${r.aboard > 0 ? `; ${r.aboard} still aboard` : ''}.`);
+    } else {
+      // Aircraft do not land anywhere: a carrier's cargo is just woken.
+      setMessage(`${unitDisplayName(carrier)} unloaded ${count} ${pluralUnit(cargoType, count)}.`);
+    }
+  };
+
   /**
    * Save and Close in the Ferry Route dialog: the changes to existing routes first, then the carrier's own route. Returns
    * the error of the first command the game refuses (the dialog stays open to show it), or null.
@@ -1321,6 +1344,24 @@ export function GameScreen({ session, onQuit }: Props) {
         setPicker('ferry');
         return;
       }
+      if (mode === 'unloadTo') {
+        const job = unloadTo;
+        const ship = job ? view.myUnits.find((u) => u.id === job.transportId) : undefined;
+        if (!job || !ship) return setTarget(null);
+        const dir = DIRS.findIndex(([dx, dy]) => {
+          const q = normalize(view as unknown as MapLike, ship.x + dx, ship.y + dy);
+          return q !== null && q.x === p.x && q.y === p.y;
+        }) as Dir;
+        const first = job.ids?.[0] ?? view.myUnits.find((u) => u.carriedBy === ship.id)?.id;
+        if (dir < 0 || first === undefined || !landingDirs(view, ship, first).includes(dir)) {
+          setMessage('The units cannot land there. Click a free land square next to the carrier (Esc cancels).');
+          return;
+        }
+        setTarget(null);
+        setUnloadTo(null);
+        finishUnload(ship, job.ids, dir);
+        return;
+      }
       if (mode === 'escort') {
         // The click must land on one of your transports (at sea or in a city); anything else keeps waiting.
         // With several transports on the square, the first one that has no escort yet is taken.
@@ -1648,7 +1689,7 @@ export function GameScreen({ session, onQuit }: Props) {
               </>
             );
           })()}
-          {target && target !== 'patrol' && <span class="message" role="status">{target === 'escort' && message ? message : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target && target !== 'patrol' && <span class="message" role="status">{(target === 'escort' || target === 'unloadTo') && message ? message : target === 'unloadTo' ? 'Unload: click the free land square next to the carrier to land on (Esc cancels).' : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
@@ -1829,21 +1870,16 @@ export function GameScreen({ session, onQuit }: Props) {
             onConfirm={(ids) => {
               if (ids.length === 0) return;
               setPicker(null);
-              const r = unloadAndLand(session, pickerUnit.id, ids.length === cargo.length ? null : ids);
-              // Same refresh as act(), also after a partial run (orders cleared, unload done, a later move failed).
-              afterOwnAct();
-              if (typeof r === 'string') {
-                setMessage(r);
+              const all = ids.length === cargo.length ? null : ids;
+              // Several free squares to land on (at sea or from an APC): the player clicks the one they want.
+              const inCity = view.myCities.some((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
+              if (!inCity && UNIT_STATS[pickerUnit.type].carries.includes('army') && landingDirs(view, pickerUnit, ids[0]).length > 1) {
+                setUnloadTo({ transportId: pickerUnit.id, ids: all });
+                setTarget('unloadTo');
+                setMessage(null);
                 return;
               }
-              const cargoType = cargo.find((c) => ids.includes(c.id))?.type ?? 'army';
-              if (UNIT_STATS[pickerUnit.type].carries.includes('army')) {
-                const kind = pluralUnit(cargoType, r.landed);
-                setMessage(`${unitDisplayName(pickerUnit)} landed ${r.landed} ${kind}${r.aboard > 0 ? `; ${r.aboard} still aboard` : ''}.`);
-              } else {
-                // Aircraft do not land anywhere: a carrier's cargo is just woken.
-                setMessage(`${unitDisplayName(pickerUnit)} unloaded ${ids.length} ${pluralUnit(cargoType, ids.length)}.`);
-              }
+              finishUnload(pickerUnit, all);
             }}
           />
         </div>

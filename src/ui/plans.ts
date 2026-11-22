@@ -30,7 +30,7 @@ const DIR_IDS: Dir[] = [0, 1, 2, 3, 4, 5, 6, 7];
  * with a free explored land square or an own city. Armies with no such square are left out.
  */
 export function landingPlan(
-  view: PlayerView, transport: Unit, armyIds: readonly number[],
+  view: PlayerView, transport: Unit, armyIds: readonly number[], only?: Dir,
 ): { unitId: number; dir: Dir }[] {
   const wanted = new Set(armyIds);
   const armies = view.myUnits
@@ -42,7 +42,7 @@ export function landingPlan(
   const planned = new Map<number, number>();
   const plan: { unitId: number; dir: Dir }[] = [];
   for (const army of armies) {
-    for (const dir of DIR_IDS) {
+    for (const dir of only === undefined ? DIR_IDS : [only]) {
       const [dx, dy] = DIRS[dir];
       const p = normalize(geo(view), transport.x + dx, transport.y + dy);
       if (!p) continue;
@@ -69,6 +69,11 @@ export function landingPlan(
     }
   }
   return plan;
+}
+
+/** The directions an army aboard `transport` could be put ashore in right now (what landingPlan would accept for one army). */
+export function landingDirs(view: PlayerView, transport: Unit, armyId: number): Dir[] {
+  return DIR_IDS.filter((d) => landingPlan(view, transport, [armyId], d).length > 0);
 }
 
 /**

@@ -21,7 +21,7 @@ export function landOnSquare(session: GameSession, transportId: number, unitId: 
  * Returns how many left the transport and how many are still aboard, or the first error.
  */
 export function unloadAndLand(
-  session: GameSession, transportId: number, ids: number[] | null,
+  session: GameSession, transportId: number, ids: number[] | null, dir?: Dir,
 ): { landed: number; aboard: number } | string {
   const start = session.view();
   const first = start.myUnits.find((u) => u.id === transportId);
@@ -40,7 +40,7 @@ export function unloadAndLand(
   if (!transport) return 'no such unit';
   const inCity = view.myCities.some((c) => c.x === transport.x && c.y === transport.y);
   if (!inCity) {
-    for (const step of landingPlan(view, transport, [...chosen])) {
+    for (const step of landingPlan(view, transport, [...chosen], dir)) {
       const err = session.act({ type: 'move', unitId: step.unitId, dir: step.dir });
       if (err) return err;
     }
