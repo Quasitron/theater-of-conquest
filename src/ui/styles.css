@@ -51,6 +51,9 @@ input, select { font: inherit; background: #0f1318; color: var(--text); border: 
 .theater-info p { margin: 0; }
 .theater-wars { color: #d8c38a; }
 .map-preview { display: block; width: 100%; height: auto; border: 1px solid #333c48; border-radius: 4px; }
+.team-play { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.team-play .hint { display: block; }
+.team-drawn { font-weight: 600; margin-right: 0.6em; }
 .house-rule { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .house-rule input { margin-top: 3px; }
 .house-rule .hint { display: block; }

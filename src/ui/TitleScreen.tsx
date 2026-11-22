@@ -14,6 +14,7 @@ import { VERSION_LABEL } from './version';
 import { THEATERS, loadTheater, maxTheaterPlayers, theaterById, theaterWorld, type TheaterData } from '../theaters';
 import { MapPreview } from './MapPreview';
 import { HOUSE_RULE_OPTIONS } from './houseRules';
+import { TEAM_PLAY_MIN_PLAYERS, assignTeams, cleanTeamSetup, loadTeamSetup, saveTeamSetup, seededRandom, teamCounts, type TeamSetup } from './teams';
 
 interface Props {
   store: SaveStore;
@@ -60,7 +61,11 @@ export function TitleScreen({ store, onStart }: Props) {
   // The form starts from the last settings used (the seed is always fresh).
   const [remembered] = useState(() => loadNewGameSettings({ world: { ...DEFAULT_WORLD }, seats: defaultSeats(2, []), rules: { ...CLASSIC_RULES } }));
   const [world, setWorld] = useState<WorldOptions>(remembered.world);
-  const [seats, setSeats] = useState<SeatConfig[]>(remembered.seats);
+  // Teams are chosen with the Team play controls below, not stored on the seats until the game starts.
+  const [seats, setSeats] = useState<SeatConfig[]>(remembered.seats.map(({ team: _team, ...rest }) => rest));
+  const [teamSetup, setTeamSetup] = useState<TeamSetup>(() => loadTeamSetup(remembered.world.players, remembered.seats));
+  /** Drives the random draw of teams, so the preview and the game that follows it agree; Reshuffle changes it. */
+  const [teamSeed, setTeamSeed] = useState(randomSeed());
   const [seed, setSeed] = useState(randomSeed());
   const [rules, setRules] = useState<HouseRules>(remembered.rules);
   const [saves, setSaves] = useState<SaveSummary[]>([]);
@@ -74,7 +79,13 @@ export function TitleScreen({ store, onStart }: Props) {
   const [theaterId, setTheaterId] = useState(THEATERS[0]?.id ?? '');
   const theater = mapKind === 'theater' ? theaterById(theaterId) : undefined;
   const mostPlayers = theater ? maxTheaterPlayers(theater) : MAX_PLAYERS;
-  const TEAM_NUMBERS = [1, 2, 3, 4];
+  const teamOn = teamSetup.on && world.players >= TEAM_PLAY_MIN_PLAYERS;
+  const teamNumbers = Array.from({ length: teamSetup.count }, (_, i) => i + 1);
+  /** Every seat's team (undefined = Alone), the random ones drawn from the team seed. */
+  const resolvedTeams = useMemo(
+    () => (teamOn ? assignTeams(seats.slice(0, world.players), teamSetup.picks, teamSetup.count, seededRandom(teamSeed)) : []),
+    [teamOn, seats, world.players, teamSetup, teamSeed],
+  );
   /** The country each seat chose on a theater map ('' = drawn at random). */
   const [picks, setPicks] = useState<string[]>([]);
   const [theaterData, setTheaterData] = useState<TheaterData | null>(null);
@@ -108,6 +119,7 @@ export function TitleScreen({ store, onStart }: Props) {
   const setPlayers = (n: number) => {
     setWorld({ ...world, players: n });
     setSeats(defaultSeats(n, seats));
+    setTeamSetup(cleanTeamSetup(teamSetup, n, []));
   };
   const updateSeat = (i: number, patch: Partial<SeatConfig>) =>
     setSeats(seats.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -121,21 +133,25 @@ export function TitleScreen({ store, onStart }: Props) {
 
   const start = async () => {
     try {
+      // The teams as they will be: fixed picks, plus the random ones drawn (the same draw a preview showed).
+      const finalSeats: SeatConfig[] = seats.map(({ team: _team, ...rest }, i) => (teamOn && resolvedTeams[i] !== undefined ? { ...rest, team: resolvedTeams[i] } : rest));
       // Everyone on one team would leave nobody to fight.
-      if (seats.every((s) => s.team !== undefined && s.team === seats[0].team)) return setError('Put at least two sides in the game: players on the same team are allies.');
+      if (finalSeats.every((s) => s.team !== undefined && s.team === finalSeats[0].team)) return setError('Put at least two sides in the game: players on the same team are allies.');
       if (theater) {
         // A historical theater: the real map, each player a different nation (named for it unless the seat has its own name).
         const data = await loadTheater(theater.id);
         const preset = theaterWorld(data, world.players, seed, rules.advancedUnits, picks);
-        const named = seats.map((s, i) => (/^Player \d+$/.test(s.name) ? { ...s, name: preset.nations[i] } : s));
+        const named = finalSeats.map((s, i) => (/^Player \d+$/.test(s.name) ? { ...s, name: preset.nations[i] } : s));
         const session = GameSession.create({ world: { ...world, width: data.width, height: data.height, wrap: data.wrap }, seed, seats: named, rules, preset }, store);
         saveNewGameSettings({ world, seats, rules });
+        saveTeamSetup(teamSetup);
         return onStart(session);
       }
       const sizeError = validateMapSize(world.width, world.height);
       if (sizeError) return setError(sizeError);
-      const session = GameSession.create({ world, seed, seats, rules }, store);
+      const session = GameSession.create({ world, seed, seats: finalSeats, rules }, store);
       saveNewGameSettings({ world, seats, rules });
+      saveTeamSetup(teamSetup);
       onStart(session);
     } catch (e) {
       setError((e as Error).message);
@@ -288,6 +304,27 @@ export function TitleScreen({ store, onStart }: Props) {
             {[2, 3, 4, 5, 6, 7, 8].filter((n) => n <= mostPlayers).map((n) => <option value={n}>{n}</option>)}
           </select>
         </label>
+        {world.players >= TEAM_PLAY_MIN_PLAYERS && (
+          <div class="team-play">
+            <label><input type="checkbox" checked={teamSetup.on}
+              onChange={(e) => setTeamSetup({ ...teamSetup, on: (e.target as HTMLInputElement).checked })} /> Team play <span class="muted hint">players on the same team are allies</span></label>
+            {teamOn && (
+              <>
+                <label>Teams{' '}
+                  <select aria-label="Number of teams" value={teamSetup.count}
+                    onChange={(e) => setTeamSetup(cleanTeamSetup({ ...teamSetup, count: Number((e.target as HTMLSelectElement).value) }, world.players, []))}>
+                    {teamCounts(world.players).map((n) => <option value={n}>{n}</option>)}
+                  </select>
+                </label>
+                <label><input type="checkbox" checked={teamSetup.preview}
+                  onChange={(e) => setTeamSetup({ ...teamSetup, preview: (e.target as HTMLInputElement).checked })} /> Show random teams before the game starts <span class="muted hint">otherwise you find out in the game</span></label>
+                {teamSetup.preview && teamSetup.picks.slice(0, world.players).includes('random') && (
+                  <button onClick={() => setTeamSeed(randomSeed())}>Reshuffle</button>
+                )}
+              </>
+            )}
+          </div>
+        )}
         <table class="seats">
           <tbody>
           {seats.map((s, i) => (
@@ -306,20 +343,17 @@ export function TitleScreen({ store, onStart }: Props) {
             <tr>
               <td />
               <td colSpan={2}>
-                <label>Team{' '}
-                  <select aria-label={`Team of ${s.name}`} title="Players on the same team are allies" value={s.team ?? ''}
-                    onChange={(e) => {
-                      const v = (e.target as HTMLSelectElement).value;
-                      setSeats(seats.map((x, j) => {
-                        if (j !== i) return x;
-                        const { team: _old, ...rest } = x;
-                        return v === '' ? rest : { ...rest, team: Number(v) };
-                      }));
-                    }}>
-                    <option value="">Alone</option>
-                    {TEAM_NUMBERS.map((n) => <option value={n}>Team {n}</option>)}
-                  </select>
-                </label>
+                {teamOn && (
+                  <label>Team{' '}
+                    <select aria-label={`Team of ${s.name}`} title="Players on the same team are allies" value={teamSetup.picks[i] ?? 'random'}
+                      onChange={(e) => setTeamSetup({ ...teamSetup, picks: teamSetup.picks.map((p, j) => (j === i ? (e.target as HTMLSelectElement).value : p)) })}>
+                      <option value="">Alone</option>
+                      <option value="random">Random</option>
+                      {teamNumbers.map((n) => <option value={String(n)}>Team {n}</option>)}
+                    </select>
+                    {teamSetup.preview && teamSetup.picks[i] === 'random' && resolvedTeams[i] !== undefined && <span class="team-drawn"> → Team {resolvedTeams[i]}</span>}
+                  </label>
+                )}
                 {theater && (
                   <label>{' '}Country{' '}
                     <select aria-label={`Country of ${s.name}`} value={picks[i] ?? ''} onChange={(e) => pickNation(i, (e.target as HTMLSelectElement).value)}>

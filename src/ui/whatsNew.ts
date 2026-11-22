@@ -16,6 +16,16 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'team-play',
+    version: '0.9.142',
+    date: '2026-11-22',
+    title: 'Team play and random teams',
+    text: [
+      'New Game now has a Team play option for 3 or more players. Choose how many teams, then give each player Alone, Random or a team number.',
+      'Random players are dealt to the smallest teams so they stay even, and human players are spread across teams. Tick "Show random teams before the game starts" to see the draw on the form (with a Reshuffle button), or leave it off to be surprised.',
+    ],
+  },
+  {
     id: 'sub-strike-slip',
     version: '0.9.140',
     date: '2026-11-20',
