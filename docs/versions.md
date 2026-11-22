@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.150 | 2026-11-22 | Rules version 39. An aircraft on a Go-to with only its last move left no longer waits stuck on a crowded square: when the next step is occupied it steps to a free square beside it that keeps it closest to the target (fuel permitting). Before, it stayed put and End Turn was refused ("cannot end its turn on an occupied square"). |
 | 0.9.149 | 2026-11-22 | Unload from an APC or a transport at sea: when more than one free land square is next to the carrier, the Unload button now asks you to click the square to land on (Esc cancels) instead of always using the first one (north first). With one choice it lands at once, as before. In a city nothing changes. |
 | 0.9.148 | 2026-11-22 | Escort: clicking a square with several transports takes the first one that has no escort yet (it used to take the first transport, even an escorted one, and the refusal was silent). The refusal now shows in the top bar ("That transport already has an escort"). |
 | 0.9.147 | 2026-11-22 | Side panel: in the "On this square" list each of your units shows its moves left in brackets after its orders, e.g. "2342nd Fighter · None (5)". |

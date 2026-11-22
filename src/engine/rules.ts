@@ -61,4 +61,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 36: stacking rule: a ferry drops its cargo onto one square (up to 4) instead of spreading it out.
 // 37: a patrol interrupted by an enemy, a block or low fuel is remembered on the unit (lastPatrol) so it can be resumed.
 // 38: a submarine's torpedo salvo that hits without sinking its target counts as a win towards the sub's promotion.
-export const RULES_VERSION = 38;
+// 39: an aircraft on its last move whose next step is an occupied square takes a free square beside it, instead of waiting stuck.
+export const RULES_VERSION = 39;

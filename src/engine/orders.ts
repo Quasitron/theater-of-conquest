@@ -205,6 +205,39 @@ function ownBlocks(s: GameState, u: Unit, p: Pos): boolean {
   return !here.some((h) => h.owner === u.owner && hasRoomFor(s, h, u.type)) && !canJoinStack(s, u, p);
 }
 
+/** True when an aircraft of ours would have to stay on p: own units stand there (not a city), none can host it or take it into a stack. */
+function airWouldStick(s: GameState, u: Unit, p: Pos): boolean {
+  if (cityAt(s, p.x, p.y)) return false;
+  const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => o !== u);
+  if (here.length === 0) return false;
+  return !here.some((h) => h.owner === u.owner && hasRoomFor(s, h, u.type)) && !canJoinStack(s, u, p);
+}
+
+/**
+ * An aircraft with its last move left must end the turn on a free square (or a base). When the next step of its way
+ * is an occupied square, this picks the free neighbouring square from which the target is nearest (fuel permitting).
+ */
+function freeSquareToward(s: GameState, u: Unit, map: ReturnType<typeof pathMapFromState>, target: Pos): Pos | null {
+  let best: Pos | null = null;
+  let bestLen = Infinity;
+  for (const q of neighbors(s, u.x, u.y)) {
+    if (map.terrain[index(s, q.x, q.y)] === null) continue;
+    const city = cityAt(s, q.x, q.y);
+    if (city && !areFriendly(s, city.owner, u.owner)) continue;
+    const here = topLevelUnitsAt(s, q.x, q.y);
+    if (here.some((o) => !areFriendly(s, o.owner, u.owner))) continue;
+    if (airWouldStick(s, u, q)) continue;
+    const rest = q.x === target.x && q.y === target.y ? [] : findPath(map, { type: u.type, x: q.x, y: q.y }, target);
+    if (rest === null) continue;
+    if (u.fuel !== null && !aircraftCanReach(map, rest.length + 1, u.fuel, target, u.type)) continue;
+    if (rest.length < bestLen) {
+      best = q;
+      bestLen = rest.length;
+    }
+  }
+  return best;
+}
+
 /**
  * Runs a unit's moving orders (goto, patrol, explore) until it is out of moves or they end. Never attacks.
  * turnStart is true when called from the start-of-turn run: only then does a blocked wait count.
@@ -320,6 +353,11 @@ export function executeOrders(
     }
     if (u.fuel !== null && o.kind !== 'goto' && path.length > u.fuel) return endOrders(u, 'lowFuel', events);
     let next = path[0];
+    // An aircraft on its last move cannot pass over an occupied square (it would be stuck there): it takes a free one instead.
+    if (UNIT_STATS[u.type].domain === 'air' && u.movesLeft <= 1 && airWouldStick(s, u, next)) {
+      const free = freeSquareToward(s, u, map, target);
+      if (free) next = free;
+    }
     if (ownBlocks(s, u, next)) {
       const detour = findPath(pathMapFromState(s, u.owner, { blockOwn: true }), u, target);
       if (detour && detour.length > 0 && !ownBlocks(s, u, detour[0])) next = detour[0];
