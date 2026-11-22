@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'stack-count-over-name',
+    version: '0.9.144',
+    date: '2026-11-22',
+    title: 'Stack count over city names',
+    text: ['When a city name runs across the stack you are working on, its count now shows on top of the name. Other counts stay under the names.'],
+  },
+  {
     id: 'fast-forward',
     version: '0.9.143',
     date: '2026-11-22',
