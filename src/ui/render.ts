@@ -607,6 +607,13 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         }
       });
     }
+    // The count of the stack the active unit stands in goes on top of a city name that runs across it (the names stay on top
+    // of every other count).
+    if (activeUnit && activeUnit.carriedBy === null && !(gliding && gliding.unitId === activeUnit.id) && !inOwnCity(activeUnit.x, activeUnit.y)) {
+      const cargo = view.myUnits.filter((c) => c.carriedBy === activeUnit.id).length;
+      const n = cargo > 0 ? cargo : stackSize(activeUnit.x, activeUnit.y);
+      if (n > 1) each((mx, my, sx, sy) => { if (mx === activeUnit.x && my === activeUnit.y && !hidden(mx, my)) badge(sx, sy, n); });
+    }
   }
 
   // Newly discovered enemy units flash a red ring (with the alert sound), so the eye is drawn to them.
