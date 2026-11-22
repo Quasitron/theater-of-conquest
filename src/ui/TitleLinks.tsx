@@ -3,6 +3,9 @@ export const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61595971664
 /** The "Buy us a coffee" donation page: left empty (and the button hidden) until the page exists. */
 export const COFFEE_URL = '';
 
+/** Shown when hovering the coffee button (nothing on touch screens); the full note lives on the donation page itself. */
+export const COFFEE_HINT = 'The game will always be free. If you would like to chip in, leave a few coins in the coffee jar.';
+
 const FacebookIcon = () => (
   <svg class="link-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
     <circle cx="12" cy="12" r="11" fill="#1877f2" />
@@ -29,7 +32,7 @@ export function TitleLinks() {
         </a>
       )}
       {COFFEE_URL && (
-        <a class="title-link" href={COFFEE_URL} target="_blank" rel="noopener noreferrer" aria-label="Buy us a coffee">
+        <a class="title-link" href={COFFEE_URL} target="_blank" rel="noopener noreferrer" aria-label="Buy us a coffee" title={COFFEE_HINT}>
           Buy us a <CoffeeIcon />
         </a>
       )}
