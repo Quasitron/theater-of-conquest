@@ -39,6 +39,7 @@ import { approachSquare, attackLabel, landersFor, bombLabel, bombardLabel, cityA
 import { ProductionReport } from './ProductionReport';
 import { MapCanvas, type ActiveFx } from './MapCanvas';
 import { getCombatMode, getReplayPace, getReportAfter, type ReplayPace } from './combatMode';
+import { FAST_FORWARD_MAX_TURNS, getSkipOpening, turnWasQuiet } from './fastForward';
 import { fightsFromEvents, placeNote, replayFights, stepDuration, FIGHT_MS, BURST_END, SHOT_SHARE, type Fight } from './fights';
 import { OrdersMenu } from './OrdersMenu';
 import { drawMinimap } from './render';
@@ -137,6 +138,10 @@ export function GameScreen({ session, onQuit }: Props) {
   const [groupBox, setGroupBox] = useState<GroupBox | null>(null);
   /** True from pressing End Turn until the computer players have finished moving (the work runs just after a paint). */
   const [endingTurn, setEndingTurn] = useState(false);
+  // Fast-forward (the quiet opening, or Wait): End Turn is pressed for you until something happens. `turns` counts them.
+  const [ff, setFf] = useState<{ turns: number } | null>(null);
+  const ffRef = useRef<{ turns: number } | null>(null);
+  const ffTimer = useRef<number | undefined>(undefined);
   const [prodMap, setProdMap] = useState(false);
   const [routesMap, setRoutesMap] = useState(false);
   const [unitsOpen, setUnitsOpen] = useState(false);
@@ -593,7 +598,29 @@ export function GameScreen({ session, onQuit }: Props) {
     setEliminated([]);
     setReports([]);
     setReportIdx(0);
+    // Fast-forwarding: another human's hand-off screen is passed over at once (nothing is shown to anyone), and the
+    // fast-forward ends when the game does.
+    if (ffRef.current && session.phase === 'handoff') {
+      ffTimer.current = window.setTimeout(() => session.confirmHandoff(), 80);
+      return;
+    }
+    if (ffRef.current && session.phase !== 'playing') stopFf();
     if (session.phase !== 'playing') return;
+    if (ffRef.current) {
+      // A quiet turn (nothing produced, nobody in sight, no fight, nothing needing orders) is passed straight on; anything
+      // else ends the fast-forward and the turn begins as usual.
+      const v = session.view();
+      const quiet = turnWasQuiet(session.log(v.me), v.me, new Set(v.myUnits.map((u) => u.id)), new Set(v.allyUnits.map((u) => u.id)))
+        && pendingSights.current.length === 0 && readyNow(new Set(), []).length === 0 && ffRef.current.turns < FAST_FORWARD_MAX_TURNS;
+      if (quiet) {
+        const next = { turns: ffRef.current.turns + 1 };
+        ffRef.current = next;
+        setFf(next);
+        ffTimer.current = window.setTimeout(endTurnFast, 120);
+        return;
+      }
+      stopFf();
+    }
     const aside = asideThisTurn();
     setHeld(new Set(aside.held));
     setSkipped(aside.skipped);
@@ -1088,10 +1115,43 @@ export function GameScreen({ session, onQuit }: Props) {
   const endTurn = () => {
     if (endingTurn) return;
     setEndingTurn(true);
+    // Ending turn 1 starts the fast-forward through the quiet opening (when that is switched on in New Game).
+    const opening = view.turn === 1 && getSkipOpening();
     window.setTimeout(() => {
-      try { act({ type: 'endTurn' }); } finally { setEndingTurn(false); }
+      try {
+        if (act({ type: 'endTurn' }) && opening) startFf();
+      } finally { setEndingTurn(false); }
     }, 50);
   };
+  function startFf() {
+    ffRef.current = { turns: 0 };
+    setFf(ffRef.current);
+  }
+  function stopFf() {
+    window.clearTimeout(ffTimer.current);
+    ffRef.current = null;
+    setFf(null);
+  }
+  /** One End Turn of a fast-forward; a refusal (a unit that cannot end its turn) ends it. */
+  function endTurnFast() {
+    setEndingTurn(true);
+    window.setTimeout(() => {
+      try { if (!act({ type: 'endTurn' })) stopFf(); } finally { setEndingTurn(false); }
+    }, 30);
+  }
+  /** Wait: fast-forward until something happens, for when nothing needs orders. */
+  const waitForSomething = () => {
+    if (endingTurn || ffRef.current) return;
+    startFf();
+    endTurnFast();
+  };
+  // Escape stops a fast-forward.
+  useEffect(() => {
+    if (!ff) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') stopFf(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ff !== null]);
 
   const doAction = (id: ActionId) => {
     if (!playing) return;
@@ -1591,7 +1651,11 @@ export function GameScreen({ session, onQuit }: Props) {
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
           {!target && !groupHint && !message && allMoved && <span class="message" role="status">All units have moved. Press Enter or click End Turn.</span>}
           {session.saveError && <span class="error" role="alert">{session.saveError}</span>}
-          {endingTurn && <span class="message working" role="status"><span class="spinner" aria-hidden="true" /> Computer players are moving…</span>}
+          {ff && <span class="message working" role="status"><span class="spinner" aria-hidden="true" /> Advancing to the next event… turn {view.turn} <button onClick={(e) => { blur(e); stopFf(); }}>Stop (Esc)</button></span>}
+          {endingTurn && !ff && <span class="message working" role="status"><span class="spinner" aria-hidden="true" /> Computer players are moving…</span>}
+          {playing && !ff && !endingTurn && ready.length === 0 && (
+            <button title="End turns for you until something happens: a unit is produced, an enemy comes into sight, a fight, or a unit needs orders" onClick={(e) => { blur(e); waitForSomething(); }}>Wait</button>
+          )}
           <button class={endTurnBlinks && !endingTurn ? 'primary blink' : 'primary'} onClick={(e) => { blur(e); play('click'); endTurn(); }} disabled={!playing || endingTurn}>End Turn</button>
         </span>
       </header>

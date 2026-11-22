@@ -55,7 +55,7 @@ input, select { font: inherit; background: #0f1318; color: var(--text); border: 
 .title .panel-head { position: sticky; top: -24px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -16px -16px 0; padding: 12px 16px; background: var(--panel); border-radius: 10px 10px 0 0; border-bottom: 1px solid #333c48; }
 .title .panel-head h2 { margin: 0; }
 .team-play { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.team-play .hint { display: block; }
+.team-play .hint, .skip-opening .hint { display: block; }
 .team-drawn { font-weight: 600; margin-right: 0.6em; }
 .house-rule { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .house-rule input { margin-top: 3px; }
