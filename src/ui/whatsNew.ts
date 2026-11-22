@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'coffee-jar',
+    version: '0.9.146',
+    date: '2026-11-22',
+    title: 'Buy us a coffee',
+    text: ['The main menu now has a Buy us a coffee button. The game will always be free: if you would like to chip in, leave a few coins in the coffee jar.'],
+  },
+  {
     id: 'follow-us',
     version: '0.9.145',
     date: '2026-11-22',

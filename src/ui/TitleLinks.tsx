@@ -1,7 +1,7 @@
 /** Where the title screen's two outside links go. An empty address hides its button. */
 export const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61595971664363';
-/** The "Buy us a coffee" donation page: left empty (and the button hidden) until the page exists. */
-export const COFFEE_URL = '';
+/** The "Buy us a coffee" donation page (Ko-fi). An empty address hides the button. */
+export const COFFEE_URL = 'https://ko-fi.com/theaterofconquest';
 
 /** Shown when hovering the coffee button (nothing on touch screens); the full note lives on the donation page itself. */
 export const COFFEE_HINT = 'The game will always be free. If you would like to chip in, leave a few coins in the coffee jar.';
