@@ -123,7 +123,7 @@ function UnitDetails({ u, view, onAction, onSelectUnit, myColor }: {
             {mine.map((o) => (
               <li key={o.id}>
                 <button class={o.id === u.id ? 'current' : ''} aria-current={o.id === u.id} onClick={(e) => { blur(e); onSelectUnit(o.id); }}>
-                  {unitDisplayName(o)} · {ordersText(view, o)}
+                  {unitDisplayName(o)} · {ordersText(view, o)} ({o.movesLeft})
                 </button>
               </li>
             ))}
