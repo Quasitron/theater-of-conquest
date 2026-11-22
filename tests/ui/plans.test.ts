@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getPlayerView } from '../../src/engine/view';
 import { updateFog } from '../../src/engine/fog';
-import { approachSquare, attackLabel, cityAttackChance, landersFor, landingPlan, sharesSquare, strikeIsSurprise, strikeLabel, unitAttackChance } from '../../src/ui/plans';
+import { approachSquare, attackLabel, cityAttackChance, landersFor, landingDirs, landingPlan,sharesSquare, strikeIsSurprise, strikeLabel, unitAttackChance } from '../../src/ui/plans';
 import { addUnit, makeGame } from '../helpers';
 
 function viewOf(s: ReturnType<typeof makeGame>) {
@@ -99,6 +99,26 @@ describe('landingPlan', () => {
     const b = addUnit(s, 'army', 0, 3, 1, { carriedBy: t.id });
     const v = viewOf(s);
     expect(plan(v, t.id, [a.id, b.id])).toEqual([{ unitId: a.id, dir: 5 }]);
+  });
+});
+
+describe('landingPlan with a chosen direction', () => {
+  const COAST = ['*#.#*', '.#...', '#....'];
+
+  it('lands everyone on the chosen square, and lists the squares that would take an army', () => {
+    const { s, t, armies } = boat(COAST, { x: 2, y: 1 }, 2);
+    s.rules.stacking = true;
+    const v = viewOf(s);
+    const ship = v.myUnits.find((u) => u.id === t.id)!;
+    const dirs = landingDirs(v, ship, armies[0].id);
+    expect(dirs).toContain(1);
+    expect(dirs).toContain(6);
+    expect(dirs.length).toBeGreaterThan(1);
+    expect(landingPlan(v, ship, armies.map((a) => a.id), 6)).toEqual([
+      { unitId: armies[0].id, dir: 6 },
+      { unitId: armies[1].id, dir: 6 },
+    ]);
+    expect(landingPlan(v, ship, [armies[0].id], 0)).toEqual([]); // north of the ship is sea
   });
 });
 

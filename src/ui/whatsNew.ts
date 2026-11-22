@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'unload-pick-square',
+    version: '0.9.149',
+    date: '2026-11-22',
+    title: 'Choose where to unload',
+    text: ['When an APC or a transport at sea has more than one free land square beside it, Unload now asks you to click the square the troops should land on, instead of always using the first one.'],
+  },
+  {
     id: 'escort-click',
     version: '0.9.148',
     date: '2026-11-22',
