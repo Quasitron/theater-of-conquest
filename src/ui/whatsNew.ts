@@ -16,6 +16,16 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'fast-forward',
+    version: '0.9.143',
+    date: '2026-11-22',
+    title: 'Skip the quiet opening, and Advance Time',
+    text: [
+      'After you set production and end turn 1, the game now ends turns for you until something happens: your first unit is built (or a teammate\'s), an enemy comes into sight, or a fight breaks out. Press Esc or Stop to take over at any time. You can switch this off with "Skip the quiet opening turns" on New Game.',
+      'The new Advance Time button next to End Turn does the same whenever none of your units needs orders.',
+    ],
+  },
+  {
     id: 'team-play',
     version: '0.9.142',
     date: '2026-11-22',

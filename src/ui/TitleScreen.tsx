@@ -14,6 +14,7 @@ import { VERSION_LABEL } from './version';
 import { THEATERS, loadTheater, maxTheaterPlayers, theaterById, theaterWorld, type TheaterData } from '../theaters';
 import { MapPreview } from './MapPreview';
 import { HOUSE_RULE_OPTIONS } from './houseRules';
+import { getSkipOpening, setSkipOpening } from './fastForward';
 import { TEAM_PLAY_MIN_PLAYERS, assignTeams, cleanTeamSetup, loadTeamSetup, saveTeamSetup, seededRandom, teamCounts, type TeamSetup } from './teams';
 
 interface Props {
@@ -63,6 +64,8 @@ export function TitleScreen({ store, onStart }: Props) {
   const [world, setWorld] = useState<WorldOptions>(remembered.world);
   // Teams are chosen with the Team play controls below, not stored on the seats until the game starts.
   const [seats, setSeats] = useState<SeatConfig[]>(remembered.seats.map(({ team: _team, ...rest }) => rest));
+  const [skipOpening, setSkipOpeningState] = useState(getSkipOpening);
+  const setSkipOpening2 = (on: boolean) => setSkipOpeningState(setSkipOpening(on));
   const [teamSetup, setTeamSetup] = useState<TeamSetup>(() => loadTeamSetup(remembered.world.players, remembered.seats));
   /** Drives the random draw of teams, so the preview and the game that follows it agree; Reshuffle changes it. */
   const [teamSeed, setTeamSeed] = useState(randomSeed());
@@ -380,6 +383,8 @@ export function TitleScreen({ store, onStart }: Props) {
           ))}
           </tbody>
         </table>
+        <label class="skip-opening"><input type="checkbox" checked={skipOpening}
+          onChange={(e) => setSkipOpening2((e.target as HTMLInputElement).checked)} /> Skip the quiet opening turns <span class="muted hint">after turn 1 the game ends turns for you until a unit is produced or an enemy shows up (teammates' production too); Esc stops it</span></label>
         <fieldset class="house-rules">
           <legend>House rules</legend>
           {HOUSE_RULE_OPTIONS.map((o) => (
