@@ -3,7 +3,7 @@ import type { LogEntry } from '../app/session';
 
 /**
  * Fast-forward: End Turn is pressed for you, turn after turn, until something happens that you would want to see.
- * Used for the quiet opening (everyone waiting for a first unit) and by the Wait button. It only ever sends ordinary
+ * Used for the quiet opening (everyone waiting for a first unit) and by the Advance Time button. It only ever sends ordinary
  * End Turn commands, so saved games and replays are unaffected.
  */
 
