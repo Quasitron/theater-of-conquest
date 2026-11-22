@@ -7,7 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
-| 0.9.142 | 2026-11-22 | New Game: Team play (3+ players): a Teams count (2 up to players-1), each seat chooses Alone, Random or Team N. Random seats join the smallest teams (even teams, humans spread out). Option to show the drawn teams on the form with a Reshuffle button; otherwise they are drawn at Start. Seats carry the same team numbers as before, so saves and rules are unchanged. |
+| 0.9.142 | 2026-11-22 | New Game: Team play (3+ players): a Teams count (2 up to players-1), each seat chooses Alone, Random or Team N. Random seats join the smallest teams (even teams, humans spread out). Option to show the drawn teams on the form with a Reshuffle button; otherwise they are drawn at Start. Seats carry the same team numbers as before, so saves and rules are unchanged. The New Game heading with a Back button now stays at the top while the long form scrolls (`.panel-head`). |
 | 0.9.141 | 2026-11-20 | The white selection frame is not drawn on a unit's destination while it glides (or, for a sub strike, waits for the fight to play), so the sub no longer seems to be in two places. |
 | 0.9.140 | 2026-11-20 | Sub strike: the firing is back to normal speed; after it the sub is seen gliding to the square it slips to (0.75 s), and the view holds a moment before the next unit. |
 | 0.9.139 | 2026-11-20 | Orders text names a city instead of its coordinates (Go-to Darnah, Patrol Alexandria ↔ Tubruq) in the info pane, unit lists and city screen; other squares still show x,y. |

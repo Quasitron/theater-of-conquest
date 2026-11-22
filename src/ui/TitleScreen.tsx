@@ -225,7 +225,11 @@ export function TitleScreen({ store, onStart }: Props) {
         )}
         {panel === 'new' && (
       <section>
-        <h2>New game</h2>
+        {/* Stays at the top while the long form scrolls, so leaving it does not mean scrolling to the bottom. */}
+        <div class="panel-head">
+          <h2>New game</h2>
+          <button onClick={() => setPanel('menu')}>Back</button>
+        </div>
         <label>Map{' '}
           <select aria-label="Map" value={mapKind} onChange={(e) => {
             const kind = (e.target as HTMLSelectElement).value as 'random' | 'theater';
