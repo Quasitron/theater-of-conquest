@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'escort-click',
+    version: '0.9.148',
+    date: '2026-11-22',
+    title: 'Escort clicks that explain themselves',
+    text: ['Clicking a stack of transports to escort now picks one that has no escort yet, and if the transport is already escorted the top bar says so instead of staying silent.'],
+  },
+  {
     id: 'stack-moves-left',
     version: '0.9.147',
     date: '2026-11-22',
