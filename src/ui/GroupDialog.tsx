@@ -1,6 +1,6 @@
 ﻿import { UNIT_STATS, UNIT_TYPES, type PlayerView, type UnitType } from '../engine';
 import { blur } from './blur';
-import { eligibleFor, GROUP_ORDERS, type GroupOrderId } from './group';
+import { eligibleFor, filterGroup, GROUP_ORDERS, type GroupFilter, type GroupOrderId } from './group';
 import { PlacedDialog } from './LeaderLine';
 
 interface Props {
@@ -9,10 +9,15 @@ interface Props {
   unitIds: number[];
   onPick: (order: GroupOrderId) => void;
   onCancel: () => void;
+  /** Units to leave out of the order (sentried ones, ones in cities); the choice is remembered by the caller. */
+  filter: GroupFilter;
+  onFilter: (f: GroupFilter) => void;
 }
 
 /** The one order to give every unit in the group; each button shows how many of the units it applies to. */
-export function GroupDialog({ view, unitIds, onPick, onCancel }: Props) {
+export function GroupDialog({ view, unitIds: caught, onPick, onCancel, filter, onFilter }: Props) {
+  const unitIds = filterGroup(view, caught, filter);
+  const left = caught.length - unitIds.length;
   const counts = new Map<UnitType, number>();
   for (const id of unitIds) {
     const u = view.myUnits.find((x) => x.id === id);
@@ -23,6 +28,11 @@ export function GroupDialog({ view, unitIds, onPick, onCancel }: Props) {
     <PlacedDialog anchor={null} label="Group" onKey={(e) => { if (e.key === 'Escape') { onCancel(); return true; } return false; }}>
       <h2>Group <span class="muted">{unitIds.length} {unitIds.length === 1 ? 'unit' : 'units'}</span></h2>
       <p class="muted">{summary}</p>
+      <div class="group-filter">
+        <label><input type="checkbox" checked={filter.skipSentry} onChange={(e) => onFilter({ ...filter, skipSentry: e.currentTarget.checked })} /> Leave out sentried units</label>
+        <label><input type="checkbox" checked={filter.skipCities} onChange={(e) => onFilter({ ...filter, skipCities: e.currentTarget.checked })} /> Leave out units in cities</label>
+        {left > 0 && <span class="muted">{left} left out</span>}
+      </div>
       <p>Give them all one order:</p>
       <div class="group-orders">
         {GROUP_ORDERS.map((o) => {

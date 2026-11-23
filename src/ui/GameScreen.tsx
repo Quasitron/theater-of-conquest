@@ -19,7 +19,7 @@ import { ManualDialog } from './ManualDialog';
 import { WhatsNewButton, WhatsNewDialogHost, useWhatsNew } from './WhatsNewButton';
 import { UnitList } from './UnitList';
 import { GroupDialog } from './GroupDialog';
-import { eligibleFor, GROUP_ORDERS, unitsInBox, type GroupBox, type GroupOrderId } from './group';
+import { eligibleFor, filterGroup, GROUP_ORDERS, loadGroupFilter, saveGroupFilter, unitsInBox, type GroupBox, type GroupFilter, type GroupOrderId } from './group';
 import { Reports, type ReportTab } from './Reports';
 import { battlesAgainstMe, newEliminations, recentSightings, sentryLines } from './reportLines';
 import { EliminationNotice } from './EliminationNotice';
@@ -135,6 +135,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const [skipped, setSkipped] = useState<number[]>([]);
   const [target, setTarget] = useState<TargetMode>(null);
   const [group, setGroup] = useState<GroupState>(null);
+  const [groupFilter, setGroupFilter] = useState<GroupFilter>(loadGroupFilter);
   const [groupBox, setGroupBox] = useState<GroupBox | null>(null);
   /** True from pressing End Turn until the computer players have finished moving (the work runs just after a paint). */
   const [endingTurn, setEndingTurn] = useState(false);
@@ -1058,8 +1059,13 @@ export function GameScreen({ session, onQuit }: Props) {
   };
   const pickGroupOrder = (id: GroupOrderId) => {
     if (group?.step !== 'order') return;
-    if (id === 'moveTo') setGroup({ step: 'target', ids: group.ids });
-    else applyGroup(id, group.ids);
+    const ids = filterGroup(view, group.ids, groupFilter); // units left out by the dialog's checkboxes get nothing
+    if (id === 'moveTo') setGroup({ step: 'target', ids });
+    else applyGroup(id, ids);
+  };
+  const changeGroupFilter = (f: GroupFilter) => {
+    setGroupFilter(f);
+    saveGroupFilter(f);
   };
   /** Gives one order to every unit of the group it is available for, then reports how many took it. */
   const applyGroup = (id: GroupOrderId, ids: number[], at?: Pos) => {
@@ -1804,7 +1810,7 @@ export function GameScreen({ session, onQuit }: Props) {
         <OrdersMenu view={view} unit={selectedUnit} at={menu} onAction={doAction} onClose={() => setMenu(null)} />
       )}
       {playing && group?.step === 'order' && !dialogOpen && (
-        <GroupDialog view={view} unitIds={group.ids} onPick={pickGroupOrder} onCancel={cancelGroup} />
+        <GroupDialog view={view} unitIds={group.ids} onPick={pickGroupOrder} onCancel={cancelGroup} filter={groupFilter} onFilter={changeGroupFilter} />
       )}
       {pickerUnit && picker === 'load' && (
         <div class="overlay">
