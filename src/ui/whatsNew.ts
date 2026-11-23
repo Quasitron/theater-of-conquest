@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'land-sidestep',
+    version: '0.9.153',
+    date: '2026-11-22',
+    title: 'Explorers go round blocked stacks',
+    text: ['A land unit on Explore that finds a full friendly stack in its way now picks another unexplored spot it can reach around it, instead of waiting behind the stack.'],
+  },
+  {
     id: 'group-filters',
     version: '0.9.152',
     date: '2026-11-22',

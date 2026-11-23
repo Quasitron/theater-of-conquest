@@ -62,4 +62,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 37: a patrol interrupted by an enemy, a block or low fuel is remembered on the unit (lastPatrol) so it can be resumed.
 // 38: a submarine's torpedo salvo that hits without sinking its target counts as a win towards the sub's promotion.
 // 39: an aircraft on its last move whose next step is an occupied square takes a free square beside it, instead of waiting stuck.
-export const RULES_VERSION = 39;
+// 40: a land explorer blocked by a full friendly stack with no free way to its frontier heads for another frontier it can reach.
+export const RULES_VERSION = 40;

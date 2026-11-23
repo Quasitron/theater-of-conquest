@@ -1,4 +1,4 @@
-import type { City, GameEvent, GameState, Orders, OrdersEndReason, PlayerId, Pos, Unit } from './types';
+﻿import type { City, GameEvent, GameState, Orders, OrdersEndReason, PlayerId, Pos, Unit } from './types';
 import type { RandomSource } from './rng';
 import { UNIT_STATS, attackRating, canCarry, fightRatings, hitsOf, isCrippled } from './units';
 import { combatWinChance } from './combat';
@@ -359,7 +359,13 @@ export function executeOrders(
       if (free) next = free;
     }
     if (ownBlocks(s, u, next)) {
-      const detour = findPath(pathMapFromState(s, u.owner, { blockOwn: true }), u, target);
+      const freeMap = pathMapFromState(s, u.owner, { blockOwn: true });
+      let detour = findPath(freeMap, u, target);
+      if (detour === null && o.kind === 'explore') {
+        // No free way to that frontier: an explorer heads for the nearest frontier it can still reach round the stack.
+        const other = findFrontier(freeMap, u, canTakeCities(u));
+        if (other) detour = findPath(freeMap, u, other);
+      }
       if (detour && detour.length > 0 && !ownBlocks(s, u, detour[0])) next = detour[0];
       else {
         if (turnStart) {
