@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'group-filters',
+    version: '0.9.152',
+    date: '2026-11-22',
+    title: 'Leave units out of a group order',
+    text: ['The Group dialog now has two checkboxes: leave out sentried units, and leave out units in cities. The order buttons show how many units will get each order, and your choice is remembered.'],
+  },
+  {
     id: 'unload-highlight',
     version: '0.9.151',
     date: '2026-11-22',

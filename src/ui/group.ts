@@ -62,6 +62,43 @@ export function unitsInBox(view: PlayerView, box: GroupBox): Unit[] {
     .sort((a, b) => a.id - b.id);
 }
 
+/** Units the player can leave out of a group order: ones on sentry, and ones standing in one of their cities. */
+export interface GroupFilter {
+  skipSentry: boolean;
+  skipCities: boolean;
+}
+
+export const NO_GROUP_FILTER: GroupFilter = { skipSentry: false, skipCities: false };
+const FILTER_KEY = 'conquest.groupFilter';
+
+export function loadGroupFilter(): GroupFilter {
+  try {
+    const raw = globalThis.localStorage?.getItem(FILTER_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<GroupFilter>;
+      return { skipSentry: p.skipSentry === true, skipCities: p.skipCities === true };
+    }
+  } catch { /* storage blocked or unreadable: nothing is left out */ }
+  return NO_GROUP_FILTER;
+}
+
+export function saveGroupFilter(f: GroupFilter): void {
+  try {
+    globalThis.localStorage?.setItem(FILTER_KEY, JSON.stringify(f));
+  } catch { /* storage blocked: the choice lasts until the page is closed */ }
+}
+
+/** The ids of `ids` that stay in the group once the filter has left units out. */
+export function filterGroup(view: PlayerView, ids: readonly number[], f: GroupFilter): number[] {
+  return ids.filter((id) => {
+    const u = view.myUnits.find((x) => x.id === id);
+    if (!u) return false;
+    if (f.skipSentry && u.orders?.kind === 'sentry') return false;
+    if (f.skipCities && view.myCities.some((c) => c.x === u.x && c.y === u.y)) return false;
+    return true;
+  });
+}
+
 /** The units of `units` (looked up afresh in `view`) for which this group order is available. */
 export function eligibleFor(view: PlayerView, units: readonly number[], order: GroupOrderId): Unit[] {
   const action = GROUP_ORDERS.find((o) => o.id === order)!.action;
