@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.157 | 2026-11-24 | Quit asks "Save before quitting?" (Save and quit / Quit without saving / Cancel) when moves have been made since the game was last saved. The turn-change autosave, Save, Save As and Export all count as saved; a finished game never asks. |
 | 0.9.156 | 2026-11-24 | Standing orders (Go-to, Explore, Patrol) now run at turn start for the units nearest a known enemy or enemy/neutral city first, then back from there, so the front of a column moves before the ones behind and fewer units are left blocked (rules 41). Same for the computer players. |
 | 0.9.155 | 2026-11-24 | Next unit: when enemy units or enemy/neutral cities are known, the units nearest them come up first (then back toward your lines), so the front of a column moves before the ones behind and full stacks stop blocking each other. Without known enemies the order is unchanged (by unit number). |
 | 0.9.154 | 2026-11-24 | Settings: "Combat Replay Limit" (6, 12, 25, 50 or All) sets how many fights the turn-start replay plays; the default stays 12, your own battles come first and the rest go to the Combat report. |
