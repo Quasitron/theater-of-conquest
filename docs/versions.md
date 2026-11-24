@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.155 | 2026-11-24 | Next unit: when enemy units or enemy/neutral cities are known, the units nearest them come up first (then back toward your lines), so the front of a column moves before the ones behind and full stacks stop blocking each other. Without known enemies the order is unchanged (by unit number). |
 | 0.9.154 | 2026-11-24 | Settings: "Combat Replay Limit" (6, 12, 25, 50 or All) sets how many fights the turn-start replay plays; the default stays 12, your own battles come first and the rest go to the Combat report. |
 | 0.9.153 | 2026-11-22 | Land explorers (Army, Armor) blocked by a full friendly stack now head for another frontier they can reach round it, instead of waiting behind it (rules 40). |
 | 0.9.152 | 2026-11-22 | Group orders: two checkboxes in the Group dialog, "Leave out sentried units" and "Leave out units in cities". The counts on the order buttons follow them, units left out get no order, and the choice is remembered (browser storage, off by default). |
