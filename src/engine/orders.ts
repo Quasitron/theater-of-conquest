@@ -1,4 +1,4 @@
-﻿import type { City, GameEvent, GameState, Orders, OrdersEndReason, PlayerId, Pos, Unit } from './types';
+import type { City, GameEvent, GameState, Orders, OrdersEndReason, PlayerId, Pos, Unit } from './types';
 import type { RandomSource } from './rng';
 import { UNIT_STATS, attackRating, canCarry, fightRatings, hitsOf, isCrippled } from './units';
 import { combatWinChance } from './combat';
@@ -496,14 +496,38 @@ export function runPlayerOrders(s: GameState, rng: RandomSource, pid: PlayerId, 
   pruneFerryRoutes(s);
   const ids = s.units
     .filter((u) => u.owner === pid && u.orders !== null && u.orders.kind !== 'sentry' && u.orders.kind !== 'repair' && u.orders.kind !== 'escort')
-    .map((u) => u.id)
-    .sort((a, b) => a - b);
+    .sort(frontFirst(s, pid))
+    .map((u) => u.id);
   for (const id of ids) {
     const u = s.units.find((x) => x.id === id);
     if (u) executeOrders(s, rng, u, events, true);
   }
   runEscorts(s, rng, pid, events); // after their transports have moved
   updateFog(s, pid);
+}
+
+/**
+ * Orders the player's units nearest a known enemy (a visible enemy unit, or a known enemy or neutral city) first, then
+ * back from there, ties by id; so the front of a column moves before the units behind it and full stacks do not
+ * block them. Without any known enemy it is plain id order.
+ */
+function frontFirst(s: GameState, pid: PlayerId): (a: Unit, b: Unit) => number {
+  const fog = s.fog[pid];
+  const points: Pos[] = s.units.filter((e) => !areFriendly(s, e.owner, pid) && canPlayerSeeUnit(s, pid, e));
+  for (const c of s.cities) {
+    if (c.owner === pid || !fog.explored[index(s, c.x, c.y)]) continue;
+    if (!areFriendly(s, fog.knownCityOwner[c.id] ?? null, pid)) points.push(c);
+  }
+  const near = new Map<number, number>();
+  const dist = (u: Unit): number => {
+    let d = near.get(u.id);
+    if (d === undefined) {
+      d = points.length === 0 ? 0 : Math.min(...points.map((p) => chebyshev(s, u, p)));
+      near.set(u.id, d);
+    }
+    return d;
+  };
+  return (a, b) => dist(a) - dist(b) || a.id - b.id;
 }
 
 /**
