@@ -1,5 +1,5 @@
 import type { LogEntry } from '../app/session';
-import type { City, PlayerId, Unit, UnitType } from '../engine';
+import type { City, PlayerId, PlayerView, Unit, UnitType } from '../engine';
 
 /**
  * Units the unit cycle should visit this turn: awake, with moves left, not held.
@@ -7,10 +7,17 @@ import type { City, PlayerId, Unit, UnitType } from '../engine';
  */
 export function readyUnits(
   units: readonly Unit[], newIds: ReadonlySet<number>, held: ReadonlySet<number>, skipped: readonly number[],
+  threat?: Threat,
 ): Unit[] {
   const ready = units.filter((u) => u.movesLeft > 0 && u.orders === null && !held.has(u.id));
   const skippedSet = new Set(skipped);
-  const byId = (a: Unit, b: Unit) => a.id - b.id;
+  // With known enemies (or cities to take), the units nearest them come first, so the front of a column moves
+  // before the ones behind it and the stack ahead is not left full and blocking.
+  const dist = new Map<number, number>();
+  if (threat && threat.points.length > 0) {
+    for (const u of ready) dist.set(u.id, Math.min(...threat.points.map((p) => distance(p, u, threat.width, threat.wrap))));
+  }
+  const byId = (a: Unit, b: Unit) => (dist.get(a.id) ?? 0) - (dist.get(b.id) ?? 0) || a.id - b.id;
   const fresh = ready.filter((u) => newIds.has(u.id) && !skippedSet.has(u.id)).sort(byId);
   const rest = ready.filter((u) => !newIds.has(u.id) && !skippedSet.has(u.id)).sort(byId);
   const tail: Unit[] = [];
@@ -19,6 +26,22 @@ export function readyUnits(
     if (u && !tail.includes(u)) tail.push(u);
   }
   return [...fresh, ...rest, ...tail];
+}
+
+/** Where the player's enemies are (and cities not yet theirs), for putting the units nearest them first. */
+export interface Threat {
+  points: readonly { x: number; y: number }[];
+  width: number;
+  wrap: boolean;
+}
+
+/** Known enemy units and known enemy or neutral cities, as the player sees them. */
+export function threatOf(view: Pick<PlayerView, 'me' | 'width' | 'wrap' | 'enemies' | 'knownCities' | 'allies'>): Threat {
+  const points = [
+    ...view.enemies.map((e) => ({ x: e.x, y: e.y })),
+    ...view.knownCities.filter((c) => c.owner !== view.me && !(c.owner !== null && view.allies.includes(c.owner))).map((c) => ({ x: c.x, y: c.y })),
+  ];
+  return { points, width: view.width, wrap: view.wrap };
 }
 
 /** Ids of the units produced during the given turn. */

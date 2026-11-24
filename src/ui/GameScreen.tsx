@@ -28,7 +28,7 @@ import { cityThreatened } from '../engine/orders';
 import { stackLimitOf } from '../engine/query';
 import { spyHeadlines, type NewsItem } from './spyNews';
 import { unitsHeadingLeft } from './unitIcons';
-import { builtThisTurn, nextReadyAfter, readyUnits, reportQueue, type NearHint, type ProductionReportItem } from './cycle';
+import { builtThisTurn, nextReadyAfter, readyUnits, reportQueue, threatOf, type NearHint, type ProductionReportItem } from './cycle';
 import { describeEvent } from './describe';
 import { downloadSave } from './exportFile';
 import { keyToAction, type ActionId } from './keys';
@@ -436,7 +436,7 @@ export function GameScreen({ session, onQuit }: Props) {
   /** The unit cycle for the current state of the game (not the last render). */
   const readyNow = (h: ReadonlySet<number> = held, s: readonly number[] = skipped): Unit[] => {
     const v = session.view();
-    return readyUnits(v.myUnits, builtThisTurn(session.log(v.me), v.turn), h, s);
+    return readyUnits(v.myUnits, builtThisTurn(session.log(v.me), v.turn), h, s, threatOf(v));
   };
   // The next unit is the closest one to where you were last working, so a local fight is finished before moving on.
   const lastUnitPos = useRef<Pos | null>(null);
@@ -445,7 +445,7 @@ export function GameScreen({ session, onQuit }: Props) {
     lastUnitPos.current ? { from: lastUnitPos.current, width: view.width, wrap: view.wrap, skipped } : undefined;
   // Depends on view (rebuilt per session change), held and skipped only, so hover and zoom reuse it.
   const ready = useMemo(
-    () => readyUnits(view.myUnits, builtThisTurn(session.log(view.me), view.turn), held, skipped),
+    () => readyUnits(view.myUnits, builtThisTurn(session.log(view.me), view.turn), held, skipped, threatOf(view)),
     [view, held, skipped],
   );
 

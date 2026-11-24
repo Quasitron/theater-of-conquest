@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'front-first',
+    version: '0.9.155',
+    date: '2026-11-24',
+    title: 'Front units move first',
+    text: ['Next unit now starts with the units closest to a known enemy (or enemy or neutral city) and works back, so the front of a column moves before the units behind it and full stacks stop blocking the rest.'],
+  },
+  {
     id: 'replay-cap',
     version: '0.9.154',
     date: '2026-11-24',
