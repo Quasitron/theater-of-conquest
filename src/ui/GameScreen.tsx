@@ -15,6 +15,7 @@ import { CityScreen } from './CityScreen';
 import { installAudioUnlock, play, playAll } from '../audio/engine';
 import { produceSound, SOUND_GAP_MS, soundsForEvents } from '../audio/fromEvents';
 import { SettingsDialog } from './SettingsDialog';
+import { PlacedDialog } from './LeaderLine';
 import { ManualDialog } from './ManualDialog';
 import { WhatsNewButton, WhatsNewDialogHost, useWhatsNew } from './WhatsNewButton';
 import { UnitList } from './UnitList';
@@ -148,6 +149,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const [unitsOpen, setUnitsOpen] = useState(false);
   const [soundOpen, setSoundOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [quitAsk, setQuitAsk] = useState(false);
   const whatsNew = useWhatsNew();
   // Fights playing out on the map, and the turn-start replay of what the other players did (null when none).
   const [fx, setFx] = useState<ActiveFx[]>([]);
@@ -275,7 +277,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const openCityObj = playing && cityOpen !== null ? view.myCities.find((c) => c.id === cityOpen) ?? null : null;
   const report = playing && !openCityObj ? reports[reportIdx] ?? null : null;
   const reportCity = report ? view.myCities.find((c) => c.id === report.cityId) ?? null : null;
-  const dialogOpen = openCityObj !== null || reportCity !== null || unitsOpen || reportTab !== null || soundOpen || manualOpen || replay !== null;
+  const dialogOpen = openCityObj !== null || reportCity !== null || unitsOpen || reportTab !== null || soundOpen || manualOpen || quitAsk || replay !== null;
   // The next spy story shows once nothing else is open, with the newspaper sound.
   const newsShown = news.length > 0 && eliminated.length === 0 && !dialogOpen;
   const newsKey = newsShown ? `:` : '';
@@ -1663,6 +1665,13 @@ export function GameScreen({ session, onQuit }: Props) {
       .catch((e) => setMessage(`Save failed: ${(e as Error).message}`));
   };
 
+  /** Saves (under the game's own name, or one asked for now), then leaves; a cancelled name or a failed save stays in the game. */
+  const saveThenQuit = () => {
+    const name = session.name !== 'autosave' ? session.name : window.prompt('Save name?', 'My game');
+    if (!name) return;
+    session.saveAs(name).then(onQuit).catch((e) => { setQuitAsk(false); setMessage(`Save failed: ${(e as Error).message}`); });
+  };
+
   return (
     <div class={dialogOpen ? 'game modal' : 'game'}>
       <header class="topbar">
@@ -1671,7 +1680,7 @@ export function GameScreen({ session, onQuit }: Props) {
         <OrdersMenu view={view} unit={playing ? selectedUnit : null} at={null} onAction={doAction} onClose={() => {}} />
         <button onClick={(e) => { blur(e); save(session.name !== 'autosave'); }}>Save</button>
         <button onClick={(e) => { blur(e); save(false); }}>Save As…</button>
-        <button onClick={(e) => { blur(e); downloadSave(session.toSave()); }}>Export</button>
+        <button onClick={(e) => { blur(e); downloadSave(session.toSave()); session.markSaved(); }}>Export</button>
         <button onClick={(e) => { blur(e); setManualOpen(true); }}>Manual</button>
         <WhatsNewButton news={whatsNew} />
         <button onClick={(e) => { blur(e); setSoundOpen(true); }}>Settings</button>
@@ -1680,7 +1689,7 @@ export function GameScreen({ session, onQuit }: Props) {
           disabled={!playing}
           onClick={(e) => { blur(e); if (window.confirm('Resign? All your units are lost and your cities become neutral. This cannot be undone.')) act({ type: 'resign' }); }}
         >Resign</button>
-        <button onClick={(e) => { blur(e); onQuit(); }}>Quit</button>
+        <button onClick={(e) => { blur(e); if (session.unsaved) setQuitAsk(true); else onQuit(); }}>Quit</button>
         <span class="topbar-right">
           {target === 'patrol' && <button class="primary" disabled={!patrolLegs || patrolLegs.length === 0} onClick={(e) => { blur(e); finishCircuit(); }}>Done: return to start</button>}
           {target === 'patrol' && <span class="message" role="status">{!patrolLegs || patrolLegs.length === 0 ? 'Patrol: click the first waypoint (Esc cancels).' : `Patrol: ${patrolLegs.length} waypoint${patrolLegs.length === 1 ? '' : 's'}. Click the next one, or the start (or Done) to finish. It returns to the start and repeats (Esc cancels).`}{selectedUnit?.fuel != null ? ` Fuel ${selectedUnit.fuel}.` : ''}</span>}
@@ -1936,6 +1945,17 @@ export function GameScreen({ session, onQuit }: Props) {
         <NewsNotice key={news[0].headline + news.length} item={news[0]} turn={view.turn} more={news.length - 1} onOk={() => setNews((q) => q.slice(1))} />
       )}
       {eliminated.length > 0 && <EliminationNotice view={view} colors={colors} ids={eliminated} onOk={() => setEliminated([])} />}
+      {quitAsk && (
+        <PlacedDialog anchor={null} label="Save before quitting?" onKey={(e) => { if (e.key === 'Escape') { setQuitAsk(false); return true; } return false; }}>
+          <h2>Save before quitting?</h2>
+          <p>You have made moves since this game was last saved.</p>
+          <div class="picker-actions">
+            <button class="primary" onClick={(e) => { blur(e); saveThenQuit(); }}>Save and quit</button>
+            <button onClick={(e) => { blur(e); onQuit(); }}>Quit without saving</button>
+            <button onClick={(e) => { blur(e); setQuitAsk(false); }}>Cancel</button>
+          </div>
+        </PlacedDialog>
+      )}
       {soundOpen && <SettingsDialog onClose={() => setSoundOpen(false)} />}
       {manualOpen && <ManualDialog onClose={() => setManualOpen(false)} />}
       <WhatsNewDialogHost news={whatsNew} />

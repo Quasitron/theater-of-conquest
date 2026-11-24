@@ -43,6 +43,8 @@ export class GameSession {
   private roster: Map<number, { type: UnitType; name: string }>[];
   private listeners = new Set<() => void>();
   private lastHuman: PlayerId;
+  /** How many commands the last save held; a game with more has unsaved moves. */
+  private savedCommands = 0;
 
   private constructor(
     readonly seats: SeatConfig[],
@@ -81,6 +83,7 @@ export class GameSession {
     const name = save.name === 'autosave' && save.gameName ? save.gameName : save.name;
     const session = new GameSession(save.seats, save.initial, save.snapshot, [...save.commands], store, name);
     session.notice = note ?? null;
+    session.savedCommands = session.commands.length;
     const rs = save.readyState;
     if (rs && rs.turn === save.snapshot.turn && rs.player === save.snapshot.currentPlayer) session.readyState = rs;
     if (save.snapshot.over) {
@@ -161,15 +164,31 @@ export class GameSession {
     };
   }
 
+  /** True when moves have been made since the game was last saved (a save, the turn-change autosave, an export or the file it was loaded from). */
+  get unsaved(): boolean {
+    return !this.state.over && this.commands.length !== this.savedCommands;
+  }
+
+  /** Notes that the game as it stands has been saved somewhere (the Export button does this too). */
+  markSaved(): void {
+    this.savedCommands = this.commands.length;
+  }
+
   async saveAs(name: string): Promise<void> {
+    const n = this.commands.length;
     if (this.store) await this.store.put(this.toSave(name));
     this.name = name;
+    if (this.store) this.savedCommands = n;
     // Refresh the autosave now, so Continue shows (and restores) the new name without waiting for a turn change.
     await this.autosave().catch(() => {});
   }
 
   async autosave(): Promise<void> {
-    if (this.store) await this.store.put(this.toSave('autosave'));
+    const n = this.commands.length;
+    if (this.store) {
+      await this.store.put(this.toSave('autosave'));
+      this.savedCommands = n;
+    }
   }
 
   /** Applies a full command; returns its raw events, or an error message. */

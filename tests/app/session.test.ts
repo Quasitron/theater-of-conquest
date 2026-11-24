@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { GameSession } from '../../src/app/session';
 import { RULES_VERSION, unitDisplayName } from '../../src/engine';
 import { describeEvent } from '../../src/ui/describe';
@@ -61,6 +61,31 @@ describe('GameSession', () => {
     expect(s.act({ type: 'endTurn' })).toBeNull();
     await tick();
     expect(s.saveError).toBeNull();
+  });
+
+  it('knows when there are moves since the last save', async () => {
+    const tick = () => new Promise((r) => setTimeout(r, 0));
+    const store = new MemorySaveStore();
+    const s = GameSession.create({ world, seed: 5, seats: [human('Ann'), idle('Bot')] }, store);
+    await tick();
+    expect(s.unsaved).toBe(false);
+    const city = s.view().myCities[0];
+    const change = () => s.act({ type: 'setProduction', cityId: city.id, unitType: s.view().myCities[0].production === 'army' ? 'fighter' : 'army' });
+    expect(change()).toBeNull();
+    expect(s.unsaved).toBe(true);
+    await s.saveAs('mine');
+    expect(s.unsaved).toBe(false);
+    expect(change()).toBeNull();
+    expect(s.unsaved).toBe(true);
+    expect(s.act({ type: 'endTurn' })).toBeNull(); // the turn-change autosave counts as a save
+    await tick();
+    expect(s.unsaved).toBe(false);
+    expect(change()).toBeNull();
+    s.markSaved(); // an export counts too
+    expect(s.unsaved).toBe(false);
+    const parsed = parseSave(serializeSave(s.toSave('slot')));
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(GameSession.fromSave(parsed.save, store).unsaved).toBe(false);
   });
 
   it('a loaded hotseat game starts at the hand-off screen', () => {

@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'quit-save-prompt',
+    version: '0.9.157',
+    date: '2026-11-24',
+    title: 'Quit asks to save',
+    text: ['If you made moves since the game was last saved, Quit now asks whether to save first (Save and quit, Quit without saving, or Cancel). The automatic save at each turn change counts as saved.'],
+  },
+  {
     id: 'front-first-orders',
     version: '0.9.156',
     date: '2026-11-24',
