@@ -20,7 +20,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     version: '0.9.154',
     date: '2026-11-24',
     title: 'Choose how many fights are replayed',
-    text: ['Settings has a new "Fights replayed at most" choice: 6, 12, 25, 50 or All. It stays at 12 unless you change it; fights beyond it are still in the Combat report.'],
+    text: ['Settings has a new "Combat Replay Limit" choice: 6, 12, 25, 50 or All. It stays at 12 unless you change it; fights beyond it are still in the Combat report.'],
   },
   {
     id: 'land-sidestep',
