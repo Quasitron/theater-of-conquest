@@ -80,8 +80,35 @@ export function setReportAfter(next: boolean): boolean {
   return next;
 }
 
-/** Forgets the cached pace and report choice (for tests). */
+/** How many fights the turn-start replay plays at most; the rest are left to the Combat report. Infinity means all of them. */
+export const REPLAY_CAP_CHOICES: readonly number[] = [6, 12, 25, 50, Infinity];
+export const DEFAULT_REPLAY_CAP = 12;
+export const REPLAY_CAP_KEY = 'conquest.replayCap';
+
+let replayCap: number | null = null;
+
+export function getReplayCap(): number {
+  if (replayCap !== null) return replayCap;
+  try {
+    const raw = globalThis.localStorage?.getItem(REPLAY_CAP_KEY);
+    if (raw === 'all') return (replayCap = Infinity);
+    const n = Number(raw);
+    if (raw && REPLAY_CAP_CHOICES.includes(n)) return (replayCap = n);
+  } catch { /* storage blocked or unreadable: use the default */ }
+  return (replayCap = DEFAULT_REPLAY_CAP);
+}
+
+export function setReplayCap(next: number): number {
+  replayCap = REPLAY_CAP_CHOICES.includes(next) ? next : DEFAULT_REPLAY_CAP;
+  try {
+    globalThis.localStorage?.setItem(REPLAY_CAP_KEY, replayCap === Infinity ? 'all' : String(replayCap));
+  } catch { /* storage blocked: the choice lasts until the page is closed */ }
+  return replayCap;
+}
+
+/** Forgets the cached pace, report and cap choices (for tests). */
 export function resetReplaySettings(): void {
   pace = null;
   reportAfter = null;
+  replayCap = null;
 }
