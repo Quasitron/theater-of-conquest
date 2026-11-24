@@ -3,7 +3,8 @@ import { getSettings, playAll, setSettings } from '../audio/engine';
 import { MUSIC } from '../audio/sounds';
 import { blur } from './blur';
 import {
-  COMBAT_MODES, REPLAY_PACES, getCombatMode, getReplayPace, getReportAfter, setCombatMode, setReplayPace, setReportAfter,
+  COMBAT_MODES, REPLAY_CAP_CHOICES, REPLAY_PACES, getCombatMode, getReplayCap, getReplayPace, getReportAfter,
+  setCombatMode, setReplayCap, setReplayPace, setReportAfter,
   type CombatMode, type ReplayPace,
 } from './combatMode';
 import { PlacedDialog } from './LeaderLine';
@@ -28,6 +29,7 @@ export function SettingsDialog({ onClose }: Props) {
   const [combat, setCombat] = useState(getCombatMode());
   const [pace, setPace] = useState(getReplayPace());
   const [after, setAfter] = useState(getReportAfter());
+  const [cap, setCap] = useState(getReplayCap());
   const change = (patch: Partial<typeof s>) => setS(setSettings(patch));
   return (
     <PlacedDialog anchor={null} label="Settings" onKey={(e) => { if (e.key === 'Escape') { onClose(); return true; } return false; }}>
@@ -85,6 +87,23 @@ export function SettingsDialog({ onClose }: Props) {
           </label>
         ))}
       </div>
+      <p>
+        <label>
+          Fights replayed at most{' '}
+          <select
+            value={cap === Infinity ? 'all' : String(cap)} disabled={combat !== 'animated'}
+            onChange={(e) => {
+              const v = (e.currentTarget as HTMLSelectElement).value;
+              setCap(setReplayCap(v === 'all' ? Infinity : Number(v)));
+            }}
+          >
+            {REPLAY_CAP_CHOICES.map((n) => (
+              <option key={n} value={n === Infinity ? 'all' : String(n)}>{n === Infinity ? 'All' : n}</option>
+            ))}
+          </select>
+          <span class="muted"> (your own battles come first; the rest go to the Combat report)</span>
+        </label>
+      </p>
       <p>
         <label>
           <input type="checkbox" checked={after} disabled={combat !== 'animated'} onChange={(e) => setAfter(setReportAfter((e.currentTarget as HTMLInputElement).checked))} />

@@ -38,7 +38,7 @@ import { EXPLOSION_TAIL_MS } from './explosions';
 import { approachSquare, attackLabel, landersFor, landingDirs,bombLabel, bombardLabel, cityAttackChance, cityBombChance, cityBombardChance, strikeIsSurprise, strikeLabel, unitAttackChance, sharesSquare, viewRelief, visibleGarrison } from './plans';
 import { ProductionReport } from './ProductionReport';
 import { MapCanvas, type ActiveFx } from './MapCanvas';
-import { getCombatMode, getReplayPace, getReportAfter, type ReplayPace } from './combatMode';
+import { getCombatMode, getReplayCap, getReplayPace, getReportAfter, type ReplayPace } from './combatMode';
 import { FAST_FORWARD_MAX_TURNS, getSkipOpening, turnWasQuiet } from './fastForward';
 import { fightsFromEvents, placeNote, replayFights, stepDuration, FIGHT_MS, BURST_END, SHOT_SHARE, type Fight } from './fights';
 import { OrdersMenu } from './OrdersMenu';
@@ -638,7 +638,7 @@ export function GameScreen({ session, onQuit }: Props) {
     // Newly sighted enemies come first (they are often the ones that then attack), then the replay of what the other
     // players did since the last turn (animated mode), then the turn proper.
     const afterSights = () => {
-      const rp = getCombatMode() === 'animated' ? replayFights(session.log(view.me), view.me, names, lookup, undefined, (p) => p !== null && p !== view.me && view.players[view.me].team !== undefined && view.players[p]?.team === view.players[view.me].team) : null;
+      const rp = getCombatMode() === 'animated' ? replayFights(session.log(view.me), view.me, names, lookup, getReplayCap(), (p) => p !== null && p !== view.me && view.players[view.me].team !== undefined && view.players[p]?.team === view.players[view.me].team) : null;
       if (rp && rp.steps.length > 0) {
         setReplayPaused(false);
         setPlayedStep(-1);

@@ -3,7 +3,8 @@ import type { GameEvent } from '../../src/engine';
 import type { LogEntry } from '../../src/app/session';
 import {
   COMBAT_MODE_KEY, DEFAULT_COMBAT_MODE, DEFAULT_REPLAY_PACE, REPLAY_PACE_KEY, REPORT_AFTER_KEY, getCombatMode,
-  getReplayPace, getReportAfter, resetCombatMode, setCombatMode, setReplayPace, setReportAfter,
+  REPLAY_CAP_KEY, getReplayCap, getReplayPace, getReportAfter, resetCombatMode, resetReplaySettings, setCombatMode, setReplayCap,
+  setReplayPace, setReportAfter,
 } from '../../src/ui/combatMode';
 import {
   BURST_END, FIGHT_MS, IMPORTANT_FACTOR, PACE_MS, REPLAY_CAP, SHOT_SHARE, fightActors, fightFrame, fightImportant, fightsFromEvents, placeNote,
@@ -203,6 +204,35 @@ describe('replay pace and the report after the replay', () => {
     expect(() => setReportAfter(true)).not.toThrow();
     expect(getReplayPace()).toBe('fast');
     expect(getReportAfter()).toBe(true);
+  });
+});
+
+describe('how many fights the replay plays', () => {
+  beforeEach(() => { resetReplaySettings(); });
+  afterEach(() => { resetReplaySettings(); vi.unstubAllGlobals(); });
+
+  it('is 12 by default, remembers a choice including All, and ignores junk', () => {
+    const m = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v); } });
+    expect(getReplayCap()).toBe(12);
+    setReplayCap(25);
+    expect(m.get(REPLAY_CAP_KEY)).toBe('25');
+    resetReplaySettings();
+    expect(getReplayCap()).toBe(25);
+    setReplayCap(Infinity);
+    resetReplaySettings();
+    expect(getReplayCap()).toBe(Infinity);
+    m.set(REPLAY_CAP_KEY, '7');
+    resetReplaySettings();
+    expect(getReplayCap()).toBe(12);
+  });
+
+  it('replays every fight when the cap is All', () => {
+    const log: LogEntry[] = [started(0, 1)];
+    for (let i = 0; i < 40; i++) log.push(entry(combat(1, true, i % 10, 0)));
+    const r = replayFights(log, 0, names, lookup, Infinity);
+    expect(r.steps).toHaveLength(40);
+    expect(r.more).toBe(0);
   });
 });
 
