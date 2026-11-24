@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'front-first-orders',
+    version: '0.9.156',
+    date: '2026-11-24',
+    title: 'Standing orders run front first',
+    text: ['At the start of your turn, units on Go-to, Explore or Patrol now move in order from the one closest to a known enemy backward, so the front of a column clears the way and fewer units get stuck behind full stacks.'],
+  },
+  {
     id: 'front-first',
     version: '0.9.155',
     date: '2026-11-24',
