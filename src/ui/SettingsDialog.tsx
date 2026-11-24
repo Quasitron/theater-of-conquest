@@ -89,7 +89,7 @@ export function SettingsDialog({ onClose }: Props) {
       </div>
       <p>
         <label>
-          Fights replayed at most{' '}
+          Combat Replay Limit{' '}
           <select
             value={cap === Infinity ? 'all' : String(cap)} disabled={combat !== 'animated'}
             onChange={(e) => {
