@@ -103,7 +103,7 @@ export function buildManual(): ManualSection[] {
       id: 'keys',
       title: 'Keys and mouse',
       paragraphs: [
-        'Move with the number pad (8 up, 9 up-right, 6 right, 3 down-right, 2 down, 1 down-left, 4 left, 7 up-left) or Home, PageUp, PageDown and End for the diagonals. The arrow keys scroll the map. Esc deselects or closes whatever is open.',
+        'Move with the number pad (8 up, 9 up-right, 6 right, 3 down-right, 2 down, 1 down-left, 4 left, 7 up-left) or Home, PageUp, PageDown and End for the diagonals. With a unit selected the arrow keys move it too (up, right, down, left); with none selected they scroll the map. Esc deselects or closes whatever is open.',
         'Clicking a distant square with a unit selected sends the unit there. The Orders menu at the top lists the orders the selected unit can be given.',
       ],
       items: KEY_ORDER.map((id) => ({ term: `${ACTION_LABELS[id].label} (${ACTION_LABELS[id].key})`, text: KEY_MEANING[id] })),
