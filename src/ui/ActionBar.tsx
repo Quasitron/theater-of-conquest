@@ -21,6 +21,7 @@ export const ACTION_LABELS: Record<ActionId, { label: string; key: string }> = {
   patrol: { label: 'Patrol', key: 'P' },
   goHome: { label: 'Go Home', key: 'H' },
   explore: { label: 'Explore', key: 'X' },
+  hunt: { label: 'Hunt', key: 'J' },
   load: { label: 'Load', key: 'L' },
   unload: { label: 'Unload', key: 'U' },
   clearOrders: { label: 'Clear Orders', key: 'Ins' },

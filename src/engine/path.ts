@@ -274,6 +274,36 @@ export function findFrontier(m: PathMap, u: Mobile, neutralCities = false): Pos 
   return null;
 }
 
+/**
+ * The nearest reachable square (distance >= 1) beside one of the `targets` (square indices), lowest index on ties.
+ * A target the unit already stands beside is left out. Null when none can be reached.
+ */
+export function findBeside(m: PathMap, u: Mobile, targets: ReadonlySet<number>): Pos | null {
+  const start = u.y * m.width + u.x;
+  const near = new Set(neighborsOf(m, start));
+  const wanted = new Set([...targets].filter((t) => !near.has(t)));
+  if (wanted.size === 0) return null;
+  const seen = new Set<number>([start]);
+  let level = [start];
+  while (level.length > 0) {
+    const next: number[] = [];
+    for (const i of level) {
+      for (const n of neighborsOf(m, i)) {
+        if (seen.has(n) || !enterable(m, u.type, n, false)) continue;
+        seen.add(n);
+        next.push(n);
+      }
+    }
+    const hit = next.filter((i) => enterable(m, u.type, i, true) && neighborsOf(m, i).some((n) => wanted.has(n)));
+    if (hit.length > 0) {
+      const best = Math.min(...hit);
+      return { x: best % m.width, y: Math.floor(best / m.width) };
+    }
+    level = next;
+  }
+  return null;
+}
+
 /** Turn on which a unit that needs `steps` moves arrives (this turn if movesLeft covers it). */
 export function arrivalTurn(u: Pick<Unit, 'type' | 'damage' | 'movesLeft'>, steps: number, turn: number): number {
   if (steps <= u.movesLeft) return turn;

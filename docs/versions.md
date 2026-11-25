@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.159 | 2026-11-25 | New order: Hunt (key J; Army, Armor and warships). Heads for the nearest known enemy unit of its element (visible or recently seen), and for land units also enemy and neutral cities; with nothing known it explores. Never attacks by itself: it stops beside its quarry and asks for orders. Also in Group orders (rules 43). |
 | 0.9.158 | 2026-11-25 | Aircraft patrols: a waypoint that cannot be flown to (an enemy on it) is passed over for that lap. With none reachable the patrol stops as "path blocked" instead of wrongly saying low on fuel and sending the aircraft home (rules 42). |
 | 0.9.157 | 2026-11-24 | Quit asks "Save before quitting?" (Save and quit / Quit without saving / Cancel) when moves have been made since the game was last saved. The turn-change autosave, Save, Save As and Export all count as saved; a finished game never asks. |
 | 0.9.156 | 2026-11-24 | Standing orders (Go-to, Explore, Patrol) now run at turn start for the units nearest a known enemy or enemy/neutral city first, then back from there, so the front of a column moves before the ones behind and fewer units are left blocked (rules 41). Same for the computer players. |

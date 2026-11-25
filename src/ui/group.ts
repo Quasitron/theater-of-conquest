@@ -20,6 +20,7 @@ export const GROUP_ORDERS = [
   { id: 'moveTo', action: 'moveTo', label: 'Move To' },
   { id: 'escort', action: 'escort', label: 'Escort' },
   { id: 'explore', action: 'explore', label: 'Explore' },
+  { id: 'hunt', action: 'hunt', label: 'Hunt' },
   { id: 'goHome', action: 'goHome', label: 'Go Home' },
   { id: 'repair', action: 'repair', label: 'Repair' },
   { id: 'clearOrders', action: 'clearOrders', label: 'Clear Orders' },

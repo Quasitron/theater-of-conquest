@@ -122,6 +122,11 @@ export function doublesDefense(att: UnitType, def: UnitType, ground: Relief, arm
   return ground === 'river' && att === 'armor' && !(armorNoRiverCover && def === 'armor');
 }
 
+/** Whether a unit of this type can be told to Hunt: an Army, an Armor, or any warship (every ship but the Transport). */
+export function canHunt(type: UnitType): boolean {
+  return type === 'army' || type === 'armor' || (UNIT_STATS[type].domain === 'sea' && type !== 'transport');
+}
+
 /** Armor and the APC share one set of terrain limits (see armorBlockedBy and armorSlowedBy). */
 export const movesLikeArmor = (type: UnitType): boolean => type === 'armor' || type === 'troopTransport';
 

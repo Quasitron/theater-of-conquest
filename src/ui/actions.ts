@@ -1,4 +1,4 @@
-import { UNIT_STATS, canBecomeAirbase, canFerry, hostHasRoom, rankOf, unitDisplayName, type Orders, type PlayerView, type Pos, type Unit } from '../engine';
+import { UNIT_STATS, canBecomeAirbase, canFerry, canHunt, hostHasRoom, rankOf, unitDisplayName, type Orders, type PlayerView, type Pos, type Unit } from '../engine';
 import type { ActionId } from './keys';
 
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
@@ -21,7 +21,7 @@ export function escortable(view: PlayerView, u: Unit): Unit[] {
 }
 
 export const UNIT_BUTTONS: ActionId[] = [
-  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'explore', 'load', 'unload', 'patrol', 'escort', 'ferry', 'resumeFerry', 'resumePatrol', 'airbase', 'sabotage', 'hurt', 'incite', 'goHome', 'clearOrders', 'center', 'info', 'disband',
+  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'explore', 'hunt', 'load', 'unload', 'patrol', 'escort', 'ferry', 'resumeFerry', 'resumePatrol', 'airbase', 'sabotage', 'hurt', 'incite', 'goHome', 'clearOrders', 'center', 'info', 'disband',
 ];
 
 /** True when a spy's own report on the city it stands in shows no garrison at all. */
@@ -61,6 +61,7 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     info: true,
     fit: true,
     explore: !air && !fixed,
+    hunt: canHunt(u.type),
     sentry: !fixed && (!air || inCity || u.carriedBy !== null),
     // An Army or Armor on open land can turn itself into an Airbase (Advanced units rule); it is for good.
     airbase: view.rules.advancedUnits && canBecomeAirbase(u.type) && u.carriedBy === null && !inCity
@@ -118,6 +119,7 @@ export function describeOrders(
       if (o.loop && o.loop.length > 0) return `Patrol circuit of ${o.loop.length + 1} legs from ${where(o.a)}`;
       return `Patrol ${where(o.a)} ↔ ${where(o.b)}`;
     case 'explore': return 'Explore';
+    case 'hunt': return 'Hunt';
     case 'repair': return 'Repair';
     case 'escort': { const n = nameOf?.(o.transportId); return n ? `Escort ${n}` : 'Escort'; }
   }
