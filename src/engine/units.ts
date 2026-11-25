@@ -28,7 +28,7 @@ export interface UnitStats {
 }
 
 export const UNIT_TYPES: readonly UnitType[] = [
-  'army', 'armor', 'troopTransport', 'fighter', 'bomber', 'transport', 'destroyer', 'submarine', 'cruiser', 'battleship', 'carrier', 'airbase', 'spy',
+  'army', 'armor', 'troopTransport', 'fighter', 'bomber', 'airCargo', 'transport', 'destroyer', 'submarine', 'cruiser', 'battleship', 'carrier', 'airbase', 'spy',
 ];
 
 const base = { range: null, carries: [] as readonly UnitType[], capacity: 0, slots: 1, advanced: false, producible: true, capacityLossPerDamage: 0, bombard: false, seesSubs: false, promotes: false };
@@ -40,14 +40,16 @@ export const UNIT_STATS: Record<UnitType, UnitStats> = {
   troopTransport: { ...base, advanced: true, slots: 2, name: 'APC', domain: 'land', move: 2, hits: 1, attack: 0, defense: 2, shot: 1, build: 12, buildRepeat: 10, carries: ['army', 'spy'], capacity: 4 },
   fighter:    { ...base, name: 'Fighter',    domain: 'air',  move: 5, hits: 1,  attack: 2, defense: 2, shot: 1, build: 12, buildRepeat: 10, range: 20 },
   bomber:     { ...base, advanced: true, name: 'Bomber', domain: 'air', move: 4, hits: 1, attack: 2, defense: 2, shot: 2, build: 12, buildRepeat: 10, range: 24 },
+  /** Flies troops and one vehicle between cities and Airbases, and drops Armies and Spies onto land; no attack, one hit, and its cargo dies with it. */
+  airCargo:   { ...base, advanced: true, name: 'Air Transport', domain: 'air', move: 4, hits: 1, attack: 0, defense: 2, shot: 2, build: 16, buildRepeat: 14, range: 16, carries: ['army', 'spy', 'armor', 'troopTransport'], capacity: 4 },
   transport:  { ...base, promotes: true, name: 'Transport',  domain: 'sea',  move: 2, hits: 3,  attack: 1, defense: 1, shot: 1, build: 30, buildRepeat: 25, carries: ['army', 'armor', 'spy'], capacity: 6, capacityLossPerDamage: 2 },
   destroyer:  { ...base, promotes: true, name: 'Destroyer',  domain: 'sea',  move: 3, hits: 3,  attack: 2, defense: 2, shot: 1, build: 24, buildRepeat: 20, seesSubs: true },
   submarine:  { ...base, promotes: true, name: 'Submarine',  domain: 'sea',  move: 2, hits: 2,  attack: 2, defense: 1, shot: 3, build: 24, buildRepeat: 20, seesSubs: true },
   cruiser:    { ...base, promotes: true, name: 'Cruiser',    domain: 'sea',  move: 2, hits: 8,  attack: 2, defense: 2, shot: 2, build: 42, buildRepeat: 35, bombard: true, seesSubs: true },
   battleship: { ...base, promotes: true, name: 'Battleship', domain: 'sea',  move: 2, hits: 12, attack: 2, defense: 2, shot: 3, build: 60, buildRepeat: 50, bombard: true },
   carrier:    { ...base, promotes: true, name: 'Carrier',    domain: 'sea',  move: 2, hits: 8,  attack: 1, defense: 2, shot: 1, build: 48, buildRepeat: 40, carries: ['fighter'], capacity: 8, capacityLossPerDamage: 1 },
-  /** Made from an Army or Armor on open land; never moves or attacks, and holds up to eight aircraft of either kind. */
-  airbase:    { ...base, advanced: true, producible: false, name: 'Airbase', domain: 'land', move: 0, hits: 1, attack: 0, defense: 2, shot: 1, build: 0, buildRepeat: 0, carries: ['fighter', 'bomber'], capacity: 8 },
+  /** Made from an Army or Armor on open land; never moves or attacks, and holds up to eight aircraft. */
+  airbase:    { ...base, advanced: true, producible: false, name: 'Airbase', domain: 'land', move: 0, hits: 1, attack: 0, defense: 2, shot: 1, build: 0, buildRepeat: 0, carries: ['fighter', 'bomber', 'airCargo'], capacity: 8 },
   /** Slips into enemy cities unseen to read and sabotage their production; no defence at all. Visible to the enemy only when uncovered (see fog.ts). */
   spy:        { ...base, advanced: true, promotes: true, name: 'Spy', domain: 'land', move: 1, hits: 1, attack: 0, defense: 0, shot: 1, build: 16, buildRepeat: 14 },
 };
@@ -96,8 +98,12 @@ export function cargoUsed(cargo: readonly Pick<Unit, 'type'>[]): number {
 
 /** Whether `host` with `aboard` already on it can take one more unit of type `type`. */
 export function hostHasRoom(host: Unit, aboard: readonly Pick<Unit, 'type'>[], type: UnitType): boolean {
+  if (host.type === 'airCargo' && isVehicle(type) && aboard.some((c) => isVehicle(c.type))) return false; // one vehicle at most
   return canCarry(host.type, type) && cargoCapacity(host) - cargoUsed(aboard) >= UNIT_STATS[type].slots;
 }
+
+/** Armor and the APC: an Air Transport takes only one of them, and cannot drop them from the air. */
+export const isVehicle = (type: UnitType): boolean => type === 'armor' || type === 'troopTransport';
 
 /** The unit types a game builds: the Advanced ones only with the Advanced units house rule. */
 export function buildableTypes(rules: { advancedUnits: boolean }): UnitType[] {
@@ -152,7 +158,7 @@ export function fightRatings(
   // Armor runs an APC down: half the defence it has against anything else.
   if (def === 'troopTransport' && att === 'armor') defense /= 2;
   if (att === 'bomber' && def === 'fighter') attack = 1;
-  if (def === 'bomber' && att === 'fighter') defense = 1;
+  if ((def === 'bomber' || def === 'airCargo') && att === 'fighter') defense = 1;
   return { attack, defense };
 }
 
@@ -164,6 +170,7 @@ export function attackBlockedReason(
   const d = UNIT_STATS[def];
   if (att === 'spy') return 'a spy cannot attack';
   if (att === 'troopTransport') return 'an APC cannot attack';
+  if (att === 'airCargo') return 'an Air Transport cannot attack';
   if ((att === 'submarine' && d.domain === 'land') || (a.domain === 'land' && def === 'submarine')) {
     return 'submarines and land units cannot attack each other';
   }

@@ -16,6 +16,17 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'air-transport',
+    version: '0.9.160',
+    date: '2026-11-25',
+    title: 'The Air Transport',
+    text: [
+      'A new unit with the Advanced units rule: the Air Transport flies Armies and Spies (4 spaces, with at most one Armor or empty APC) between your cities and Airbases, and parachutes troops onto land beside it. It cannot attack and is easy prey for Fighters.',
+      'It has air routes of its own (the Ferry Route button, orange on the map). A route to a city or Airbase takes one waiting Armor along by itself; a route to open land is an airdrop for troops.',
+    ],
+    image: { src: 'air-transport.webp', alt: 'The Air Transport card' },
+  },
+  {
     id: 'hunt-order',
     version: '0.9.159',
     date: '2026-11-25',

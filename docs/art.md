@@ -7,7 +7,7 @@
 - **Made with:** Gemini (AI image generation), by the game's owner, in the style of the intro page.
 - **The made-up lettering:** every card has nonsense text baked into its top-left corner (a usual look of AI-generated lettering). The game covers it with a dark panel (`.unit-card-hud` in `src/ui/styles.css`) that lists the unit's real numbers (`cardLines` in `src/ui/labels.ts`), so the pictures themselves are unchanged.
 - **Adding a unit:** make `public/art/<type>.webp` (the same recipe: scale to 560 px, WebP quality about 82) and the card appears; the test `tests/ui/unitCards.test.ts` checks that every unit type has one.
-- **Air Transport (not in the game yet):** `public/art/airCargo.webp` is its card (from `art-originals\Air Transport.jpg`), staged with `public/sounds/produce-airCargo.mp3`. The unit's internal id will be `airCargo`; its map icon is `public/art/units/airCargo.webp` (made by `tools/make-unit-icons.ps1` from `art-originals\units\Air_Transport.jpg`, faces right, 320x130). Still to do: the unit itself (design in the project memory), its `UNIT_ICONS` entry and the other wiring.
+- **Air Transport:** `public/art/airCargo.webp` is its card (from `art-originals\Air Transport.jpg`) and `public/art/units/airCargo.webp` its map icon (made by `tools/make-unit-icons.ps1` from `art-originals\units\Air_Transport.jpg`, faces right, 320x130). In the game since 0.9.160, with `public/sounds/produce-airCargo.mp3`.
 - **Map icons** are separate: the cards are too busy for a map square, so a later art pass would add small simplified icons.
 ## Map icons
 

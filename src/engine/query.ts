@@ -1,5 +1,5 @@
 import type { City, DestroyReason, GameEvent, GameState, PlayerId, Unit, UnitType } from './types';
-import { UNIT_STATS, canCarry, cargoCapacity, cargoUsed } from './units';
+import { UNIT_STATS, cargoCapacity, cargoUsed, hostHasRoom } from './units';
 import { areFriendly } from './relations';
 import { recordDestroyed } from './stats';
 
@@ -46,7 +46,7 @@ export function cargoRoom(s: GameState, carrier: Unit): number {
 
 /** Whether `host` carries units of `type` and has room for one more. */
 export function hasRoomFor(s: GameState, host: Unit, type: UnitType): boolean {
-  return canCarry(host.type, type) && cargoRoom(s, host) >= UNIT_STATS[type].slots;
+  return hostHasRoom(host, cargoOf(s, host), type);
 }
 
 /** Aircraft refuel on a carrier or in a friendly city. */
@@ -54,6 +54,11 @@ export function isAtRefuelPoint(s: GameState, u: Unit): boolean {
   if (u.carriedBy !== null) return true;
   const c = cityAt(s, u.x, u.y);
   return !!c && areFriendly(s, c.owner, u.owner);
+}
+
+/** The Airbase an aircraft is parked at, if it is at one. */
+export function airbaseUnder(s: GameState, u: Unit): Unit | undefined {
+  return u.carriedBy === null ? undefined : s.units.find((h) => h.id === u.carriedBy && h.type === 'airbase');
 }
 
 export function spawnUnit(s: GameState, type: UnitType, owner: PlayerId, x: number, y: number): Unit {

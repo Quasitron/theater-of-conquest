@@ -1,9 +1,9 @@
 import type { City, GameEvent, GameState, Orders, OrdersEndReason, PlayerId, Pos, Unit } from './types';
 import type { RandomSource } from './rng';
-import { UNIT_STATS, attackRating, canCarry, canHunt, fightRatings, hitsOf, isCrippled } from './units';
+import { UNIT_STATS, attackRating, canCarry, canHunt, fightRatings, hitsOf, isCrippled, isVehicle } from './units';
 import { combatWinChance } from './combat';
 import { chebyshev, index, isCoastal, neighbors, reliefAt } from './map';
-import { canJoinStack, cityAt, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
+import { canJoinStack, cargoOf, cityAt, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
 import { areFriendly } from './relations';
 import { canPlayerSeeUnit, updateFog } from './fog';
 import { moveUnit } from './movement';
@@ -11,7 +11,7 @@ import { attackRestriction, attackUnit } from './attack';
 import { unloadCargo } from './cargo';
 import { aircraftCanReach, dirBetween, findBeside, findFrontier, findPath, pathMapFromState } from './path';
 import { pickUpRoute } from './routes';
-import { ferryArrive, ferryRouteOf, pruneFerryRoutes } from './ferry';
+import { airDrop, airDropApproach, airDropReady, ferryArrive, ferryPickupPlace, ferryRouteOf, pruneFerryRoutes } from './ferry';
 
 const NO_AIR_EXPLORE = 'aircraft cannot explore yet';
 const NO_PATROL_BASE = 'patrol must start or end at a city or carrier';
@@ -88,6 +88,15 @@ export function validateOrders(s: GameState, u: Unit, o: Orders): string | null 
       if (o.ferry && u.ferry === undefined) return 'not on a ferry route';
       if (o.target.x === u.x && o.target.y === u.y) return o.ferry ? null : 'already there';
       const map = pathMapFromState(s, u.owner);
+      const drop = o.ferry === 'drop' ? airDrop(s, u) : null;
+      if (drop) {
+        // An airdrop flies to a square beside the drop and must still get back to the pickup.
+        if (airDropReady(s, u, drop)) return null;
+        const way = airDropApproach(s, map, u, u, drop);
+        const home = ferryPickupPlace(s, ferryRouteOf(s, u)!.pickup);
+        if (way === null || !home) return 'no known path';
+        return way.steps + chebyshev(s, way.pos, home) > (u.fuel ?? 0) ? 'out of range' : null;
+      }
       const path = findPath(map, u, o.target);
       if (path === null) return 'no known path';
       if (air && !aircraftCanReach(map, path.length, u.fuel ?? 0, o.target, u.type)) return 'out of range';
@@ -321,7 +330,7 @@ export function executeOrders(
     if (o.kind === 'goto' && o.ferry) {
       // The target follows the route (it may have been edited); a lost pickup city or a vanished route ends the orders.
       const route = ferryRouteOf(s, u);
-      const pick = route && s.cities.find((c) => c.id === route.pickup);
+      const pick = route && ferryPickupPlace(s, route.pickup);
       if (!route) delete u.ferry;
       if (!route || !pick || pick.owner !== u.owner) return endOrders(u, 'destinationLost', events);
       o.target = o.ferry === 'pickup' ? { x: pick.x, y: pick.y } : { x: route.drop.x, y: route.drop.y };
@@ -342,8 +351,24 @@ export function executeOrders(
       if (!o.loop.some((p) => (p.x !== o.a.x || p.y !== o.a.y) && reachable(p))) return endOrders(u, 'blocked', events);
       while ((o.leg ?? 0) < o.loop.length && !reachable(patrolTarget(o))) o.leg = (o.leg ?? 0) + 1;
     }
-    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? patrolTarget(o)
-      : o.kind === 'hunt' ? huntGoal(s, u, map) : findFrontier(map, u, canTakeCities(u));
+    // An Air Transport bound for open ground drops from beside the square, then flies back with its moves to spare.
+    const drop = o.kind === 'goto' && o.ferry === 'drop' ? airDrop(s, u) : null;
+    let approach: Pos | null = null;
+    if (drop) {
+      if (cargoOf(s, u).some((c) => isVehicle(c.type))) return endOrders(u, 'vehicleAboard', events);
+      if (airDropReady(s, u, drop)) {
+        arrive();
+        ferryLegChanged = false;
+        continue;
+      }
+      const way = airDropApproach(s, map, u, u, drop);
+      if (way === null) return blocked();
+      const home = ferryPickupPlace(s, ferryRouteOf(s, u)!.pickup)!;
+      if (way.steps + chebyshev(s, way.pos, home) > (u.fuel ?? 0)) return endOrders(u, 'lowFuel', events);
+      approach = way.pos;
+    }
+    const target = approach ?? (o.kind === 'goto' ? o.target : o.kind === 'patrol' ? patrolTarget(o)
+      : o.kind === 'hunt' ? huntGoal(s, u, map) : findFrontier(map, u, canTakeCities(u)));
     if (target === null) return endOrders(u, o.kind === 'hunt' ? 'nothingToHunt' : 'nothingToExplore', events);
     if (u.x === target.x && u.y === target.y) {
       if (o.kind === 'goto') {
@@ -391,7 +416,7 @@ export function executeOrders(
     }
     const path = findPath(map, u, target);
     if (path === null || path.length === 0) return blocked();
-    if (u.fuel !== null && o.kind === 'goto' && !aircraftCanReach(map, path.length, u.fuel, target, u.type)) {
+    if (u.fuel !== null && o.kind === 'goto' && !drop && !aircraftCanReach(map, path.length, u.fuel, target, u.type)) {
       return endOrders(u, 'lowFuel', events);
     }
     if (u.fuel !== null && o.kind !== 'goto' && path.length > u.fuel) return endOrders(u, 'lowFuel', events);
@@ -429,10 +454,17 @@ export function executeOrders(
     const cityBefore = o.kind === 'explore' || o.kind === 'hunt' ? adjacentForeignCities(s, u) : null;
     if (dir === null || moveUnit(s, rng, u, dir, events) !== null) return blocked();
     if (!s.units.includes(u)) return;
-    if (o.kind === 'patrol' && u.carriedBy !== null) u.orders = o; // boarding made it a sentry; a patrol keeps flying
+    // Boarding (an Airbase or carrier) cleared its orders: a patrol keeps flying, and a ferry flight carries on with its route.
+    if ((o.kind === 'patrol' || (o.kind === 'goto' && o.ferry)) && u.carriedBy !== null) u.orders = o;
     u.blockedTurns = 0;
     updateFog(s, u.owner);
-    if (o.kind === 'goto' && u.x === o.target.x && u.y === o.target.y) return arrive();
+    if (drop) {
+      if (airDropReady(s, u, drop)) {
+        arrive();
+        ferryLegChanged = false;
+        continue;
+      }
+    } else if (o.kind === 'goto' && u.x === o.target.x && u.y === o.target.y) return arrive();
     if (u.carriedBy === null && enemyAdjacent(s, u)) return endOrders(u, 'enemySighted', events);
     if (cityBefore && [...adjacentForeignCities(s, u)].some((id) => !cityBefore.has(id))) {
       return endOrders(u, 'cityFound', events);

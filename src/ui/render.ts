@@ -55,8 +55,8 @@ export interface DrawOptions {
   groupBox?: GroupBox | null;
   /** The player's city routes, drawn as arrows from each route city to its destination. */
   cityRoutes?: { from: Pos; to: Pos; types: UnitType[] }[];
-  /** Ferry routes, from the pickup city to the drop square; `paused` draws them greyed out. */
-  ferryRoutes?: { from: Pos; to: Pos; paused: boolean }[];
+  /** Ferry routes, from the pickup to the drop square; `paused` draws them greyed out, `air` in the air route style. */
+  ferryRoutes?: { from: Pos; to: Pos; paused: boolean; air?: boolean }[];
   /** Production map: hides the units and shows what each own city is building. */
   productionMap?: boolean;
   /** Attack hover: a red crosshair with the label, drawn instead of the hover preview. */
@@ -863,19 +863,22 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
     }
   }
 
-  // Ferry routes: a blue dashed line with an arrowhead at each end, a ring at the drop square and an anchor between; grey when paused.
+  // Ferry routes: a blue dashed line with an arrowhead at each end, a ring at the drop square and an anchor between.
+  // Air routes: an orange dotted line with a parachute. Both are grey when paused.
   for (const r of o.ferryRoutes ?? []) {
     for (const [from, to] of copiesOf([r.from, r.to])) {
-      const colour = r.paused ? '#8a94a0' : '#4fc3f7';
+      const colour = r.paused ? '#8a94a0' : r.air ? '#ffab40' : '#4fc3f7';
       ctx.strokeStyle = colour;
       ctx.fillStyle = colour;
       ctx.lineWidth = 2;
-      ctx.setLineDash([8, 5]);
+      ctx.setLineDash(r.air ? [2, 6] : [8, 5]);
+      if (r.air) ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(cx(from), cy(from));
       ctx.lineTo(cx(to), cy(to));
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.lineWidth = 2;
       const ang = Math.atan2(cy(to) - cy(from), cx(to) - cx(from));
       const head = Math.max(6, t * 0.4);
       const arrow = (px: number, py: number, a: number) => {
@@ -899,8 +902,9 @@ export function drawMap(ctx: CanvasRenderingContext2D, o: DrawOptions): void {
         ctx.lineWidth = 3;
         const mx = (cx(from) + cx(to)) / 2;
         const my = (cy(from) + cy(to)) / 2;
-        ctx.strokeText('⚓', mx, my - 2);
-        ctx.fillText('⚓', mx, my - 2);
+        const mark = r.air ? '\u{1FA82}' : '⚓';
+        ctx.strokeText(mark, mx, my - 2);
+        ctx.fillText(mark, mx, my - 2);
       }
     }
   }

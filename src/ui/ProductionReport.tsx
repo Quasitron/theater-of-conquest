@@ -14,6 +14,7 @@ export const UNIT_BLURB: Record<UnitType, string> = {
   troopTransport: 'Armored Personnel Carrier: a tracked carrier for four armies or spies; armor\'s pace and terrain limits, loads and unloads on any land square, but no attack and weak defence; keep it away from enemy armor.',
   fighter: 'A fast scout and striker; it must land in a city or on a carrier before its fuel runs out.',
   bomber: 'A slower aircraft with a longer range; it sinks ships and bombs cities, but fights poorly against fighters and cannot land on a carrier.',
+  airCargo: 'Flies armies, spies and one vehicle between cities and airbases, and parachutes troops onto land; no attack, easy prey for fighters, and its cargo dies with it.',
   spy: 'Slips into enemy cities unseen to read what they build and wreck it; no defence, so keep it hidden. A seasoned spy can even stir up a revolt.',
   airbase: 'Made by an army or armor on open land: it cannot move or attack, but aircraft land and refuel there.',
   transport: 'Ferries armies across the water; weak in a fight, so keep it escorted.',
