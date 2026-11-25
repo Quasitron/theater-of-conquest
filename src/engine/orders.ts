@@ -302,6 +302,12 @@ export function executeOrders(
       if (!dest || dest.owner !== u.owner) return endOrders(u, 'destinationLost', events);
     }
     const map = pathMapFromState(s, u.owner);
+    if (o.kind === 'patrol' && o.loop && o.loop.length > 0 && u.fuel !== null) {
+      // A waypoint that cannot be flown to (an enemy on it, say) is passed over for this lap.
+      const reachable = (p: Pos): boolean => findPath(map, u, p) !== null;
+      if (!o.loop.some((p) => (p.x !== o.a.x || p.y !== o.a.y) && reachable(p))) return endOrders(u, 'blocked', events);
+      while ((o.leg ?? 0) < o.loop.length && !reachable(patrolTarget(o))) o.leg = (o.leg ?? 0) + 1;
+    }
     const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? patrolTarget(o) : findFrontier(map, u, canTakeCities(u));
     if (target === null) return endOrders(u, 'nothingToExplore', events);
     if (u.x === target.x && u.y === target.y) {
@@ -325,6 +331,8 @@ export function executeOrders(
       const circuit = o.loop !== undefined && o.loop.length > 0;
       const base = circuit ? (isRefuelBase(s, u, o.a) ? o.a : null) : patrolBase(s, u, o);
       const toTarget = findPath(map, u, target);
+      // With its base fine but no way to where it is going, the patrol is blocked, not short of fuel.
+      if (base !== null && toTarget === null) return endOrders(u, 'blocked', events);
       let need = Infinity;
       if (circuit) {
         // The rest of the circuit from the corner it is heading for, back to the base.

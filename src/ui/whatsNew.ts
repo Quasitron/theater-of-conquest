@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'patrol-skip-blocked',
+    version: '0.9.158',
+    date: '2026-11-25',
+    title: 'Patrols skip blocked waypoints',
+    text: ['An aircraft patrol now passes over a waypoint it cannot fly to, such as one with an enemy on it, and carries on. If none can be reached it says the path is blocked, instead of claiming to be low on fuel.'],
+  },
+  {
     id: 'quit-save-prompt',
     version: '0.9.157',
     date: '2026-11-24',
