@@ -1,4 +1,4 @@
-import { CITY_STRENGTH_HITS, UNIT_STATS, armorBlockedBy, movesLikeArmor, attackBlockedReason, hostHasRoom, step, type Dir, type MapLike, type PlayerView, type Pos, type Unit } from '../engine';
+import { CITY_STRENGTH_HITS, UNIT_STATS, armorBlockedBy, movesLikeArmor, attackBlockedReason, hostHasRoom, isVehicle, step, type Dir, type MapLike, type PlayerView, type Pos, type Unit } from '../engine';
 
 export interface StepTarget {
   x: number;
@@ -17,9 +17,36 @@ export function dirTo(v: PlayerView, from: Pos, to: Pos): Dir | null {
   return null;
 }
 
+const friendlyCityAt = (v: PlayerView, p: Pos): boolean =>
+  v.knownCities.some((c) => c.x === p.x && c.y === p.y && c.owner !== null && (c.owner === v.me || v.allies.includes(c.owner)));
+
+/** Where a unit riding in an Air Transport can get out: open land (or a friendly city) beside it. Vehicles only at an Airbase. */
+function dropTargets(v: PlayerView, u: Unit, plane: Unit): StepTarget[] {
+  if (isVehicle(u.type) && plane.carriedBy === null) return [];
+  const out: StepTarget[] = [];
+  for (let d = 0; d < 8; d++) {
+    const p = step(mapOf(v), plane.x, plane.y, d as Dir);
+    if (!p) continue;
+    const target = { ...p, dir: d as Dir, attack: false };
+    if (v.knownCities.some((c) => c.x === p.x && c.y === p.y)) {
+      if (friendlyCityAt(v, p)) out.push(target);
+      continue;
+    }
+    if (v.terrain[p.y * v.width + p.x] !== 'land') continue;
+    if (movesLikeArmor(u.type) && v.rules.advancedUnits && armorBlockedBy(v.relief?.[p.y * v.width + p.x] ?? 'clear')) continue;
+    if (v.enemies.some((e) => e.visibleNow && e.x === p.x && e.y === p.y)) continue;
+    const there = [...v.myUnits.filter((o) => o.carriedBy === null && o.x === p.x && o.y === p.y), ...v.allyUnits.filter((a) => a.x === p.x && a.y === p.y)];
+    if (there.length > 0 && !(v.rules.stacking && there.length < 4 && there.every((o) => UNIT_STATS[o.type].domain !== 'air'))) continue;
+    out.push(target);
+  }
+  return out;
+}
+
 /** Adjacent squares this unit could plausibly step to, judged only from what the player knows. */
 export function stepTargets(v: PlayerView, u: Unit): StepTarget[] {
   if (u.movesLeft <= 0) return [];
+  const plane = u.carriedBy === null ? undefined : v.myUnits.find((h) => h.id === u.carriedBy && h.type === 'airCargo');
+  if (plane && !friendlyCityAt(v, plane)) return dropTargets(v, u, plane);
   const domain = UNIT_STATS[u.type].domain;
   const out: StepTarget[] = [];
   for (let d = 0; d < 8; d++) {
@@ -55,7 +82,7 @@ export function stepTargets(v: PlayerView, u: Unit): StepTarget[] {
     }
     const friends = v.myUnits.filter((o) => o.x === p.x && o.y === p.y && o.carriedBy === null && o.id !== u.id);
     const host = friends.find(
-      (o) => hostHasRoom(o, v.myUnits.filter((c) => c.carriedBy === o.id), u.type),
+      (o) => o.type !== 'airCargo' && hostHasRoom(o, v.myUnits.filter((c) => c.carriedBy === o.id), u.type),
     );
     if (ownCity || host) {
       out.push({ ...p, dir: d as Dir, attack: false });

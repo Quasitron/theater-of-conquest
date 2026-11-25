@@ -44,10 +44,10 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   hunt: 'Hunt: an Army, Armor or warship goes looking for a fight. It heads for the nearest known enemy unit of its own kind (land or sea), including one seen in the last few turns, and an Army or Armor also for enemy and neutral cities. With nothing known it explores. It never attacks by itself: next to its quarry it stops and asks for orders.',
   explore: 'Explore: the unit wanders out to uncover the nearest unexplored squares by itself. An Army or Armor also heads for a known neutral city when it is nearer, and stops beside it so you can decide.',
   escort: 'Escort: a warship follows a Transport and guards it, fighting what it is likely to beat.',
-  ferry: 'Ferry Route: a Transport (or any other carrier except a Carrier) runs a standing route: it loads at a pickup city, sails to a drop square, puts everything ashore, and goes back, over and over. Routes are shared: pick an existing one to put another carrier on it. A route can wait at the pickup until the carrier is full. When an enemy comes near, or the pickup city is lost, the carrier waits for orders.',
+  ferry: 'Ferry Route: a Transport (or any other carrier except a Carrier) runs a standing route: it loads at a pickup city, sails to a drop square, puts everything ashore, and goes back, over and over. An Air Transport flies air routes of its own (see Air Transport). Routes are shared: pick an existing one to put another carrier on it. A route can wait at the pickup until the carrier is full. When an enemy comes near, or the pickup city is lost, the carrier waits for orders.',
   resumeFerry: 'Resume Route: a carrier whose ferry route was interrupted carries on with it.',
   resumePatrol: 'Resume Patrol: a unit whose patrol was interrupted (an enemy came near, the way was blocked, or it went home for fuel) takes it up again.',
-  load: 'Load the unit onto a ship or aircraft carrier beside it.',
+  load: 'Load units onto a carrier: a Transport, Carrier or Air Transport in your city, an APC anywhere, or an Air Transport at an Airbase (from the squares around it).',
   unload: 'Unload what is aboard onto land or into a city.',
   clearOrders: 'Clear the unit\'s orders so it waits for you again.',
   disband: 'Disband (scrap) the unit. This cannot be undone.',
@@ -154,8 +154,18 @@ export function buildManual(): ManualSection[] {
       id: 'advanced',
       title: 'Advanced units rules',
       paragraphs: [
-        'These rules from the original game\'s advanced version come with the Advanced units house rule: Armor, Bombers, Airbases and Spies; terrain on the map (mountains, forest, rough ground, rivers, deserts); 2-square sight for air units, cities and Airbases; crippled units attacking at half strength; and ships other than Carriers attacking aircraft poorly.',
+        'These rules from the original game\'s advanced version come with the Advanced units house rule (which also adds this game\'s own APC and Air Transport): Armor, Bombers, Airbases and Spies; terrain on the map (mountains, forest, rough ground, rivers, deserts); 2-square sight for air units, cities and Airbases; crippled units attacking at half strength; and ships other than Carriers attacking aircraft poorly.',
         `A land unit in a forest or on a mountain defends at double against everything but Armies, and at double in a river against Armor. Armor cannot enter mountains and moves 1 square in rough ground, rivers and forest.`,
+      ],
+    },
+    {
+      id: 'airtransport',
+      title: 'Air Transport',
+      paragraphs: [
+        'The Air Transport (Advanced units rule) has 4 spaces: Armies and Spies take one, Armor or an APC two, and only one vehicle may be aboard. An APC puts its troops out before it boards. The plane cannot attack, is easy prey for Fighters, and everything aboard dies with it if it is shot down or runs out of fuel.',
+        'It loads in your cities, and at an Airbase from the squares around it (that uses the boarding unit\'s turn). Leaving a city, it takes waiting Armies and Spies by itself; vehicles board only with Load, or on an air route.',
+        'Troops can jump anywhere: use Unload, then click a green square beside the plane. A drop is never onto an enemy or into a city that is not yours or a teammate\'s, and it uses the unit\'s turn; the plane can fly on. Vehicles get out only in a city or at an Airbase.',
+        'Air routes (the Ferry Route button) pick up at a city or Airbase. If the drop is a city or Airbase the plane lands there, and takes one waiting Armor along with troops. If the drop is open land, at least 2 squares from the pickup, the plane parachutes troops there from beside it and flies back, and takes no Armor. A flight between bases must fit the fuel; an airdrop must be reached and returned from on one tank. Air routes show orange and dotted on the Routes view.',
       ],
     },
     {

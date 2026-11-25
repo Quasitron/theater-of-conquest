@@ -1,7 +1,7 @@
 import type { HouseRules } from './rules';
 
 export type UnitType =
-  | 'army' | 'armor' | 'troopTransport' | 'fighter' | 'bomber' | 'transport' | 'destroyer'
+  | 'army' | 'armor' | 'troopTransport' | 'fighter' | 'bomber' | 'airCargo' | 'transport' | 'destroyer'
   | 'submarine' | 'cruiser' | 'battleship' | 'carrier' | 'airbase' | 'spy';
 export type Domain = 'land' | 'sea' | 'air';
 export type Terrain = 'water' | 'land' | 'city';
@@ -89,7 +89,7 @@ export type Orders =
   | { kind: 'escort'; transportId: number };
 
 export type OrdersEndReason =
-  | 'arrived' | 'blocked' | 'enemySighted' | 'lowFuel' | 'nothingToExplore' | 'nothingToHunt' |'cityFound' | 'returning' | 'destinationLost'
+  | 'arrived' | 'blocked' | 'enemySighted' | 'lowFuel' | 'nothingToExplore' | 'nothingToHunt' | 'vehicleAboard' |'cityFound' | 'returning' | 'destinationLost'
   | 'baseLost' | 'baseOutOfRange' | 'repaired' | 'cityLost' | 'escortLost' | 'crippled';
 
 /** A city's standing route: matching units it builds head for another city of the owner. */
@@ -105,8 +105,13 @@ export interface CityRoute {
   by: PlayerId;
 }
 
-/** A ferry route: a carrier loads at the pickup city, sails to the drop square, unloads everything, and goes back. Shared by the carriers on it. */
+/**
+ * A ferry route: a carrier loads at the pickup, goes to the drop square, unloads, and goes back. Shared by the carriers
+ * on it. `pickup` is a city id, or (air routes only) an Airbase written as -(unit id) - 1. `air` marks an Air Transport route.
+ */
 export interface FerryRoute {
+  /** An Air Transport route (absent for ships and APCs). */
+  air?: true;
   id: number;
   /** Id of the pickup city. */
   pickup: number;

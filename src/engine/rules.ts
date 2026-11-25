@@ -66,4 +66,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 41: at the start of a turn a player's standing orders run for the units nearest a known enemy first, instead of in id order.
 // 42: an aircraft patrol passes over a waypoint it cannot fly to; with none reachable it stops as blocked, not as low on fuel.
 // 43: the Hunt order (Army, Armor, warships).
-export const RULES_VERSION = 43;
+// 44: the Air Transport (Advanced units): airdrops and air routes; Airbases also hold it.
+export const RULES_VERSION = 44;

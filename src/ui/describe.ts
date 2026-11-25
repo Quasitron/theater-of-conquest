@@ -19,6 +19,7 @@ const ORDERS_END: Record<Exclude<OrdersEndReason, 'arrived' | 'returning' | 'bas
   lowFuel: 'low on fuel',
   nothingToExplore: 'nothing left to explore',
   nothingToHunt: 'nothing left to hunt',
+  vehicleAboard: 'a vehicle cannot be airdropped',
   destinationLost: 'destination city lost',
   escortLost: 'its transport is gone',
   crippled: 'badly damaged',

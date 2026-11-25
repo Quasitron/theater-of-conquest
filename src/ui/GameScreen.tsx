@@ -4,11 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { GameSession, SessionCommand } from '../app/session';
 import { landOnSquare, unloadAndLand } from '../app/unloadAndLand';
 import {
-  UNIT_STATS, DIRS, normalize, isCrippled, patrolTarget, step,aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, chebyshev, findPath, pathMapFromView, unitDisplayName,
+  UNIT_STATS, DIRS, normalize, isCrippled, patrolTarget, step,aircraftCanReach, pathArrivalTurn, cargoCapacity, cargoUsed, hostHasRoom, isVehicle, chebyshev, findPath, pathMapFromView, unitDisplayName,
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
-import { availableActions, escortable, loadCandidates } from './actions';
+import { airbaseUnder, availableActions, escortable, loadCandidates, planeOnGround } from './actions';
 import { FerryDialog, emptyFerryDraft, type FerryDraft } from './FerryDialog';
 import { autoFit, centerOn, clampCamera, exploredBox, keepInViewWrap, pan, type Camera } from './camera';
 import { CityScreen } from './CityScreen';
@@ -99,6 +99,14 @@ const GameLog = memo(function GameLog({ lines }: { lines: LogLine[] }) {
 });
 
 /** Path, reachability and label from `u` to `to` (fuel-aware for aircraft). */
+/** Where a ferry or air route picks up: one of your cities, or (a negative number) one of your Airbases. */
+function pickupPlace(view: PlayerView, pickup: number | undefined): { x: number; y: number; name: string } | undefined {
+  if (pickup === undefined) return undefined;
+  if (pickup >= 0) return view.myCities.find((c) => c.id === pickup);
+  const base = view.myUnits.find((u) => u.id === -pickup - 1);
+  return base ? { x: base.x, y: base.y, name: `Airbase ${base.x},${base.y}` } : undefined;
+}
+
 function planPath(view: PlayerView, u: Unit, to: Pos, extraSteps = 0): { path: Pos[] | null; ok: boolean; label: string } {
   const map = pathMapFromView(view);
   const path = findPath(map, u, to);
@@ -411,11 +419,12 @@ export function GameScreen({ session, onQuit }: Props) {
       ? view.ferryRoutes.map((r) => ({
         from: { x: r.pickup.x, y: r.pickup.y }, to: { ...r.drop },
         paused: !view.myUnits.some((u) => u.ferry === r.id && u.orders?.kind === 'goto'),
+        air: r.air,
       }))
       : [];
     // While a new route is being designated, a draft line follows the pointer from the pickup city.
-    const pickup = target === 'ferryDrop' && ferryPlan?.pickup !== undefined ? view.myCities.find((c) => c.id === ferryPlan.pickup) : undefined;
-    if (pickup && hover && !(hover.x === pickup.x && hover.y === pickup.y)) shown.push({ from: { x: pickup.x, y: pickup.y }, to: { ...hover }, paused: false });
+    const pickup = target === 'ferryDrop' ? pickupPlace(view, ferryPlan?.pickup) : undefined;
+    if (pickup && hover && !(hover.x === pickup.x && hover.y === pickup.y)) shown.push({ from: { x: pickup.x, y: pickup.y }, to: { ...hover }, paused: false, air: selectedUnit?.type === 'airCargo' });
     return shown.length > 0 ? shown : undefined;
   }, [routesMap, view, target, ferryPlan, hover]);
 
@@ -1328,13 +1337,17 @@ export function GameScreen({ session, onQuit }: Props) {
         return;
       }
       const mode = target;
+      const air = selectedUnit.type === 'airCargo';
+      const ownBase = air ? view.myUnits.find((u) => u.type === 'airbase' && u.x === p.x && u.y === p.y) : undefined;
       if (mode === 'ferryPickup') {
         const city = view.myCities.find((c) => c.x === p.x && c.y === p.y);
-        if (!city) {
-          setMessage('Click one of your cities for the pickup (Esc cancels).');
+        // An air route may also pick up at an Airbase, written as a negative number.
+        const pickup = city ? city.id : ownBase ? -ownBase.id - 1 : undefined;
+        if (pickup === undefined) {
+          setMessage(air ? 'Click one of your cities or Airbases for the pickup (Esc cancels).' : 'Click one of your cities for the pickup (Esc cancels).');
           return;
         }
-        setFerryPlan((plan) => ({ ...(plan ?? {}), pickup: city.id, note: undefined }));
+        setFerryPlan((plan) => ({ ...(plan ?? {}), pickup, note: undefined }));
         setTarget('ferryDrop');
         setMessage(null);
         return;
@@ -1346,9 +1359,9 @@ export function GameScreen({ session, onQuit }: Props) {
         // The ship sails to the drop square, so it must be water (or a city of yours); cargo goes ashore from there.
         const ground = view.terrain[p.y * view.width + p.x];
         const friendlyCity = view.knownCities.some((c) => c.x === p.x && c.y === p.y && (c.owner === view.me || (c.owner !== null && view.allies.includes(c.owner))));
-        const dropGround = selectedUnit && UNIT_STATS[selectedUnit.type].domain === 'land' ? 'land' : 'water';
-        if (ground !== dropGround && !friendlyCity) {
-          setFerryPlan({ ...plan, note: 'The drop square must be a ' + (dropGround === 'land' ? 'land tile' : 'sea tile') + ' (or a friendly city).' + (dropGround === 'land' ? '' : ' Pick the water beside the coast where the cargo should land.') });
+        const dropGround = air || UNIT_STATS[selectedUnit.type].domain === 'land' ? 'land' : 'water';
+        if (ground !== dropGround && !friendlyCity && !ownBase) {
+          setFerryPlan({ ...plan, note: air ? 'The drop square must be land, a friendly city or an Airbase.' : 'The drop square must be a ' + (dropGround === 'land' ? 'land tile' : 'sea tile') + ' (or a friendly city).' + (dropGround === 'land' ? '' : ' Pick the water beside the coast where the cargo should land.') });
           return;
         }
         const squares = { pickup: plan.pickup, drop: { x: p.x, y: p.y } };
@@ -1465,7 +1478,7 @@ export function GameScreen({ session, onQuit }: Props) {
     const unit = stackAt >= 0 && stack.length > 1 ? stack[(stackAt + 1) % stack.length] : stack[0];
     // A host with room for the selected unit (a carrier for a fighter, a transport for an army) is a boarding
     // order, not a selection. Press Esc first to select the host itself.
-    if (unit && selectedUnit && stackAt < 0 && unit.id !== selectedUnit.id && explored
+    if (unit && selectedUnit && stackAt < 0 && unit.id !== selectedUnit.id && explored && unit.type !== 'airCargo'
       && hostHasRoom(unit, view.myUnits.filter((c) => c.carriedBy === unit.id), selectedUnit.type)) {
       return giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
     }
@@ -1712,7 +1725,7 @@ export function GameScreen({ session, onQuit }: Props) {
               </>
             );
           })()}
-          {target && target !== 'patrol' && <span class="message" role="status">{(target === 'escort' || target === 'unloadTo') && message ? message : target === 'unloadTo' ? 'Unload: click one of the green squares to land on (Esc cancels).' : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? 'Ferry route: click the pickup city (Esc cancels).' : target === 'ferryDrop' ? 'Ferry route: click the drop square (Esc cancels).' : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
+          {target && target !== 'patrol' && <span class="message" role="status">{(target === 'escort' || target === 'unloadTo') && message ? message : target === 'unloadTo' ? 'Unload: click one of the green squares to land on (Esc cancels).' : target === 'escort' ? 'Escort: click one of your transports (Esc cancels).' : target === 'ferryPickup' ? (selectedUnit?.type === 'airCargo' ? 'Air route: click the pickup city or Airbase (Esc cancels).' : 'Ferry route: click the pickup city (Esc cancels).') : target === 'ferryDrop' ? (selectedUnit?.type === 'airCargo' ? 'Air route: click the drop square (Esc cancels).' : 'Ferry route: click the drop square (Esc cancels).') : `${target === 'moveTo' ? 'Move to' : 'Patrol to'}: click a square (Esc cancels).`}</span>}
           {!target && groupHint && <span class="message" role="status">{groupHint}</span>}
           {!target && !groupHint && message && <span class="message" role="status">{message}</span>}
           {!target && !groupHint && !message && playing && nothingLeft && <span class="message" role="status">You have no cities or units left.</span>}
@@ -1728,15 +1741,17 @@ export function GameScreen({ session, onQuit }: Props) {
       </header>
       <div class={target === 'ferryPickup' || target === 'ferryDrop' ? 'mapcol ferry-pick' : 'mapcol'}>
         {(target === 'ferryPickup' || target === 'ferryDrop') && (() => {
-          const pickupCity = ferryPlan?.pickup !== undefined ? view.myCities.find((c) => c.id === ferryPlan.pickup) : undefined;
+          const pickupCity = pickupPlace(view, ferryPlan?.pickup);
+          const air = selectedUnit?.type === 'airCargo';
+          const what = air ? 'an air route' : 'a ferry route';
           return (
-            <div class="ferry-banner" role="status">
+            <div class={air ? 'ferry-banner air-route' : 'ferry-banner'} role="status">
               <span>
-                {'⚓'} <strong>{ferryPlan?.edit !== undefined ? 'Changing a ferry route' : 'Setting up a ferry route'}</strong> (not a move order)
+                {air ? '\u{1FA82}' : '⚓'} <strong>{ferryPlan?.edit !== undefined ? `Changing ${what}` : `Setting up ${what}`}</strong> (not a move order)
                 {' — '}
                 {target === 'ferryPickup'
-                  ? 'Step 1 of 2: click the PICKUP city, where the ship loads.'
-                  : `${pickupCity ? `Pickup: ${pickupCity.name}. ` : ''}${ferryPlan?.edit !== undefined || !pickupCity ? 'Step 2 of 2: ' : ''}Click a SEA square for the drop, where the ship stops and puts the cargo ashore.`}
+                  ? air ? 'Step 1 of 2: click the PICKUP city or Airbase, where the plane loads.' : 'Step 1 of 2: click the PICKUP city, where the ship loads.'
+                  : `${pickupCity ? `Pickup: ${pickupCity.name}. ` : ''}${ferryPlan?.edit !== undefined || !pickupCity ? 'Step 2 of 2: ' : ''}${air ? 'Click the DROP: a city or Airbase to fly troops and Armor there, or open LAND to parachute troops.' : 'Click a SEA square for the drop, where the ship stops and puts the cargo ashore.'}`}
                 {ferryPlan?.note && <strong class="error" role="alert"> {ferryPlan.note}</strong>}
               </span>
               <button onClick={(e) => { blur(e); setTarget(null); setFerryPlan(null); setPicker('ferry'); }}>Back to the dialog (Esc)</button>
@@ -1853,9 +1868,12 @@ export function GameScreen({ session, onQuit }: Props) {
             }}
             onPickSquares={(routeId) => {
               setPicker(null);
-              const here = routeId === null ? view.myCities.find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y) : undefined;
-              setFerryPlan({ ...(routeId !== null ? { edit: routeId } : {}), ...(here ? { pickup: here.id } : {}) });
-              setTarget(here ? 'ferryDrop' : 'ferryPickup');
+              // Starting from where the carrier stands: a city of ours, or (Air Transport) the Airbase it is parked at.
+              const city = view.myCities.find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
+              const base = pickerUnit.type === 'airCargo' ? airbaseUnder(view, pickerUnit) : undefined;
+              const here = routeId !== null ? undefined : city ? city.id : base ? -base.id - 1 : undefined;
+              setFerryPlan({ ...(routeId !== null ? { edit: routeId } : {}), ...(here !== undefined ? { pickup: here } : {}) });
+              setTarget(here !== undefined ? 'ferryDrop' : 'ferryPickup');
               setMessage(null);
             }}
           />
@@ -1888,13 +1906,13 @@ export function GameScreen({ session, onQuit }: Props) {
         <div class="overlay">
           <UnitPicker
             title={`Unload from ${UNIT_STATS[pickerUnit.type].name} #${pickerUnit.id}`}
-            units={cargo}
+            units={pickerUnit.type === 'airCargo' && !planeOnGround(view, pickerUnit) ? cargo.filter((c) => !isVehicle(c.type)) : cargo}
             onCancel={() => setPicker(null)}
             onConfirm={(ids) => {
               if (ids.length === 0) return;
               setPicker(null);
               const all = ids.length === cargo.length ? null : ids;
-              // Several free squares to land on (at sea or from an APC): the player clicks the one they want.
+              // Several free squares to land on (at sea, from an APC or an airdrop): the player clicks the one they want.
               const inCity = view.myCities.some((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
               if (!inCity && UNIT_STATS[pickerUnit.type].carries.includes('army') && landingDirs(view, pickerUnit, ids[0]).length > 1) {
                 setUnloadTo({ transportId: pickerUnit.id, ids: all });

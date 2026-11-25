@@ -19,6 +19,7 @@ export const UNIT_ICONS: Partial<Record<UnitType, UnitIcon>> = {
   troopTransport: { src: '/art/units/troopTransport.webp', faces: 'right', size: 1 },
   fighter: { src: '/art/units/fighter.webp', faces: 'right', size: 0.92 },
   bomber: { src: '/art/units/bomber.webp', faces: 'right', size: 0.95 },
+  airCargo: { src: '/art/units/airCargo.webp', faces: 'right', size: 1 },
   spy: { src: '/art/units/spy.webp', faces: 'right', size: 0.95 },
   airbase: { src: '/art/units/airbase.webp', faces: null, size: 0.95 },
   destroyer: { src: '/art/units/destroyer.webp', faces: 'right', size: 0.84 },

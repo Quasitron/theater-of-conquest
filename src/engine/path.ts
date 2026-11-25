@@ -49,6 +49,8 @@ function buildOwn(
     if (!e) own.set(i, (e = { count: 0, air: 0, room: {} }));
     e.count++;
     if (UNIT_STATS[u.type].domain === 'air') e.air++;
+    // Nothing walks or flies aboard an Air Transport out in the open: it is loaded in a city or at an Airbase.
+    if (u.type === 'airCargo') continue;
     for (const carried of UNIT_STATS[u.type].carries) e.room[carried] = (e.room[carried] ?? 0) + cargoCapacity(u) - (cargo.get(u.id) ?? 0);
   }
   return own;

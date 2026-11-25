@@ -51,10 +51,17 @@ interface Row {
 export function FerryDialog({ view, unit, draft, onDraft, onPickSquares, onSave, onCancel, error }: Props) {
   const [open, setOpen] = useState<Set<number>>(new Set());
   const assigned = draft.assign === undefined ? unit.ferry ?? null : draft.assign === 'new' ? -1 : draft.assign;
-  const cityName = (id: number) => view.myCities.find((c) => c.id === id)?.name ?? '?';
+  const air = unit.type === 'airCargo';
+  /** A pickup's name: a city, or (air routes) an Airbase, written as a negative number. */
+  const cityName = (id: number) => {
+    if (id >= 0) return view.myCities.find((c) => c.id === id)?.name ?? '?';
+    const base = view.myUnits.find((u) => u.id === -id - 1);
+    return base ? `Airbase ${base.x},${base.y}` : '?';
+  };
   const label = (pickup: number, drop: { x: number; y: number }) => ferryLabel(view, { pickup: { name: cityName(pickup) }, drop });
 
-  const rows: Row[] = view.ferryRoutes.map((r) => {
+  // Air routes and surface routes are kept apart.
+  const rows: Row[] = view.ferryRoutes.filter((r) => r.air === air).map((r) => {
     const sq = draft.squares[r.id];
     return {
       id: r.id,
@@ -90,10 +97,11 @@ export function FerryDialog({ view, unit, draft, onDraft, onPickSquares, onSave,
   };
 
   return (
-    <div class="picker ferry-dialog">
-      <h3>Ferry route for {UNIT_STATS[unit.type].name} #{unit.id}</h3>
+    <div class={air ? 'picker ferry-dialog air-route' : 'picker ferry-dialog'}>
+      <h3>{air ? '\u{1FA82} Air route' : 'Ferry route'} for {UNIT_STATS[unit.type].name} #{unit.id}</h3>
+      {air && <span class="muted">A route to a city or Airbase flies troops and one Armor. A route to open land parachutes troops only.</span>}
       <span><strong>Current Route Assignment:</strong> {current ? current.label.replace(' (new)', '') : 'None'}</span>
-      <strong>Existing Routes</strong>
+      <strong>{air ? 'Existing Air Routes' : 'Existing Routes'}</strong>
       {rows.length === 0 ? <span class="muted">None yet: use New route… below.</span> : (
         <div class="ferry-table-scroll" style={{ maxHeight: `${FERRY_ROWS_VISIBLE * 1.8 + 1.6}em` }}>
           <div class="ferry-table">

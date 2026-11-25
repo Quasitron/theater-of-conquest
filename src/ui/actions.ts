@@ -1,16 +1,27 @@
-import { UNIT_STATS, canBecomeAirbase, canFerry, canHunt, hostHasRoom, rankOf, unitDisplayName, type Orders, type PlayerView, type Pos, type Unit } from '../engine';
+import { UNIT_STATS, canBecomeAirbase, canFerry, canHunt, chebyshev, hostHasRoom, isVehicle, rankOf, unitDisplayName, type MapLike, type Orders, type PlayerView, type Pos, type Unit } from '../engine';
 import type { ActionId } from './keys';
 
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
 const inAllyCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.knownCities.some((c) => c.x === u.x && c.y === u.y && c.owner !== null && v.allies.includes(c.owner));
 
-/** Own units on the transport's square that could board it, by id. */
+/** The own Airbase an aircraft is parked at, if it is at one. */
+export const airbaseUnder = (view: PlayerView, u: Unit): Unit | undefined =>
+  u.carriedBy === null ? undefined : view.myUnits.find((h) => h.id === u.carriedBy && h.type === 'airbase');
+
+/** Whether an Air Transport is in a city of yours or a teammate's, or at an Airbase: where vehicles can get out. */
+export const planeOnGround = (view: PlayerView, plane: Unit): boolean =>
+  inOwnCity(view, plane) || inAllyCity(view, plane) || airbaseUnder(view, plane) !== undefined;
+
+/** Own units on the transport's square (or, for an Air Transport at an Airbase, beside it) that could board it, by id. */
 export function loadCandidates(view: PlayerView, t: Unit): Unit[] {
   if (UNIT_STATS[t.type].carries.length === 0) return [];
   const aboard = view.myUnits.filter((c) => c.carriedBy === t.id);
+  const base = t.type === 'airCargo' && airbaseUnder(view, t) !== undefined;
   // Only units that still fit: a full transport has nothing to pick (so Load is not offered).
   return view.myUnits
-    .filter((u) => u.id !== t.id && u.carriedBy === null && u.x === t.x && u.y === t.y && hostHasRoom(t, aboard, u.type))
+    .filter((u) => u.id !== t.id && u.carriedBy === null && hostHasRoom(t, aboard, u.type) && (base
+      ? u.movesLeft > 0 && !inOwnCity(view, u) && chebyshev(view as unknown as MapLike, u, t) === 1
+      : u.x === t.x && u.y === t.y))
     .sort((a, b) => a.id - b.id);
 }
 
@@ -46,14 +57,15 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     center: true,
     endTurn: true,
     disband: true,
-    load: st.carries.length > 0 && (inCity || u.type === 'troopTransport') && loadCandidates(view, u).length > 0,
-    unload: hasCargo,
+    load: st.carries.length > 0 && (inCity || u.type === 'troopTransport' || (u.type === 'airCargo' && airbaseUnder(view, u) !== undefined)) && loadCandidates(view, u).length > 0,
+    // In flight an Air Transport can only put out troops.
+    unload: hasCargo && (u.type !== 'airCargo' || planeOnGround(view, u) || view.myUnits.some((c) => c.carriedBy === u.id && !isVehicle(c.type))),
     // Home is any city of yours or a teammate's (an ally's city refuels and repairs too).
     goHome: !fixed && !inCity && !inAllyCity(view, u) && (view.myCities.length > 0 || view.knownCities.some((c) => c.owner !== null && view.allies.includes(c.owner))),
     patrol: !fixed,
     // A warship (not a transport) can escort when a transport of ours at sea has no escort yet.
     escort: st.domain === 'sea' && u.type !== 'transport' && u.carriedBy === null && escortable(view, u).length > 0,
-    ferry: canFerry(u.type) && u.carriedBy === null,
+    ferry: canFerry(u.type) && (u.carriedBy === null || airbaseUnder(view, u) !== undefined),
     // A carrier whose route was interrupted (an enemy came near, say) carries on with it.
     resumeFerry: u.ferry !== undefined && u.orders === null && view.ferryRoutes.some((r) => r.id === u.ferry),
     // A patrol that was interrupted (an enemy sighted, a block, low fuel) can be picked up again.
@@ -91,11 +103,12 @@ export function ferryLabel(view: PlayerView, r: { pickup: { name: string }; drop
 /** The orders of u in words, naming the transport an escort follows. */
 export function ordersText(view: PlayerView, u: Unit): string {
   const route = u.ferry === undefined ? undefined : view.ferryRoutes.find((r) => r.id === u.ferry);
-  if (route && u.orders === null) return `Ferry paused: ${ferryLabel(view, route)}`;
+  const kind = route?.air ? 'Air route' : 'Ferry';
+  if (route && u.orders === null) return `${kind} paused: ${ferryLabel(view, route)}`;
   if (route && u.orders?.kind === 'goto' && u.orders.ferry) {
     const here = u.x === route.pickup.x && u.y === route.pickup.y;
     const leg = u.orders.ferry === 'drop' ? 'to drop' : here ? `waiting at ${route.pickup.name}${route.waitFull ? ' for a full load' : ' for cargo'}` : `to ${route.pickup.name}`;
-    return `Ferry: ${ferryLabel(view, route)} (${leg})`;
+    return `${kind}: ${ferryLabel(view, route)} (${leg})`;
   }
   if (u.orders === null && u.lastPatrol) return 'None (patrol interrupted: Resume Patrol)';
   return describeOrders(u.orders, (id) => {

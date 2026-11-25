@@ -44,7 +44,7 @@ interface Props {
   /** Own units heading left, so their pictures are mirrored. */
   headingLeft?: ReadonlySet<number>;
   cityRoutes?: { from: Pos; to: Pos; types: UnitType[] }[];
-  ferryRoutes?: { from: Pos; to: Pos; paused: boolean }[];
+  ferryRoutes?: { from: Pos; to: Pos; paused: boolean; air?: boolean }[];
   attack: { at: Pos; label: string } | null;
   /** Unload: the squares the units can land on, highlighted. */
   landing?: readonly Pos[];

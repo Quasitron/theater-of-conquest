@@ -1,8 +1,9 @@
 import type { Dir, GameEvent, GameState, Pos, Unit } from './types';
 import type { RandomSource } from './rng';
-import { UNIT_STATS, armorBlockedBy, armorSlowedBy, canCarry, movesLikeArmor } from './units';
+import { UNIT_STATS, armorBlockedBy, armorSlowedBy, isVehicle, movesLikeArmor } from './units';
 import { reliefAt, step, terrainAt } from './map';
-import { canJoinStack, cargoOf, cargoRoom, cityAt, destroyUnit, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
+import { airbaseUnder, canJoinStack, cargoOf, cityAt, destroyUnit, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
+import { boardOnDeparture } from './ferry';
 import { areFriendly } from './relations';
 import { attackCity, attackUnit, bombCity, bombardCity } from './attack';
 
@@ -17,7 +18,8 @@ export function slowArmor(s: GameState, u: Unit): void {
   if (movesLikeArmor(u.type) && s.rules.advancedUnits && armorSlowedBy(reliefAt(s, u.x, u.y))) u.movesLeft = 0;
 }
 
-export function relocate(s: GameState, u: Unit, to: Pos, events: GameEvent[]): void {
+/** `base` is the Airbase the unit is taking off from, if any. */
+export function relocate(s: GameState, u: Unit, to: Pos, events: GameEvent[], base?: Unit): void {
   const from = { x: u.x, y: u.y };
   const leaving = cityAt(s, from.x, from.y);
   u.x = to.x;
@@ -29,30 +31,7 @@ export function relocate(s: GameState, u: Unit, to: Pos, events: GameEvent[]): v
     c.y = to.y;
   }
   // A transport leaving a city takes the armies there, and a carrier the fighters, up to capacity.
-  // (Not a ferry carrier sailing back to its pickup city: it has just put its cargo ashore here and must not take it again.)
-  const returning = u.ferry !== undefined && u.orders?.kind === 'goto' && u.orders.ferry === 'pickup';
-  if (UNIT_STATS[u.type].carries.length > 0 && leaving && !returning && areFriendly(s, leaving.owner, u.owner)) {
-    let room = cargoRoom(s, u);
-    const waiting = s.units.filter(
-      (a) =>
-        canCarry(u.type, a.type) &&
-        a.carriedBy === null &&
-        a.owner === u.owner &&
-        a.x === from.x &&
-        a.y === from.y &&
-        !(s.rules.sentriedStayAsGarrison && a.orders !== null),
-    );
-    for (const a of waiting) {
-      const need = UNIT_STATS[a.type].slots;
-      if (need > room) continue;
-      room -= need;
-      a.carriedBy = u.id;
-      a.x = to.x;
-      a.y = to.y;
-      // Armies aboard sleep; fighters aboard a carrier wait for orders until the player sentries them.
-      a.orders = UNIT_STATS[a.type].domain === 'air' ? null : { kind: 'sentry' };
-    }
-  }
+  boardOnDeparture(s, u, from, to, leaving, base);
   // Aircraft patrols tied to this carrier move with it, as in the original.
   for (const p of s.units) {
     const o = p.orders;
@@ -80,14 +59,43 @@ export function wakeSentry(host: Unit): void {
   }
 }
 
+/** Whether land unit `u` can be put out of an Air Transport onto the square `to`; an error message when not. */
+export function leavePlaneError(s: GameState, u: Unit, plane: Unit, to: Pos): string | null {
+  if (isVehicle(u.type) && !airbaseUnder(s, plane)) return 'vehicles can only unload in a city or at an Airbase';
+  const city = cityAt(s, to.x, to.y);
+  if (city) return areFriendly(s, city.owner, u.owner) ? null : 'troops cannot be dropped into that city';
+  if (terrainAt(s, to.x, to.y) !== 'land') return 'land units cannot enter water';
+  if (movesLikeArmor(u.type) && s.rules.advancedUnits && armorBlockedBy(reliefAt(s, to.x, to.y))) return u.type === 'armor' ? 'Armor cannot enter mountains' : 'an APC cannot enter mountains';
+  const here = topLevelUnitsAt(s, to.x, to.y);
+  if (here.some((o) => !areFriendly(s, o.owner, u.owner))) return 'troops cannot be dropped onto an enemy';
+  return here.length === 0 || canJoinStack(s, u, to) ? null : 'square is occupied';
+}
+
+/** Puts a unit out of its Air Transport onto the adjacent square; that is its turn. */
+export function leavePlane(s: GameState, u: Unit, plane: Unit, to: Pos, events: GameEvent[]): string | null {
+  const error = leavePlaneError(s, u, plane, to);
+  if (error) return error;
+  u.carriedBy = null;
+  relocate(s, u, to, events);
+  u.movesLeft = 0;
+  u.movedThisTurn = true;
+  return null;
+}
+
 export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, events: GameEvent[]): string | null {
   if (u.type === 'airbase') return 'an airbase cannot move';
   if (u.movesLeft <= 0) return 'unit has no moves left';
   const to = step(s, u.x, u.y, dir);
   if (!to) return 'cannot move off the map';
   const st = UNIT_STATS[u.type];
+  // Where it is leaving from: an Airbase it is parked at, or an Air Transport it is riding in.
+  const base = airbaseUnder(s, u);
+  const plane = u.carriedBy === null ? undefined : s.units.find((h) => h.id === u.carriedBy && h.type === 'airCargo');
 
   const city = cityAt(s, to.x, to.y);
+  // Leaving an Air Transport anywhere but a friendly city is an airdrop (or, at an Airbase, an unloading).
+  const from = cityAt(s, u.x, u.y);
+  if (plane && !(from && areFriendly(s, from.owner, u.owner))) return leavePlane(s, u, plane, to, events);
   if (u.type === 'spy' && city && !areFriendly(s, city.owner, u.owner)) {
     // A spy slips into an enemy city without a fight, and unseen.
     if (city.owner === null) return 'a spy has no business in a neutral city';
@@ -98,6 +106,7 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
   }
   if (city && !areFriendly(s, city.owner, u.owner)) {
     if (u.type === 'troopTransport') return 'an APC cannot attack';
+    if (u.type === 'airCargo') return 'an Air Transport cannot attack';
     if (st.domain === 'sea' && st.bombard && s.rules.cityStrength && city.owner !== null) return bombardCity(s, rng, u, city, events);
     if (st.domain === 'air' && u.type === 'bomber' && s.rules.advancedUnits) return bombCity(s, rng, u, city, events);
     if (st.domain !== 'land') return 'only land units can attack cities';
@@ -113,20 +122,20 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
   if (city) {
     spendMove(u);
     u.carriedBy = null;
-    relocate(s, u, to, events);
+    relocate(s, u, to, events, base);
     settleAircraft(s, u, events);
     return null;
   }
 
   const host = occupants.find(
-    (o) => o.owner === u.owner && hasRoomFor(s, o, u.type),
+    (o) => o.owner === u.owner && o.type !== 'airCargo' && hasRoomFor(s, o, u.type),
   );
   if (host) {
     spendMove(u);
     u.carriedBy = host.id;
     u.orders = st.domain === 'air' ? null : { kind: 'sentry' };
     wakeSentry(host);
-    relocate(s, u, to, events);
+    relocate(s, u, to, events, base);
     settleAircraft(s, u, events);
     return null;
   }
@@ -142,7 +151,7 @@ export function moveUnit(s: GameState, rng: RandomSource, u: Unit, dir: Dir, eve
 
   spendMove(u);
   u.carriedBy = null;
-  relocate(s, u, to, events);
+  relocate(s, u, to, events, base);
   slowArmor(s, u);
   settleAircraft(s, u, events);
   return null;
