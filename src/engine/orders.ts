@@ -1,6 +1,6 @@
 import type { City, GameEvent, GameState, Orders, OrdersEndReason, PlayerId, Pos, Unit } from './types';
 import type { RandomSource } from './rng';
-import { UNIT_STATS, attackRating, canCarry, fightRatings, hitsOf, isCrippled } from './units';
+import { UNIT_STATS, attackRating, canCarry, canHunt, fightRatings, hitsOf, isCrippled } from './units';
 import { combatWinChance } from './combat';
 import { chebyshev, index, isCoastal, neighbors, reliefAt } from './map';
 import { canJoinStack, cityAt, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
@@ -9,7 +9,7 @@ import { canPlayerSeeUnit, updateFog } from './fog';
 import { moveUnit } from './movement';
 import { attackRestriction, attackUnit } from './attack';
 import { unloadCargo } from './cargo';
-import { aircraftCanReach, dirBetween, findFrontier, findPath, pathMapFromState } from './path';
+import { aircraftCanReach, dirBetween, findBeside, findFrontier, findPath, pathMapFromState } from './path';
 import { pickUpRoute } from './routes';
 import { ferryArrive, ferryRouteOf, pruneFerryRoutes } from './ferry';
 
@@ -77,6 +77,8 @@ export function validateOrders(s: GameState, u: Unit, o: Orders): string | null 
       return null;
     case 'explore':
       return air ? NO_AIR_EXPLORE : null;
+    case 'hunt':
+      return canHunt(u.type) ? null : 'only armies, armor and warships can hunt';
     case 'repair':
       if (u.damage === 0) return 'nothing to repair';
       if (u.carriedBy !== null || !inFriendlyCity(s, u)) return 'repairs need a friendly city';
@@ -174,6 +176,33 @@ function endOrders(u: Unit, reason: OrdersEndReason, events: GameEvent[]): void 
 
 /** Explorers that can capture a city (Army, Armor) also head for known neutral cities, stopping beside them. */
 const canTakeCities = (u: Unit): boolean => u.type === 'army' || u.type === 'armor';
+
+/**
+ * The squares a hunter is after, as its owner knows them: enemy units of its own element (visible now, or remembered
+ * where last seen), and for an Army or Armor also known enemy and neutral cities.
+ */
+function huntTargets(s: GameState, u: Unit): Set<number> {
+  const fog = s.fog[u.owner];
+  const domain = UNIT_STATS[u.type].domain;
+  const out = new Set<number>();
+  for (const e of Object.values(fog.lastSeen)) {
+    if (!areFriendly(s, e.owner, u.owner) && (UNIT_STATS[e.type].domain === domain || (domain === 'land' && e.type === 'airbase'))) {
+      out.add(index(s, e.x, e.y));
+    }
+  }
+  if (canTakeCities(u)) {
+    for (const c of s.cities) {
+      const i = index(s, c.x, c.y);
+      if (fog.explored[i] && c.owner !== u.owner && !areFriendly(s, fog.knownCityOwner[c.id] ?? null, u.owner)) out.add(i);
+    }
+  }
+  return out;
+}
+
+/** Where a hunter heads next: beside the nearest target it can reach, else the nearest unexplored edge. */
+function huntGoal(s: GameState, u: Unit, map: ReturnType<typeof pathMapFromState>): Pos | null {
+  return findBeside(map, u, huntTargets(s, u)) ?? findFrontier(map, u);
+}
 
 /** True when a visible enemy unit stands next to `u`. */
 function enemyAdjacent(s: GameState, u: Unit): boolean {
@@ -301,6 +330,11 @@ export function executeOrders(
       const dest = s.cities.find((c) => c.id === o.routeCity);
       if (!dest || dest.owner !== u.owner) return endOrders(u, 'destinationLost', events);
     }
+    // A hunter already beside its quarry asks for orders before it wanders off elsewhere.
+    if (o.kind === 'hunt' && u.carriedBy === null && s.units.some((e) => !areFriendly(s, e.owner, u.owner)
+      && UNIT_STATS[e.type].domain === UNIT_STATS[u.type].domain && chebyshev(s, e, u) <= 1 && canPlayerSeeUnit(s, u.owner, e))) {
+      return endOrders(u, 'enemySighted', events);
+    }
     const map = pathMapFromState(s, u.owner);
     if (o.kind === 'patrol' && o.loop && o.loop.length > 0 && u.fuel !== null) {
       // A waypoint that cannot be flown to (an enemy on it, say) is passed over for this lap.
@@ -308,8 +342,9 @@ export function executeOrders(
       if (!o.loop.some((p) => (p.x !== o.a.x || p.y !== o.a.y) && reachable(p))) return endOrders(u, 'blocked', events);
       while ((o.leg ?? 0) < o.loop.length && !reachable(patrolTarget(o))) o.leg = (o.leg ?? 0) + 1;
     }
-    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? patrolTarget(o) : findFrontier(map, u, canTakeCities(u));
-    if (target === null) return endOrders(u, 'nothingToExplore', events);
+    const target = o.kind === 'goto' ? o.target : o.kind === 'patrol' ? patrolTarget(o)
+      : o.kind === 'hunt' ? huntGoal(s, u, map) : findFrontier(map, u, canTakeCities(u));
+    if (target === null) return endOrders(u, o.kind === 'hunt' ? 'nothingToHunt' : 'nothingToExplore', events);
     if (u.x === target.x && u.y === target.y) {
       if (o.kind === 'goto') {
         arrive();
@@ -369,9 +404,9 @@ export function executeOrders(
     if (ownBlocks(s, u, next)) {
       const freeMap = pathMapFromState(s, u.owner, { blockOwn: true });
       let detour = findPath(freeMap, u, target);
-      if (detour === null && o.kind === 'explore') {
+      if (detour === null && (o.kind === 'explore' || o.kind === 'hunt')) {
         // No free way to that frontier: an explorer heads for the nearest frontier it can still reach round the stack.
-        const other = findFrontier(freeMap, u, canTakeCities(u));
+        const other = o.kind === 'hunt' ? huntGoal(s, u, freeMap) : findFrontier(freeMap, u, canTakeCities(u));
         if (other) detour = findPath(freeMap, u, other);
       }
       if (detour && detour.length > 0 && !ownBlocks(s, u, detour[0])) next = detour[0];
@@ -391,7 +426,7 @@ export function executeOrders(
       return blocked();
     }
     const dir = dirBetween(s, u, next);
-    const cityBefore = o.kind === 'explore' ? adjacentForeignCities(s, u) : null;
+    const cityBefore = o.kind === 'explore' || o.kind === 'hunt' ? adjacentForeignCities(s, u) : null;
     if (dir === null || moveUnit(s, rng, u, dir, events) !== null) return blocked();
     if (!s.units.includes(u)) return;
     if (o.kind === 'patrol' && u.carriedBy !== null) u.orders = o; // boarding made it a sentry; a patrol keeps flying

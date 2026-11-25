@@ -28,7 +28,7 @@ function unitLine(t: UnitType): string {
 }
 
 const KEY_ORDER = [
-  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'patrol', 'goHome', 'explore', 'escort', 'ferry', 'resumeFerry', 'resumePatrol', 'load', 'unload',
+  'next', 'skip', 'hold', 'sentry', 'repair', 'moveTo', 'patrol', 'goHome', 'explore', 'hunt', 'escort', 'ferry', 'resumeFerry', 'resumePatrol', 'load', 'unload',
   'clearOrders', 'disband', 'airbase', 'sabotage', 'hurt', 'incite', 'center', 'fit', 'info', 'endTurn',
 ] as const;
 
@@ -41,6 +41,7 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   moveTo: 'Move To: then click a square; the unit goes there by the shortest known way, over as many turns as it takes.',
   patrol: 'Patrol a route: press P, click each waypoint in turn (a triangle, a stretch of coast), then click the start (the city, carrier or square the unit stands on) or press Done. The unit visits the waypoints in order, returns to the start and goes round again. For out and back, click the far square, then the start. Aircraft must start at a city or carrier and can only add waypoints while the whole route, back to the base, fits in their fuel.',
   goHome: 'Go Home: head for the nearest friendly city.',
+  hunt: 'Hunt: an Army, Armor or warship goes looking for a fight. It heads for the nearest known enemy unit of its own kind (land or sea), including one seen in the last few turns, and an Army or Armor also for enemy and neutral cities. With nothing known it explores. It never attacks by itself: next to its quarry it stops and asks for orders.',
   explore: 'Explore: the unit wanders out to uncover the nearest unexplored squares by itself. An Army or Armor also heads for a known neutral city when it is nearer, and stops beside it so you can decide.',
   escort: 'Escort: a warship follows a Transport and guards it, fighting what it is likely to beat.',
   ferry: 'Ferry Route: a Transport (or any other carrier except a Carrier) runs a standing route: it loads at a pickup city, sails to a drop square, puts everything ashore, and goes back, over and over. Routes are shared: pick an existing one to put another carrier on it. A route can wait at the pickup until the carrier is full. When an enemy comes near, or the pickup city is lost, the carrier waits for orders.',
@@ -102,7 +103,7 @@ export function buildManual(): ManualSection[] {
       id: 'keys',
       title: 'Keys and mouse',
       paragraphs: [
-        'Move with the number pad (8 up, 9 up-right, 6 right, 3 down-right, 2 down, 1 down-left, 4 left, 7 up-left) or Home, PageUp, PageDown and End for the diagonals. The arrow keys scroll the map. Esc deselects or closes whatever is open.',
+        'Move with the number pad (8 up, 9 up-right, 6 right, 3 down-right, 2 down, 1 down-left, 4 left, 7 up-left) or Home, PageUp, PageDown and End for the diagonals. With a unit selected the arrow keys move it too (up, right, down, left); with none selected they scroll the map. Esc deselects or closes whatever is open.',
         'Clicking a distant square with a unit selected sends the unit there. The Orders menu at the top lists the orders the selected unit can be given.',
       ],
       items: KEY_ORDER.map((id) => ({ term: `${ACTION_LABELS[id].label} (${ACTION_LABELS[id].key})`, text: KEY_MEANING[id] })),

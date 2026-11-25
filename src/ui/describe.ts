@@ -18,6 +18,7 @@ const ORDERS_END: Record<Exclude<OrdersEndReason, 'arrived' | 'returning' | 'bas
   enemySighted: 'enemy sighted',
   lowFuel: 'low on fuel',
   nothingToExplore: 'nothing left to explore',
+  nothingToHunt: 'nothing left to hunt',
   destinationLost: 'destination city lost',
   escortLost: 'its transport is gone',
   crippled: 'badly damaged',

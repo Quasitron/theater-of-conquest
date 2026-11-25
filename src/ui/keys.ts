@@ -1,6 +1,6 @@
 import type { Dir } from '../engine';
 
-export type ActionId = 'next' | 'skip' | 'hold' | 'sentry' | 'repair' | 'moveTo' | 'patrol' | 'goHome' | 'explore'
+export type ActionId = 'next' | 'skip' | 'hold' | 'sentry' | 'repair' | 'moveTo' | 'patrol' | 'goHome' | 'explore' | 'hunt'
   | 'load' | 'unload' | 'clearOrders' | 'disband' | 'center' | 'endTurn' | 'info' | 'fit' | 'escort' | 'airbase' | 'sabotage' | 'hurt' | 'incite' | 'ferry' | 'resumeFerry' | 'resumePatrol';
 
 export type KeyAction =
@@ -20,8 +20,8 @@ const ARROWS: Record<string, { dir: Dir; dx: number; dy: number }> = {
   ArrowLeft: { dir: 6, dx: -3, dy: 0 },
 };
 const ACTIONS: Record<string, ActionId> = {
-  n: 'next', ' ': 'skip', tab: 'hold', s: 'sentry', r: 'repair', t: 'moveTo', p: 'patrol', h: 'goHome', x: 'explore',
-  e: 'escort', b: 'airbase', g: 'sabotage', m: 'hurt', v: 'incite', l: 'load', u: 'unload', insert: 'clearOrders', delete: 'disband', c: 'center', enter: 'endTurn', i: 'info', z: 'fit', f: 'ferry', y: 'resumeFerry', k: 'resumePatrol',
+  n: 'next', ' ': 'skip', tab: 'hold', s: 'sentry', r: 'repair', t: 'moveTo', p: 'patrol', h: 'goHome', x: 'explore', w: 'hunt',
+  e: 'escort', a: 'airbase', g: 'sabotage', m: 'hurt', v: 'incite', l: 'load', u: 'unload', insert: 'clearOrders', delete: 'disband', c: 'center', enter: 'endTurn', i: 'info', z: 'fit', f: 'ferry', y: 'resumeFerry', k: 'resumePatrol',
 };
 
 export function keyToAction(key: string, code: string): KeyAction | null {

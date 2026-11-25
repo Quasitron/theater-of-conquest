@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'hunt-order',
+    version: '0.9.159',
+    date: '2026-11-25',
+    title: 'New order: Hunt',
+    text: ['Tell an Army, Armor or warship to Hunt (W) and it heads for the nearest known enemy, or for enemy and neutral cities if it can take them, and explores when nothing is known. It stops beside its quarry and asks you what to do.', 'Build Airbase is now on A instead of B.'],
+  },
+  {
     id: 'patrol-skip-blocked',
     version: '0.9.158',
     date: '2026-11-25',

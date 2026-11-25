@@ -81,13 +81,15 @@ export type Orders =
       leg?: number;
     }
   | { kind: 'explore' }
+  /** Heads for the nearest known enemy unit or (land units) enemy or neutral city, else the unexplored edge. */
+  | { kind: 'hunt' }
   /** Sits in a friendly city until its damage is repaired, then wakes up. */
   | { kind: 'repair' }
   /** A warship that follows one of its own transports, staying beside it and fighting enemy ships that come next to it. */
   | { kind: 'escort'; transportId: number };
 
 export type OrdersEndReason =
-  | 'arrived' | 'blocked' | 'enemySighted' | 'lowFuel' | 'nothingToExplore' | 'cityFound' | 'returning' | 'destinationLost'
+  | 'arrived' | 'blocked' | 'enemySighted' | 'lowFuel' | 'nothingToExplore' | 'nothingToHunt' |'cityFound' | 'returning' | 'destinationLost'
   | 'baseLost' | 'baseOutOfRange' | 'repaired' | 'cityLost' | 'escortLost' | 'crippled';
 
 /** A city's standing route: matching units it builds head for another city of the owner. */
