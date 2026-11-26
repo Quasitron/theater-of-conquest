@@ -40,10 +40,10 @@ const aboard = (s: GameState, plane: Unit, type: 'army' | 'armor' | 'spy' | 'tro
   addUnit(s, type, 0, plane.x, plane.y, { carriedBy: plane.id, orders: { kind: 'sentry' } });
 
 describe('Air Transport', () => {
-  it('is built only with the Advanced units rule, as slowly as a Spy', () => {
+  it('is built only with the Advanced units rule, in 22 turns and then 18', () => {
     expect(buildableTypes({ advancedUnits: true })).toContain('airCargo');
     expect(buildableTypes({ advancedUnits: false })).not.toContain('airCargo');
-    expect(UNIT_STATS.airCargo).toMatchObject({ move: 4, range: 16, hits: 1, attack: 0, capacity: 4, build: UNIT_STATS.spy.build, buildRepeat: UNIT_STATS.spy.buildRepeat });
+    expect(UNIT_STATS.airCargo).toMatchObject({ move: 4, range: 16, hits: 1, attack: 0, capacity: 4, build: 22, buildRepeat: 18 });
   });
 
   it('defends like a Bomber and cannot attack', () => {
