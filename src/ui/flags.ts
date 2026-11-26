@@ -16,6 +16,7 @@ const FLAG_CODES: Record<string, string> = {
 /** The flag picture of a country by name, or null when the name is not a known country (a player's own name, a random map). The Confederate States have their own. */
 export function flagUrl(nation: string): string | null {
   if (nation === 'Confederate States') return '/art/flags/csa.webp';
+  if (nation === 'Newfoundland') return '/art/flags/newfoundland.webp';
   const code = FLAG_CODES[nation];
   return code ? `/art/flags/${code}.webp` : null;
 }

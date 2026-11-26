@@ -185,8 +185,20 @@ async function build(t, land50, lakes50, rivers, places, regions) {
   const usedNames = new Set();
   const taken = new Set();
   const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
-  for (const p of candidates) {
-    if (cities.length >= target) break;
+  // A country can be split by state or province (the American Civil War: Union and Confederacy); a single city can be re-assigned by name.
+  const nationOf = (p) => t.nationOverrides?.[p.name] ?? t.nationByRegion?.[p.adm0name]?.[p.adm1name] ?? p.adm0name;
+  // With city zones each group of countries has its own quota, and every start country is served first so that none runs short.
+  const zoneOf = (nation) => t.cityZones.find((z) => !z.nations || z.nations.includes(nation));
+  const inZone = new Map();
+  const perNation = new Map();
+  const queued = t.cityZones ? [...candidates.map((p) => [p, true]), ...candidates.map((p) => [p, false])] : candidates.map((p) => [p, false]);
+  const used = new Set();
+  for (const [p, first] of queued) {
+    if (!t.cityZones && cities.length >= target) break;
+    if (used.has(p)) continue;
+    const nation = nationOf(p);
+    if (first && !(t.startNations?.includes(nation) && (perNation.get(nation) ?? 0) < (t.minNationCities ?? 4))) continue;
+    if (t.cityZones && (inZone.get(zoneOf(nation)) ?? 0) >= zoneOf(nation).cities) continue;
     let [ci, cj] = cellOf(p.longitude, p.latitude);
     if (!inside(ci, cj)) continue;
     if (!land[cj * W + ci]) { // a port on a coarse coast: the nearest land square beside it
@@ -198,15 +210,18 @@ async function build(t, land50, lakes50, rivers, places, regions) {
       ci += best[0]; cj += best[1];
     }
     if (cities.some((c) => cheb([c.x, c.y], [ci, cj]) < (t.citySpacing ?? MIN_CITY_SPACING))) continue;
-    // A country can be split by state or province (the American Civil War: Union and Confederacy); a single city can be re-assigned by name.
-    const nation = t.nationOverrides?.[p.name] ?? t.nationByRegion?.[p.adm0name]?.[p.adm1name] ?? p.adm0name;
     // Two cities can share a name (Victoria, Cordoba): the bigger one, picked first, keeps it and the other is told apart by its country.
     let name = p.name;
     if (usedNames.has(name)) name = `${p.name} (${nation})`;
     while (usedNames.has(name)) name += ' II';
     usedNames.add(name);
-    cities.push({ x: ci, y: cj, name, nation, pop: p.pop_max, capital: p.featurecla === 'Admin-0 capital' && !t.nationByRegion?.[p.adm0name] });
+    // A country split by region loses its capital to the split, unless this city stayed with the country itself (and zones are in use).
+    const split = t.nationByRegion?.[p.adm0name] && !(t.cityZones && nation === p.adm0name);
+    cities.push({ x: ci, y: cj, name, nation, pop: p.pop_max, capital: p.featurecla === 'Admin-0 capital' && !split });
     taken.add(cj * W + ci);
+    used.add(p);
+    perNation.set(nation, (perNation.get(nation) ?? 0) + 1);
+    if (t.cityZones) inZone.set(zoneOf(nation), (inZone.get(zoneOf(nation)) ?? 0) + 1);
   }
   cities.sort((a, b) => a.y - b.y || a.x - b.x);
 

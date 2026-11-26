@@ -35,4 +35,7 @@ const render = (input, name) => sharp(input, { density: 300 }).resize(64, 48, { 
 
 for (const code of new Set(codes)) await render(join(src, `${code}.svg`), code);
 await render(Buffer.from(csa), 'csa');
-console.log(`${new Set(codes).size + 1} flags written`);
+// Newfoundland's old tricolour: pink, white and green.
+const newfoundland = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36"><rect width="16" height="36" fill="#f29ec4"/><rect x="16" width="16" height="36" fill="#fff"/><rect x="32" width="16" height="36" fill="#1f7a3d"/></svg>';
+await render(Buffer.from(newfoundland), 'newfoundland');
+console.log(`${new Set(codes).size + 2} flags written`);
