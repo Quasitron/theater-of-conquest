@@ -67,13 +67,14 @@
   "width": 100,
   "height": 62,
   "wrap": false,
-  "cities": 107,
+  "cities": 99,
   "nations": [
    "Canada",
    "United States of America",
-   "France",
+   "Newfoundland",
    "Spain",
    "United Kingdom",
+   "France",
    "Iceland",
    "Ireland",
    "Portugal"

@@ -2,7 +2,9 @@
 // about square on the ground); change it and rebuild (node tools/theaters/build.mjs <id>) to make a map bigger or smaller.
 // Optional tuning per theater: landPerCity, landThreshold, mountainMean/Peak, roughMean/Peak, forestShare, riverRank,
 // minNationCities, lakeRank, startNations (the countries a player may start as; by default every country with enough cities),
-// nationOverrides (city name -> country, where today's data disagrees with the history).
+// nationOverrides (city name -> country, where today's data disagrees with the history), nationByRegion (country ->
+// state or province -> the country it counts as here), cityZones (a city quota per group of countries, the entry with no
+// `nations` taking all the others; replaces landPerCity, and each start country is first given minNationCities).
 export const THEATERS = [
   {
     id: 'western-europe',
@@ -60,7 +62,18 @@ export const THEATERS = [
     riverRank: 6,
     roughMean: 650,
     roughPeak: 1500,
-    startNations: ['United States of America', 'Canada', 'United Kingdom', 'France', 'Spain', 'Portugal', 'Ireland', 'Iceland'],
+    startNations: ['United States of America', 'Canada', 'Newfoundland', 'United Kingdom', 'France', 'Spain', 'Portugal', 'Ireland', 'Iceland'],
+    // Newfoundland was a Dominion of its own until 1949; it gives the western side a third home.
+    nationByRegion: { Canada: { 'Newfoundland and Labrador': 'Newfoundland' } },
+    // Even sides for a left-against-right game: as many cities in the west as in the east, and a few in the middle up for grabs.
+    cityZones: [
+      { nations: ['United States of America', 'Canada', 'Newfoundland', 'Bermuda'], cities: 46 },
+      { nations: ['Greenland', 'Iceland', 'Faroe Islands'], cities: 7 },
+      // The east's 46: Britain keeps its northern ports, and North Africa does not crowd out Europe.
+      { nations: ['United Kingdom'], cities: 7 },
+      { nations: ['Algeria', 'Morocco', 'Tunisia', 'Libya'], cities: 8 },
+      { cities: 31 }, // the rest of Europe
+    ],
   },
   {
     id: 'pacific',

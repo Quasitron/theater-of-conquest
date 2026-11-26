@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'north-atlantic-even',
+    version: '0.9.162',
+    date: '2026-11-26',
+    title: 'The North Atlantic: even sides',
+    text: ['The North Atlantic map now has 46 cities in the west, 46 in the east and 7 in the middle (Greenland, Iceland and the Faroes), for fair left-against-right team games. Newfoundland joins as a third western starting country. Games already under way keep their old map.'],
+  },
+  {
     id: 'air-transport-build-time',
     version: '0.9.161',
     date: '2026-11-26',
