@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'air-transport-build-time',
+    version: '0.9.161',
+    date: '2026-11-26',
+    title: 'Air Transports take longer to build',
+    text: ['An Air Transport now takes 22 turns to build, then 18 for each one after (was 16 and 14).'],
+  },
+  {
     id: 'air-transport',
     version: '0.9.160',
     date: '2026-11-25',

@@ -67,4 +67,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 42: an aircraft patrol passes over a waypoint it cannot fly to; with none reachable it stops as blocked, not as low on fuel.
 // 43: the Hunt order (Army, Armor, warships).
 // 44: the Air Transport (Advanced units): airdrops and air routes; Airbases also hold it.
-export const RULES_VERSION = 44;
+// 45: the Air Transport takes 22 turns to build, then 18 (was 16 and 14).
+export const RULES_VERSION = 45;
