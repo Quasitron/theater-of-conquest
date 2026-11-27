@@ -4,6 +4,12 @@ import type { ActionId } from './keys';
 const inOwnCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.myCities.some((c) => c.x === u.x && c.y === u.y);
 const inAllyCity = (v: PlayerView, u: Pick<Unit, 'x' | 'y'>) => v.knownCities.some((c) => c.x === u.x && c.y === u.y && c.owner !== null && v.allies.includes(c.owner));
 
+/** The cities routes may use: your own, then your teammates'. */
+export const friendlyCities = (v: PlayerView): PlayerView['knownCities'] => [
+  ...v.knownCities.filter((c) => c.owner === v.me),
+  ...v.knownCities.filter((c) => c.owner !== null && c.owner !== v.me && v.allies.includes(c.owner)),
+];
+
 /** The own Airbase an aircraft is parked at, if it is at one. */
 export const airbaseUnder = (view: PlayerView, u: Unit): Unit | undefined =>
   u.carriedBy === null ? undefined : view.myUnits.find((h) => h.id === u.carriedBy && h.type === 'airbase');
@@ -57,7 +63,7 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     center: true,
     endTurn: true,
     disband: true,
-    load: st.carries.length > 0 && (inCity || u.type === 'troopTransport' || (u.type === 'airCargo' && airbaseUnder(view, u) !== undefined)) && loadCandidates(view, u).length > 0,
+    load: st.carries.length > 0 && (inCity || inAllyCity(view, u) || u.type === 'troopTransport' || (u.type === 'airCargo' && airbaseUnder(view, u) !== undefined)) && loadCandidates(view, u).length > 0,
     // In flight an Air Transport can only put out troops.
     unload: hasCargo && (u.type !== 'airCargo' || planeOnGround(view, u) || view.myUnits.some((c) => c.carriedBy === u.id && !isVehicle(c.type))),
     // Home is any city of yours or a teammate's (an ally's city refuels and repairs too).

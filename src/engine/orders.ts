@@ -332,12 +332,12 @@ export function executeOrders(
       const route = ferryRouteOf(s, u);
       const pick = route && ferryPickupPlace(s, route.pickup);
       if (!route) delete u.ferry;
-      if (!route || !pick || pick.owner !== u.owner) return endOrders(u, 'destinationLost', events);
+      if (!route || !pick || !areFriendly(s, pick.owner, u.owner)) return endOrders(u, 'destinationLost', events);
       o.target = o.ferry === 'pickup' ? { x: pick.x, y: pick.y } : { x: route.drop.x, y: route.drop.y };
     }
     if (o.kind === 'goto' && o.routeCity !== undefined) {
       const dest = s.cities.find((c) => c.id === o.routeCity);
-      if (!dest || dest.owner !== u.owner) return endOrders(u, 'destinationLost', events);
+      if (!dest || !areFriendly(s, dest.owner, u.owner)) return endOrders(u, 'destinationLost', events);
     }
     // A hunter already beside its quarry asks for orders before it wanders off elsewhere.
     if (o.kind === 'hunt' && u.carriedBy === null && s.units.some((e) => !areFriendly(s, e.owner, u.owner)

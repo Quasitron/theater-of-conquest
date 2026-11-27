@@ -199,7 +199,7 @@ describe('ferry routes', () => {
     const c = addUnit(s, 'carrier', 0, 0, 0);
     expect(ferry(s, d.id, { pickup: 0, drop: DROP })).toMatchObject({ ok: false });
     expect(ferry(s, c.id, { pickup: 0, drop: DROP })).toMatchObject({ ok: false, error: 'Carrier cannot run a ferry route' });
-    expect(ferry(s, t.id, { pickup: 1, drop: DROP })).toMatchObject({ ok: false, error: 'the pickup must be one of your cities' });
+    expect(ferry(s, t.id, { pickup: 1, drop: DROP })).toMatchObject({ ok: false, error: 'the pickup must be your city or an ally\'s' });
     expect(ferry(s, t.id, { pickup: 0, drop: { x: 0, y: 0 } })).toMatchObject({ ok: false, error: 'the drop square must differ from the pickup city' });
     expect(ferry(s, t.id, { routeId: 9 })).toMatchObject({ ok: false, error: 'no such ferry route' });
   });

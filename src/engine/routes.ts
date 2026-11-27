@@ -2,6 +2,7 @@ import type { City, CityRoute, GameState, Orders, PlayerId, Pos, Unit, UnitType 
 import { UNIT_STATS, UNIT_TYPES } from './units';
 import { aircraftCanReach, findPath, pathMapFromState, type PathMap } from './path';
 import { validateOrders } from './orders';
+import { areFriendly } from './relations';
 
 /** Which unit types could travel a route from one city to another, on the owner's known map. */
 export function routeUnitTypes(map: PathMap, from: Pos, to: Pos): Record<UnitType, boolean> {
@@ -19,7 +20,7 @@ export function validateRoute(s: GameState, pid: PlayerId, city: City, route: Om
   if (typeof route !== 'object' || route === null) return 'invalid route';
   const dest = s.cities.find((c) => c.id === route.destId);
   if (!dest) return 'no such destination city';
-  if (dest.owner !== pid) return 'the destination must be your city';
+  if (!areFriendly(s, dest.owner, pid)) return 'the destination must be your city or an ally\'s';
   if (dest.id === city.id) return 'the destination must be a different city';
   if (!Array.isArray(route.types) || route.types.length === 0) return 'pick at least one unit type';
   if (new Set(route.types).size !== route.types.length || !route.types.every((t) => UNIT_TYPES.includes(t))) {
@@ -51,7 +52,7 @@ export function applyRoute(s: GameState, city: City, u: Unit): void {
   const route = city.routes?.find((r) => r.types.includes(u.type));
   if (!route) return;
   const dest = s.cities.find((c) => c.id === route.destId);
-  if (!dest || dest.owner !== u.owner) return;
+  if (!dest || !areFriendly(s, dest.owner, u.owner)) return;
   const orders: Orders = {
     kind: 'goto',
     target: { x: dest.x, y: dest.y },
@@ -74,12 +75,12 @@ export function pickUpRoute(s: GameState, u: Unit): void {
   applyRoute(s, city, u);
 }
 
-/** Drops the city's routes that no longer hold: the setter lost the city, or the destination is no longer theirs. */
+/** Drops the city's routes that no longer hold: the setter lost the city, or the destination is no longer theirs or an ally's. */
 export function dropStaleRoute(s: GameState, city: City): void {
   if (!city.routes) return;
   const keep = city.routes.filter((route) => {
     const dest = s.cities.find((c) => c.id === route.destId);
-    return city.owner === route.by && !!dest && dest.owner === route.by;
+    return city.owner === route.by && !!dest && areFriendly(s, dest.owner, route.by);
   });
   if (keep.length === 0) delete city.routes;
   else if (keep.length !== city.routes.length) city.routes = keep;

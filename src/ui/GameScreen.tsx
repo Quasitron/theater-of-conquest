@@ -8,7 +8,7 @@ import {
   type Dir, type MapLike, type Orders, type PlayerView, type Pos, type Unit, type UnitType,
 } from '../engine';
 import type { SaveStore } from '../storage';
-import { airbaseUnder, availableActions, escortable, loadCandidates, planeOnGround } from './actions';
+import { airbaseUnder, availableActions, escortable, friendlyCities, loadCandidates, planeOnGround } from './actions';
 import { FerryDialog, emptyFerryDraft, type FerryDraft } from './FerryDialog';
 import { autoFit, centerOn, clampCamera, exploredBox, keepInViewWrap, pan, type Camera } from './camera';
 import { CityScreen } from './CityScreen';
@@ -99,10 +99,10 @@ const GameLog = memo(function GameLog({ lines }: { lines: LogLine[] }) {
 });
 
 /** Path, reachability and label from `u` to `to` (fuel-aware for aircraft). */
-/** Where a ferry or air route picks up: one of your cities, or (a negative number) one of your Airbases. */
+/** Where a ferry or air route picks up: your city or an ally's, or (a negative number) one of your Airbases. */
 function pickupPlace(view: PlayerView, pickup: number | undefined): { x: number; y: number; name: string } | undefined {
   if (pickup === undefined) return undefined;
-  if (pickup >= 0) return view.myCities.find((c) => c.id === pickup);
+  if (pickup >= 0) return friendlyCities(view).find((c) => c.id === pickup);
   const base = view.myUnits.find((u) => u.id === -pickup - 1);
   return base ? { x: base.x, y: base.y, name: `Airbase ${base.x},${base.y}` } : undefined;
 }
@@ -408,7 +408,7 @@ export function GameScreen({ session, onQuit }: Props) {
   const cityRoutes = useMemo(() => {
     if (!routesMap) return undefined;
     return view.myCities.flatMap((c) => (c.routes ?? []).flatMap((r) => {
-      const dest = view.myCities.find((d) => d.id === r.destId);
+      const dest = friendlyCities(view).find((d) => d.id === r.destId);
       return dest ? [{ from: { x: c.x, y: c.y }, to: { x: dest.x, y: dest.y }, types: r.types }] : [];
     }));
   }, [routesMap, view]);
@@ -1340,11 +1340,11 @@ export function GameScreen({ session, onQuit }: Props) {
       const air = selectedUnit.type === 'airCargo';
       const ownBase = air ? view.myUnits.find((u) => u.type === 'airbase' && u.x === p.x && u.y === p.y) : undefined;
       if (mode === 'ferryPickup') {
-        const city = view.myCities.find((c) => c.x === p.x && c.y === p.y);
+        const city = friendlyCities(view).find((c) => c.x === p.x && c.y === p.y);
         // An air route may also pick up at an Airbase, written as a negative number.
         const pickup = city ? city.id : ownBase ? -ownBase.id - 1 : undefined;
         if (pickup === undefined) {
-          setMessage(air ? 'Click one of your cities or Airbases for the pickup (Esc cancels).' : 'Click one of your cities for the pickup (Esc cancels).');
+          setMessage(air ? 'Click your city or Airbase, or an ally\'s city, for the pickup (Esc cancels).' : 'Click your city or an ally\'s for the pickup (Esc cancels).');
           return;
         }
         setFerryPlan((plan) => ({ ...(plan ?? {}), pickup, note: undefined }));
@@ -1868,8 +1868,8 @@ export function GameScreen({ session, onQuit }: Props) {
             }}
             onPickSquares={(routeId) => {
               setPicker(null);
-              // Starting from where the carrier stands: a city of ours, or (Air Transport) the Airbase it is parked at.
-              const city = view.myCities.find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
+              // Starting from where the carrier stands: a friendly city, or (Air Transport) the Airbase it is parked at.
+              const city = friendlyCities(view).find((c) => c.x === pickerUnit.x && c.y === pickerUnit.y);
               const base = pickerUnit.type === 'airCargo' ? airbaseUnder(view, pickerUnit) : undefined;
               const here = routeId !== null ? undefined : city ? city.id : base ? -base.id - 1 : undefined;
               setFerryPlan({ ...(routeId !== null ? { edit: routeId } : {}), ...(here !== undefined ? { pickup: here } : {}) });

@@ -23,14 +23,14 @@ function roomWhenLeft(s: GameState, carrier: Unit, troops: Unit[]): boolean {
   return s.rules.stacking && others.length + troops.length <= stackLimitOf('land') && others.every((o) => UNIT_STATS[o.type].domain !== 'air');
 }
 
-/** Boards the given own armies (or fighters) onto a carrier standing in its owner's city. */
+/** Boards the given own armies (or fighters) onto a carrier standing in its owner's city or an ally's. */
 export function loadUnits(s: GameState, t: Unit, unitIds: number[]): string | null {
   if (UNIT_STATS[t.type].carries.length === 0) return 'this unit cannot carry cargo';
-  // An APC (Armored Personnel Carrier) loads on any land square; ships and carriers only in a city of theirs. An Air
+  // An APC (Armored Personnel Carrier) loads on any land square; ships and carriers only in a friendly city. An Air
   // Transport also loads at an Airbase, from the squares around it.
   const air = t.type === 'airCargo';
   const atBase = air && airbaseUnder(s, t) !== undefined;
-  if (!inOwnCity(s, t) && t.type !== 'troopTransport' && !atBase) return air ? 'can only load in one of your cities or at an Airbase' : 'can only load in one of your cities';
+  if (!inFriendlyCity(s, t) && t.type !== 'troopTransport' && !atBase) return air ? 'can only load in a friendly city or at an Airbase' : 'can only load in a friendly city';
   if (unitIds.length === 0 || new Set(unitIds).size !== unitIds.length) return 'nothing to load';
   const boarding: Unit[] = [];
   for (const id of unitIds) {

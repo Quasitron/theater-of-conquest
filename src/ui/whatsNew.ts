@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'allied-city-routes',
+    version: '0.9.164',
+    date: '2026-11-26',
+    title: 'Routes and ferries through allied cities',
+    text: ['In a team game your city routes may now end at an ally\'s city, and your ferry and air routes may pick up there.', 'Your carriers can also load your own units in an ally\'s city.'],
+  },
+  {
     id: 'airbase-needs-move',
     version: '0.9.163',
     date: '2026-11-26',
