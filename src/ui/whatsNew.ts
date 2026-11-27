@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'airbase-needs-move',
+    version: '0.9.163',
+    date: '2026-11-26',
+    title: 'Building an Airbase takes a move',
+    text: ['An Army or Armor now needs a move left to turn into an Airbase. One that has already used its turn can build on the next.'],
+  },
+  {
     id: 'north-atlantic-even',
     version: '0.9.162',
     date: '2026-11-26',

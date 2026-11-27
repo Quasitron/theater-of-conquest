@@ -66,6 +66,7 @@ export function apply(state: GameState, cmd: Command, inPlace = false): ApplyRes
       else if (!s.rules.advancedUnits) error = 'airbases are part of the Advanced units rule';
       else if (!canBecomeAirbase(u.type)) error = 'only an Army or Armor can build an airbase';
       else if (u.carriedBy !== null || terrainAt(s, u.x, u.y) !== 'land' || cityAt(s, u.x, u.y)) error = 'an airbase needs open land';
+      else if (u.movesLeft <= 0) error = 'building an airbase needs a move left';
       else {
         u.type = 'airbase';
         u.damage = 0;

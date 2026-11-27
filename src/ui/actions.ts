@@ -75,8 +75,8 @@ export function availableActions(view: PlayerView, u: Unit): Record<ActionId, bo
     explore: !air && !fixed,
     hunt: canHunt(u.type),
     sentry: !fixed && (!air || inCity || u.carriedBy !== null),
-    // An Army or Armor on open land can turn itself into an Airbase (Advanced units rule); it is for good.
-    airbase: view.rules.advancedUnits && canBecomeAirbase(u.type) && u.carriedBy === null && !inCity
+    // An Army or Armor on open land with a move left can turn itself into an Airbase (Advanced units rule); it is for good.
+    airbase: view.rules.advancedUnits && canBecomeAirbase(u.type) && u.movesLeft > 0 && u.carriedBy === null && !inCity
       && view.terrain[u.y * view.width + u.x] === 'land',
     sabotage: view.rules.advancedUnits && inEnemyCity,
     // Nothing to damage in an empty city (its spy-eyed garrison list is empty).
