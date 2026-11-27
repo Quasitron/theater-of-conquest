@@ -10,7 +10,7 @@ export const LONG_GAP_MS: Partial<Record<SoundName, number>> = { explosion: 500 
 
 /** When a batch is over the cap, the least important sounds are dropped first (higher = more important). */
 const PRIORITY: Record<SoundName, number> = {
-  win: 10, lose: 10, lost: 9, capture: 8, alert: 7, explosion: 6, crash: 6, shot: 5, promote: 5, 'promote-elite': 6, news: 6, unload: 4, chime: 3, turn: 2, click: 1,
+  win: 10, lose: 10, lost: 9, capture: 8, alert: 7, explosion: 6, shot: 5, promote: 5, 'promote-elite': 6, news: 6, unload: 4, chime: 3, turn: 2, click: 1,
   'produce-army': 3, 'produce-armor': 3, 'produce-troopTransport': 3, 'produce-fighter': 3, 'produce-bomber': 3, 'produce-airCargo': 3, airbase: 4, 'produce-transport': 3, 'produce-destroyer': 3,
   'produce-submarine': 3, 'produce-cruiser': 3, 'produce-battleship': 3, 'produce-carrier': 3, 'produce-spy': 3,
 };
@@ -26,8 +26,7 @@ function soundFor(e: GameEvent, me: PlayerId): SoundName[] {
     // The log only holds events the player could see, so every combat in it counts.
     case 'combat': return (e.defender.kind === 'city' && e.attackerWon) || e.strike ? ['shot', 'explosion'] : ['shot']; // a torpedo that hits blows up too
     case 'unitDestroyed':
-      if (e.reason === 'combat') return ['explosion'];
-      if (e.reason === 'crashed') return ['crash'];
+      if (e.reason === 'combat' || e.reason === 'crashed') return ['explosion']; // an aircraft out of fuel blows up too
       return [];
     case 'cityBombed': return ['explosion'];
     case 'citySabotaged': return ['explosion']; // production wrecked

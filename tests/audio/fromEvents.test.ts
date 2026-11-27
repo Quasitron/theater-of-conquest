@@ -79,8 +79,8 @@ describe('soundsForEvents', () => {
     expect(soundsForEvents([combat, bombed], 1)).toEqual(['shot', 'explosion']);
   });
 
-  it('a crash is its own sound; disbanding is silent', () => {
-    expect(soundsForEvents([destroyed('crashed')], 0)).toEqual(['crash']);
+  it('a crash goes up like any other loss; disbanding is silent', () => {
+    expect(soundsForEvents([destroyed('crashed')], 0)).toEqual(['explosion']);
     expect(soundsForEvents([destroyed('disbanded')], 0)).toEqual([]);
   });
 
@@ -138,7 +138,7 @@ describe('soundsForEvents', () => {
     expect(out).not.toContain('unload');
     // Order of appearance is kept.
     expect(out.length).toBe(MAX_SOUNDS);
-    expect(out).toEqual(['explosion', 'crash', 'alert', 'lost']);
+    expect(out).toEqual(['shot', 'explosion', 'alert', 'lost']);
   });
 });
 

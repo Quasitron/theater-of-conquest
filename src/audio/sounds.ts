@@ -1,11 +1,11 @@
 export type SoundName =
-  | 'click' | 'turn' | 'chime' | 'shot' | 'explosion' | 'crash'
+  | 'click' | 'turn' | 'chime' | 'shot' | 'explosion'
   | 'capture' | 'lost' | 'alert' | 'unload' | 'promote' | 'promote-elite' | 'win' | 'lose' | 'news'
   | 'produce-army' | 'produce-armor' | 'produce-troopTransport' | 'produce-fighter' | 'produce-bomber' | 'produce-airCargo' | 'airbase' | 'produce-transport' | 'produce-destroyer'
   | 'produce-submarine' | 'produce-cruiser' | 'produce-battleship' | 'produce-carrier' | 'produce-spy';
 
 export const SOUND_NAMES: SoundName[] = [
-  'click', 'turn', 'chime', 'shot', 'explosion', 'crash', 'capture', 'lost', 'alert', 'unload', 'promote', 'promote-elite', 'win', 'lose', 'news',
+  'click', 'turn', 'chime', 'shot', 'explosion', 'capture', 'lost', 'alert', 'unload', 'promote', 'promote-elite', 'win', 'lose', 'news',
   'produce-army', 'produce-armor', 'produce-troopTransport', 'produce-fighter', 'produce-bomber', 'produce-airCargo', 'airbase', 'produce-transport', 'produce-destroyer',
   'produce-submarine', 'produce-cruiser', 'produce-battleship', 'produce-carrier', 'produce-spy',
 ];
@@ -214,12 +214,7 @@ export const SYNTH: Record<SoundName, SynthFn> = {
     noise(c, o, t, 0.9, { gain: 0.6, from: 1800, to: 80, q: 1 });
     tone(c, o, t, 90, 0.7, { gain: 0.5, endFreq: 30 });
   },
-  // An aircraft out of fuel: a falling whistle, then a thud.
-  crash: (c, o, t) => {
-    tone(c, o, t, 1200, 0.6, { type: 'sawtooth', gain: 0.1, endFreq: 150 });
-    noise(c, o, t + 0.55, 0.5, { gain: 0.5, from: 1200, to: 60 });
-    tone(c, o, t + 0.55, 70, 0.4, { gain: 0.4, endFreq: 30 });
-  },
+
   // A city is yours: a short brass fanfare, three rising notes ending on a held chord, with a cymbal-like tail.
   capture: fanfare,
   // Army: a quick snare-like drum roll, a slight crescendo.

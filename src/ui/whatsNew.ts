@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'crash-explosion',
+    version: '0.9.165',
+    date: '2026-11-27',
+    title: 'Crashing aircraft explode',
+    text: ['An aircraft that runs out of fuel and crashes now plays the explosion sound.'],
+  },
+  {
     id: 'allied-city-routes',
     version: '0.9.164',
     date: '2026-11-26',
