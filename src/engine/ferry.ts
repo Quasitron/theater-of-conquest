@@ -213,7 +213,9 @@ export function ferryArrive(s: GameState, u: Unit, leg: 'pickup' | 'drop', event
 function validateFerry(s: GameState, u: Unit, pickup: number, drop: Pos): string | null {
   const air = u.type === 'airCargo';
   const city = ferryPickupPlace(s, pickup);
-  if (!city || city.owner !== u.owner || (pickup < 0 && !air)) return air ? 'the pickup must be one of your cities or Airbases' : 'the pickup must be one of your cities';
+  // A city may be a teammate's; an Airbase must be our own.
+  const usable = !!city && (pickup >= 0 ? areFriendly(s, city.owner, u.owner) : air && city.owner === u.owner);
+  if (!city || !usable) return air ? 'the pickup must be your city or Airbase, or an ally\'s city' : 'the pickup must be your city or an ally\'s';
   if (!Number.isInteger(drop?.x) || !Number.isInteger(drop?.y) || drop.x < 0 || drop.x >= s.width || drop.y < 0 || drop.y >= s.height) return 'invalid drop square';
   if (s.fog[u.owner].explored[drop.y * s.width + drop.x] !== 1) return 'the drop square is not explored';
   if (drop.x === city.x && drop.y === city.y) return 'the drop square must differ from the pickup city';
@@ -246,7 +248,7 @@ function validateAirDrop(s: GameState, u: Unit, pickup: Pos, drop: Pos): string 
 /** Sends the carrier on its route: to the pickup city, or to the drop square if it already has cargo. */
 function startFerry(s: GameState, rng: RandomSource, u: Unit, route: FerryRoute, events: GameEvent[]): string | null {
   const city = ferryPickupPlace(s, route.pickup);
-  if (!city || city.owner !== u.owner) return 'the pickup is no longer yours';
+  if (!city || !areFriendly(s, city.owner, u.owner)) return 'the pickup is no longer yours or an ally\'s';
   if (airDrop(s, u) && cargoOf(s, u).some((c) => isVehicle(c.type))) return 'a vehicle cannot be airdropped: unload it first';
   const leg = cargoOf(s, u).length > 0 ? 'drop' : 'pickup';
   const target = leg === 'pickup' ? { x: city.x, y: city.y } : { ...route.drop };

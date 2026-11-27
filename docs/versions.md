@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.164 | 2026-11-26 | Team games: city routes may end at an allied city, ferry and air routes may pick up there, and carriers load your units there (rules 47). |
 | 0.9.163 | 2026-11-26 | An Army or Armor needs a move left to build an Airbase (rules 46). |
 | 0.9.162 | 2026-11-26 | North Atlantic theater rebalanced for left-against-right team play: 46 cities west, 7 middle (Greenland, Iceland, Faroes), 46 east (was 35, 7, 65; 99 cities, was 107). Newfoundland (9 cities, starts at St. John's, its own tricolour flag) is a new western start. Coastline and terrain unchanged; saved games keep their map. |
 | 0.9.161 | 2026-11-26 | Air Transport build time raised to 22 turns, then 18 (was 16 then 14), for playtesting (rules 45). |

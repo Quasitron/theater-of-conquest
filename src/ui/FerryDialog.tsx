@@ -54,7 +54,7 @@ export function FerryDialog({ view, unit, draft, onDraft, onPickSquares, onSave,
   const air = unit.type === 'airCargo';
   /** A pickup's name: a city, or (air routes) an Airbase, written as a negative number. */
   const cityName = (id: number) => {
-    if (id >= 0) return view.myCities.find((c) => c.id === id)?.name ?? '?';
+    if (id >= 0) return view.knownCities.find((c) => c.id === id)?.name ?? '?';
     const base = view.myUnits.find((u) => u.id === -id - 1);
     return base ? `Airbase ${base.x},${base.y}` : '?';
   };

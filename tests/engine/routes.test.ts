@@ -86,7 +86,7 @@ describe('setRoute', () => {
     expect(setRoute(s, route({ arrival: 'x' as 'wait' }))).toMatchObject({ ok: false, error: 'invalid arrival mode' });
     expect(setRoute(s, route({ types: ['destroyer'] }))).toMatchObject({ ok: false, error: 'Destroyer cannot make that trip' });
     s.cities[1].owner = 1;
-    expect(setRoute(s, route())).toMatchObject({ ok: false, error: 'the destination must be your city' });
+    expect(setRoute(s, route())).toMatchObject({ ok: false, error: 'the destination must be your city or an ally\'s' });
   });
 
   it('works out which unit types can make the trip', () => {

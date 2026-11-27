@@ -56,6 +56,42 @@ describe('teams', () => {
     expect(r2.events.some((e) => e.type === 'combat')).toBe(true);
   });
 
+  it('let my city route end at an ally\'s city, never an enemy\'s', () => {
+    const s = game();
+    s.fog[0].explored.fill(1);
+    const home = cityAt(s, 0, 0)!;
+    const route = (destId: number): Command => ({ type: 'setRoute', player: 0, cityId: home.id, route: { destId, types: ['army'], blockWait: 3, arrival: 'wait' } });
+    expect(apply(s, route(cityAt(s, 8, 0)!.id))).toMatchObject({ ok: false });
+    const r = run(s, route(cityAt(s, 4, 0)!.id));
+    // A built Army would take the route: one that walks into the city takes it too.
+    const army = addUnit(r.state, 'army', 0, 1, 0);
+    const moved = run(r.state, { type: 'move', player: 0, unitId: army.id, dir: 6 });
+    expect(cityAt(moved.state, 0, 0)!.routes).toHaveLength(1);
+    expect(moved.state.units.find((u) => u.id === army.id)!.orders).toMatchObject({ kind: 'goto', target: { x: 4, y: 0 } });
+  });
+
+  it('let my ferry route pick up at an ally\'s city and my transport load there, taking only my units', () => {
+    const s = makeGame(['*~~~*~~~*', '#~~~#~~~#'].map((row) => row.replace(/~/g, '.')), { players: 3 });
+    s.players[0].team = 1;
+    s.players[1].team = 1;
+    for (const p of s.players) updateFog(s, p.id);
+    s.fog[0].explored.fill(1);
+    const ally = cityAt(s, 4, 0)!;
+    const ship = addUnit(s, 'transport', 0, 4, 0);
+    const mine = addUnit(s, 'army', 0, 4, 0);
+    const theirs = addUnit(s, 'army', 1, 4, 0);
+    const loaded = run(s, { type: 'load', player: 0, transportId: ship.id, unitIds: [mine.id] });
+    expect(loaded.state.units.find((u) => u.id === mine.id)!.carriedBy).toBe(ship.id);
+    expect(apply(s, { type: 'load', player: 0, transportId: ship.id, unitIds: [theirs.id] })).toMatchObject({ ok: false });
+    const ferried = run(s, { type: 'setFerry', player: 0, unitId: ship.id, ferry: { pickup: ally.id, drop: { x: 2, y: 0 } } });
+    const after = ferried.state.units;
+    expect(after.find((u) => u.id === mine.id)!.carriedBy).toBe(ship.id);
+    expect(after.find((u) => u.id === theirs.id)!.carriedBy).toBeNull();
+    expect(getPlayerView(ferried.state, 0).ferryRoutes[0].pickup.name).toBe(ally.name);
+    const enemy = cityAt(s, 8, 0)!;
+    expect(apply(s, { type: 'setFerry', player: 0, unitId: ship.id, ferry: { pickup: enemy.id, drop: { x: 6, y: 0 } } })).toMatchObject({ ok: false });
+  });
+
   it('share sight: an ally\'s units show up on my map and are never enemies', () => {
     const s = game();
     const scout = addUnit(s, 'army', 1, 6, 1);

@@ -8,7 +8,7 @@ import { cityIsCoastal, inProductionCount, statsText, turnsToComplete } from './
 import { PlacedDialog } from './LeaderLine';
 import type { Pt } from './placement';
 import { blur } from './blur';
-import { ordersText } from './actions';
+import { friendlyCities, ordersText } from './actions';
 import { Chevrons } from './Chevrons';
 import { UnitCard } from './UnitCard';
 
@@ -35,7 +35,7 @@ interface Props {
 
 
 function routeSummary(view: PlayerView, route: CityRoute): string {
-  const dest = view.myCities.find((c) => c.id === route.destId);
+  const dest = friendlyCities(view).find((c) => c.id === route.destId);
   const types = route.types.map((t) => UNIT_STATS[t].name).join(', ');
   const on = route.arrival === 'explore' ? 'Explore' : route.arrival === 'sentry' ? 'Sentry' : 'Wait for orders';
   return `${types} → ${dest ? dest.name : 'a lost city'} (${on})`;
@@ -52,7 +52,9 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
   const [name, setName] = useState(city.name);
 
   // Route form: unit types the route cannot serve are greyed out, per the chosen destination.
-  const others = view.myCities.filter((c) => c.id !== city.id).sort((a, b) => a.name.localeCompare(b.name));
+  // Your own cities come first, then your allies'.
+  const mineFirst = (c: { owner: number | null }) => (c.owner === view.me ? 0 : 1);
+  const others = friendlyCities(view).filter((c) => c.id !== city.id).sort((a, b) => mineFirst(a) - mineFirst(b) || a.name.localeCompare(b.name));
   // A city can have several routes, each unit type on at most one. The form edits one of them (or a new one).
   const routes = city.routes ?? [];
   const first = routes[0];
@@ -92,7 +94,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
   /** Where a type already goes on one of the city's other routes, for the checkbox hint. */
   const takenBy = (t: UnitType): string | null => {
     const r = routes.find((x, i) => i !== editing && x.types.includes(t));
-    return r ? view.myCities.find((c) => c.id === r.destId)?.name ?? 'another city' : null;
+    return r ? friendlyCities(view).find((c) => c.id === r.destId)?.name ?? 'another city' : null;
   };
 
   const commit = () => {
@@ -249,7 +251,7 @@ export function CityScreen({ view, city, anchor, color, error, onPick, onRename,
           </p>
           <label>Destination{' '}
             <select value={destId ?? ''} onChange={(e) => setDestId(Number((e.target as HTMLSelectElement).value))}>
-              {others.map((c) => <option value={c.id}>{c.name}</option>)}
+              {others.map((c) => <option value={c.id}>{c.name}{c.owner === view.me ? '' : ' (ally)'}</option>)}
             </select>
           </label>
           <fieldset class="route-types">
