@@ -87,6 +87,12 @@ describe('Airbase (Advanced units house rule)', () => {
     expect(again).toMatchObject({ ok: false });
   });
 
+  it('needs a move left: a soldier that has used its turn waits for the next one', () => {
+    const s = makeGame(M, { rules: ON });
+    const spent = addUnit(s, 'army', 0, 1, 0, { movesLeft: 0 });
+    expect(apply(s, { type: 'buildAirbase', player: 0, unitId: spent.id })).toMatchObject({ ok: false, error: 'building an airbase needs a move left' });
+  });
+
   it('is refused without the rule, in a city, on a ship, and for other units', () => {
     const off = makeGame(M);
     expect(apply(off, { type: 'buildAirbase', player: 0, unitId: addUnit(off, 'army', 0, 1, 0).id })).toMatchObject({ ok: false });

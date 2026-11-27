@@ -181,6 +181,7 @@ describe('Build Airbase action', () => {
     const can = (id: number) => { const { v, u } = viewOf(s, id); return availableActions(v, u); };
     expect([can(field.id).airbase, can(city.id).airbase, can(base.id).airbase]).toEqual([true, false, false]);
     expect([can(base.id).moveTo, can(base.id).patrol, can(base.id).sentry, can(base.id).skip]).toEqual([false, false, false, false]);
+    expect(can(addUnit(s, 'army', 0, 1, 0, { movesLeft: 0 }).id).airbase).toBe(false);
     const off = makeGame(M);
     const a = addUnit(off, 'army', 0, 1, 0);
     const { v, u } = viewOf(off, a.id);

@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.163 | 2026-11-26 | An Army or Armor needs a move left to build an Airbase (rules 46). |
 | 0.9.162 | 2026-11-26 | North Atlantic theater rebalanced for left-against-right team play: 46 cities west, 7 middle (Greenland, Iceland, Faroes), 46 east (was 35, 7, 65; 99 cities, was 107). Newfoundland (9 cities, starts at St. John's, its own tricolour flag) is a new western start. Coastline and terrain unchanged; saved games keep their map. |
 | 0.9.161 | 2026-11-26 | Air Transport build time raised to 22 turns, then 18 (was 16 then 14), for playtesting (rules 45). |
 | 0.9.160 | 2026-11-25 | New unit, the Air Transport (Advanced units; this game's own addition, not in the original): move 4, range 16, 1 hit, no attack, defends like a Bomber, build 16 then 14. 4 spaces (Armies, Spies, and at most one Armor or empty APC). Loads in cities and at Airbases; parachutes troops onto land; vehicles get out only in cities or at Airbases. Air routes (orange): pickup at a city or Airbase; drop at a city or Airbase (takes one Armor by itself) or on open land (airdrop). Airbases hold it; computer players do not build it (rules 44). |
