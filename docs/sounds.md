@@ -40,8 +40,7 @@ Production sounds play as each new unit's production screen opens, one at a time
 | `produce-carrier` | The production screen for a new carrier opens (recorded, 5 s; the synth klaxon is the fallback) |
 | `produce-spy` | The production screen for a new spy opens (recorded, 4 s; the synth soft low tone is the fallback) |
 | `shot` | A battle you can see |
-| `explosion` | A unit was destroyed in a battle (yours or one you watch), after the shot; recorded, 1 s, the synth boom is the fallback |
-| `crash` | An aircraft ran out of fuel and crashed |
+| `explosion` | A unit was destroyed in a battle (yours or one you watch), after the shot, or an aircraft ran out of fuel and crashed; recorded, 1 s, the synth boom is the fallback |
 | `capture` | You captured a city (brass fanfare); winning an ordinary fight has no sound of its own beyond the shot and explosion |
 | `lost` | One of your cities was captured (alarm) |
 | `alert` | One of your units sighted an enemy and stopped |
