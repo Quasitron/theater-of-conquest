@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.166 | 2026-11-27 | An Airbase holds any number of aircraft, as a city does (was 8), as page 40 of the original manual says; its unit table says 8. Ground units sharing its square are unchanged. Rules 48. |
 | 0.9.165 | 2026-11-27 | An aircraft that runs out of fuel and crashes plays the explosion sound. |
 | 0.9.164 | 2026-11-26 | Team games: city routes may end at an allied city, ferry and air routes may pick up there, and carriers load your units there (rules 47). |
 | 0.9.163 | 2026-11-26 | An Army or Armor needs a move left to build an Airbase (rules 46). |

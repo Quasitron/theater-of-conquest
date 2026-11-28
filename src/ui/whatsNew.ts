@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'airbase-unlimited',
+    version: '0.9.166',
+    date: '2026-11-27',
+    title: 'No limit on aircraft at an Airbase',
+    text: ['An Airbase now holds any number of aircraft, just as a city does. Before, it held 8. If it is destroyed, every aircraft on it is still lost.'],
+  },
+  {
     id: 'crash-explosion',
     version: '0.9.165',
     date: '2026-11-27',

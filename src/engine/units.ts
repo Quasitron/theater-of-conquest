@@ -48,8 +48,8 @@ export const UNIT_STATS: Record<UnitType, UnitStats> = {
   cruiser:    { ...base, promotes: true, name: 'Cruiser',    domain: 'sea',  move: 2, hits: 8,  attack: 2, defense: 2, shot: 2, build: 42, buildRepeat: 35, bombard: true, seesSubs: true },
   battleship: { ...base, promotes: true, name: 'Battleship', domain: 'sea',  move: 2, hits: 12, attack: 2, defense: 2, shot: 3, build: 60, buildRepeat: 50, bombard: true },
   carrier:    { ...base, promotes: true, name: 'Carrier',    domain: 'sea',  move: 2, hits: 8,  attack: 1, defense: 2, shot: 1, build: 48, buildRepeat: 40, carries: ['fighter'], capacity: 8, capacityLossPerDamage: 1 },
-  /** Made from an Army or Armor on open land; never moves or attacks, and holds up to eight aircraft. */
-  airbase:    { ...base, advanced: true, producible: false, name: 'Airbase', domain: 'land', move: 0, hits: 1, attack: 0, defense: 2, shot: 1, build: 0, buildRepeat: 0, carries: ['fighter', 'bomber', 'airCargo'], capacity: 8 },
+  /** Made from an Army or Armor on open land; never moves or attacks, and like a city holds any number of aircraft. */
+  airbase:    { ...base, advanced: true, producible: false, name: 'Airbase', domain: 'land', move: 0, hits: 1, attack: 0, defense: 2, shot: 1, build: 0, buildRepeat: 0, carries: ['fighter', 'bomber', 'airCargo'], capacity: Infinity },
   /** Slips into enemy cities unseen to read and sabotage their production; no defence at all. Visible to the enemy only when uncovered (see fog.ts). */
   spy:        { ...base, advanced: true, promotes: true, name: 'Spy', domain: 'land', move: 1, hits: 1, attack: 0, defense: 0, shot: 1, build: 16, buildRepeat: 14 },
 };

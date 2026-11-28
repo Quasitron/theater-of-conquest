@@ -21,7 +21,7 @@ function unitLine(t: UnitType): string {
   bits.push(`defence ${u.defense}`);
   if (u.shot > 1) bits.push(`${u.shot} shots`);
   if (u.range !== null) bits.push(`range ${u.range}`);
-  if (u.carries.length > 0) bits.push(`carries ${u.capacity}`);
+  if (u.carries.length > 0) bits.push(Number.isFinite(u.capacity) ? `carries ${u.capacity}` : 'holds any number of aircraft');
   if (u.producible) bits.push(`takes ${u.build} turns to build, then ${u.buildRepeat} for each after`);
   if (u.advanced) bits.push('Advanced units rule');
   return `${UNIT_BLURB[t]} (${bits.join(', ')}.)`;

@@ -56,6 +56,8 @@ export function cargoSummary(cargo: readonly Pick<Unit, 'type'>[]): string {
 
 /** A carrier's load as "Cargo: 5/6 spaces used" (capacity shrinks with damage; an Armor takes two spaces, so this is not a unit count). */
 export function cargoLoad(used: number, capacity: number): string {
+  // An Airbase has no limit.
+  if (!Number.isFinite(capacity)) return `Aircraft aboard: ${used} (no limit)`;
   return `Cargo: ${used}/${capacity} spaces used`;
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { UNIT_STATS, buildableTypes, fightRatings } from '../../src/engine';
+import { UNIT_STATS, buildableTypes, cargoCapacity, fightRatings } from '../../src/engine';
+import { cargoLoad } from '../../src/ui/labels';
 import { apply } from '../../src/engine/apply';
 import { moveUnit } from '../../src/engine/movement';
 import { cargoOf, destroyUnit } from '../../src/engine/query';
@@ -123,13 +124,15 @@ describe('Airbase (Advanced units house rule)', () => {
     expect(carrier.id).toBeGreaterThan(0);
   });
 
-  it('holds eight aircraft', () => {
+  it('holds any number of aircraft, like a city', () => {
     const s = makeGame(M, { rules: ON });
     const base = addUnit(s, 'airbase', 0, 2, 0, { movesLeft: 0, fuel: null });
     for (let i = 0; i < 8; i++) addUnit(s, 'fighter', 0, 2, 0, { carriedBy: base.id });
     const f = addUnit(s, 'fighter', 0, 3, 0);
-    expect(moveUnit(s, new Rng(1), f, 6, [])).toBeNull(); // flies over a full airbase
-    expect(f.carriedBy).toBeNull();
+    expect(moveUnit(s, new Rng(1), f, 6, [])).toBeNull(); // a ninth lands too
+    expect(f.carriedBy).toBe(base.id);
+    expect(cargoOf(s, base)).toHaveLength(9);
+    expect(cargoLoad(9, cargoCapacity(base))).toBe('Aircraft aboard: 9 (no limit)');
   });
 
   it('destroying the airbase destroys the aircraft on it', () => {
