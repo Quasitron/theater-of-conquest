@@ -942,6 +942,7 @@ function airbaseValue(view: PlayerView, sq: Pos): number {
   if (foes.some((c) => d(sq, c) < BASE_FROM_FOE)) return 0;
   const bases = view.myUnits.filter((b) => b.type === 'airbase');
   if (bases.some((b) => d(sq, b) < BASE_APART)) return 0;
+  if (view.allyUnits.some((b) => b.type === 'airbase' && d(sq, b) === 0)) return 0; // one Airbase to a square
   const covered = (c: Pos) => view.myCities.some((m) => d(c, m) <= BASE_REACH) || bases.some((b) => d(c, b) <= BASE_REACH);
   return foes.filter((c) => d(sq, c) <= BASE_REACH && !covered(c)).length;
 }

@@ -16,11 +16,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: 'airbase-unlimited',
+    id: 'airbase-stack',
     version: '0.9.166',
     date: '2026-11-27',
-    title: 'No limit on aircraft at an Airbase',
-    text: ['An Airbase now holds any number of aircraft, just as a city does. Before, it held 8. If it is destroyed, every aircraft on it is still lost.'],
+    title: 'A full stack at an Airbase',
+    text: ['With Stackable units on, 4 land units can now share an Airbase\'s square, beside the 8 aircraft it holds. After that the square is full.', 'A square takes only one Airbase.'],
   },
   {
     id: 'crash-explosion',

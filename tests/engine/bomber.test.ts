@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { UNIT_STATS, buildableTypes, cargoCapacity, fightRatings } from '../../src/engine';
-import { cargoLoad } from '../../src/ui/labels';
+import { UNIT_STATS, buildableTypes, fightRatings } from '../../src/engine';
 import { apply } from '../../src/engine/apply';
 import { moveUnit } from '../../src/engine/movement';
+import { findPath, pathMapFromState } from '../../src/engine/path';
 import { cargoOf, destroyUnit } from '../../src/engine/query';
 import { Rng } from '../../src/engine/rng';
 import { addUnit, defenderAlwaysHits, fixedRng, makeGame } from '../helpers';
@@ -124,15 +124,43 @@ describe('Airbase (Advanced units house rule)', () => {
     expect(carrier.id).toBeGreaterThan(0);
   });
 
-  it('holds any number of aircraft, like a city', () => {
+  it('holds eight aircraft', () => {
     const s = makeGame(M, { rules: ON });
     const base = addUnit(s, 'airbase', 0, 2, 0, { movesLeft: 0, fuel: null });
     for (let i = 0; i < 8; i++) addUnit(s, 'fighter', 0, 2, 0, { carriedBy: base.id });
     const f = addUnit(s, 'fighter', 0, 3, 0);
-    expect(moveUnit(s, new Rng(1), f, 6, [])).toBeNull(); // a ninth lands too
-    expect(f.carriedBy).toBe(base.id);
-    expect(cargoOf(s, base)).toHaveLength(9);
-    expect(cargoLoad(9, cargoCapacity(base))).toBe('Aircraft aboard: 9 (no limit)');
+    expect(moveUnit(s, new Rng(1), f, 6, [])).toBeNull(); // flies over a full airbase
+    expect(f.carriedBy).toBeNull();
+  });
+
+  it('with stacking, takes a full stack of 4 land units beside its 8 aircraft, and no more', () => {
+    const s = makeGame(M, { rules: { ...ON, stacking: true } });
+    s.fog[0].explored.fill(1);
+    const base = addUnit(s, 'airbase', 0, 2, 0, { movesLeft: 0, fuel: null });
+    for (let i = 0; i < 3; i++) addUnit(s, 'army', 0, 2, 0);
+    const fourth = addUnit(s, 'army', 0, 3, 0);
+    expect(findPath(pathMapFromState(s, 0), fourth, { x: 2, y: 0 })).toEqual([{ x: 2, y: 0 }]);
+    expect(moveUnit(s, new Rng(1), fourth, 6, [])).toBeNull();
+    const fifth = addUnit(s, 'army', 0, 3, 0);
+    expect(findPath(pathMapFromState(s, 0), fifth, { x: 2, y: 0 })).toBeNull();
+    expect(moveUnit(s, new Rng(1), fifth, 6, [])).toBe('square is occupied');
+    for (let i = 0; i < 7; i++) addUnit(s, 'fighter', 0, 2, 0, { carriedBy: base.id });
+    const eighth = addUnit(s, 'fighter', 0, 3, 0);
+    expect(moveUnit(s, new Rng(1), eighth, 6, [])).toBeNull(); // the land stack does not stop it landing
+    expect(eighth.carriedBy).toBe(base.id);
+  });
+
+  it('without stacking no land unit shares its square', () => {
+    const s = makeGame(M, { rules: ON });
+    addUnit(s, 'airbase', 0, 2, 0, { movesLeft: 0, fuel: null });
+    expect(moveUnit(s, new Rng(1), addUnit(s, 'army', 0, 3, 0), 6, [])).toBe('square is occupied');
+  });
+
+  it('is one to a square, so a stack cannot turn into several', () => {
+    const s = makeGame(M, { rules: { ...ON, stacking: true } });
+    addUnit(s, 'airbase', 0, 2, 0, { movesLeft: 0, fuel: null });
+    const a = addUnit(s, 'army', 0, 2, 0);
+    expect(apply(s, { type: 'buildAirbase', player: 0, unitId: a.id })).toMatchObject({ ok: false, error: 'there is already an airbase here' });
   });
 
   it('destroying the airbase destroys the aircraft on it', () => {

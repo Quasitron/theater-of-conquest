@@ -1,6 +1,6 @@
 import type { GameEvent, GameState, Unit } from './types';
 import { UNIT_STATS, canCarry, cargoUsed, isVehicle } from './units';
-import { airbaseUnder, cargoOf, cargoRoom, cityAt, stackLimitOf, topLevelUnitsAt } from './query';
+import { airbaseUnder, cargoOf, cargoRoom, cityAt, stackCountOf, stackLimitOf, topLevelUnitsAt } from './query';
 import { chebyshev } from './map';
 import { pickUpRoute } from './routes';
 import { areFriendly } from './relations';
@@ -20,7 +20,7 @@ function roomWhenLeft(s: GameState, carrier: Unit, troops: Unit[]): boolean {
   if (cityAt(s, carrier.x, carrier.y)) return true;
   const others = topLevelUnitsAt(s, carrier.x, carrier.y).filter((o) => o !== carrier);
   if (others.length === 0 && troops.length === 1) return true;
-  return s.rules.stacking && others.length + troops.length <= stackLimitOf('land') && others.every((o) => UNIT_STATS[o.type].domain !== 'air');
+  return s.rules.stacking && stackCountOf(others) + troops.length <= stackLimitOf('land') && others.every((o) => UNIT_STATS[o.type].domain !== 'air');
 }
 
 /** Boards the given own armies (or fighters) onto a carrier standing in its owner's city or an ally's. */

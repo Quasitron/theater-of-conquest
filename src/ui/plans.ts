@@ -2,7 +2,7 @@ import {
   CITY_COMBAT, CITY_STRENGTH_HITS, DIRS, armorBlockedBy, isVehicle, movesLikeArmor, attackRating, STRIKE_CHANCE, isStrikeTarget, fightRatings, garrisonBonus, hitsOf, UNIT_STATS, chebyshev, combatExpectedDamage, combatWinChance, findPath, normalize, pathMapFromView,
   type Dir, type MapLike, type PlayerId, type PlayerView, type Pos, type Relief, type Unit, type UnitType,
 } from '../engine';
-import { stackLimitOf } from '../engine/query';
+import { stackCountOf, stackLimitOf } from '../engine/query';
 
 /** The known ground on a square, 'clear' when the map has no terrain or the square is unexplored. */
 export function viewRelief(view: PlayerView, x: number, y: number): Relief {
@@ -58,7 +58,7 @@ export function landingPlan(
         if (stacking) {
           const mine = view.myUnits.filter((u) => u.carriedBy === null && u.x === p.x && u.y === p.y);
           const allies = view.allyUnits.filter((u) => u.x === p.x && u.y === p.y);
-          const there = mine.length + allies.length;
+          const there = stackCountOf([...mine, ...allies]);
           if ([...mine, ...allies].some((u) => UNIT_STATS[u.type].domain === 'air')) continue;
           if (there + (planned.get(i) ?? 0) >= stackLimitOf('land')) continue;
           planned.set(i, (planned.get(i) ?? 0) + 1);

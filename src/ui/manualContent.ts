@@ -21,7 +21,7 @@ function unitLine(t: UnitType): string {
   bits.push(`defence ${u.defense}`);
   if (u.shot > 1) bits.push(`${u.shot} shots`);
   if (u.range !== null) bits.push(`range ${u.range}`);
-  if (u.carries.length > 0) bits.push(Number.isFinite(u.capacity) ? `carries ${u.capacity}` : 'holds any number of aircraft');
+  if (u.carries.length > 0) bits.push(`carries ${u.capacity}`);
   if (u.producible) bits.push(`takes ${u.build} turns to build, then ${u.buildRepeat} for each after`);
   if (u.advanced) bits.push('Advanced units rule');
   return `${UNIT_BLURB[t]} (${bits.join(', ')}.)`;
@@ -51,7 +51,7 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   unload: 'Unload what is aboard onto land or into a city.',
   clearOrders: 'Clear the unit\'s orders so it waits for you again.',
   disband: 'Disband (scrap) the unit. This cannot be undone.',
-  airbase: 'Turn an Army or Armor on open land into an Airbase (Advanced units rule). It needs a move left this turn. This is permanent.',
+  airbase: 'Turn an Army or Armor on open land into an Airbase (Advanced units rule). It needs a move left this turn. This is permanent. A square takes only one Airbase. It holds 8 aircraft, and with Stackable units 4 land units can share its square.',
   sabotage: 'A Spy in an enemy city wrecks the production that city has built up.',
   hurt: 'A Spy in an enemy city damages one unit of its garrison.',
   incite: 'An Elite Spy tries to turn an enemy city against its owner (needs the Promotions rule).',
