@@ -210,6 +210,11 @@ export function ferryArrive(s: GameState, u: Unit, leg: 'pickup' | 'drop', event
   return disembark(s, u, events) || airborne ? 'pickup' : null;
 }
 
+/** Whether player `pid` sees an enemy on square p this turn. */
+export function enemyOnSquare(s: GameState, pid: PlayerId, p: Pos): boolean {
+  return Object.values(s.fog[pid].lastSeen).some((e) => e.turnSeen === s.turn && e.x === p.x && e.y === p.y && !areFriendly(s, e.owner, pid));
+}
+
 function validateFerry(s: GameState, u: Unit, pickup: number, drop: Pos): string | null {
   const air = u.type === 'airCargo';
   const city = ferryPickupPlace(s, pickup);
@@ -223,6 +228,7 @@ function validateFerry(s: GameState, u: Unit, pickup: number, drop: Pos): string
   const dropCity = cityAt(s, drop.x, drop.y);
   const land = UNIT_STATS[u.type].domain === 'land'; // an APC runs routes over land
   if (terrainAt(s, drop.x, drop.y) !== (land ? 'land' : 'water') && !(dropCity && areFriendly(s, dropCity.owner, u.owner))) return land ? 'the drop square must be a land tile (or a friendly city)' : 'the drop square must be a sea tile (or a friendly city)';
+  if (enemyOnSquare(s, u.owner, drop)) return 'an enemy is on the drop square';
   // Own units standing about (even the carrier itself on the drop square) do not count: the route is about the sea or land between.
   if (findPath({ ...pathMapFromState(s, u.owner), own: new Map() }, { type: u.type, x: city.x, y: city.y }, drop) === null) return 'no known path between the pickup city and the drop square';
   return null;

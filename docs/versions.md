@@ -7,6 +7,7 @@ The title screen shows `Version X.Y.Z · build <hash> · <date>` (`src/ui/versio
 
 | Version | Date | What it covers |
 | --- | --- | --- |
+| 0.9.167 | 2026-11-27 | Ferry and APC routes: when our own side fills the drop square, a carrier keeps its route, goes up beside the square and waits for room (before: "no known path", route paused). A carrier heading back and one waiting to get in, on the same drop, change places in a narrow channel. An enemy seen on the drop square stops the route with "an enemy is on the drop square", also when resuming or setting the route. Rules 49. |
 | 0.9.166 | 2026-11-27 | With Stackable units, an Airbase takes no place in its square's stack: 4 land units can share it (was 3), beside its 8 aircraft. A square takes only one Airbase, so bases cannot be piled up into a super stack. Without the rule nothing changes: no land unit shares an Airbase. Clicking an Airbase square with an aircraft selected lands it even when land units stand there. Rules 48. |
 | 0.9.165 | 2026-11-27 | An aircraft that runs out of fuel and crashes plays the explosion sound. |
 | 0.9.164 | 2026-11-26 | Team games: city routes may end at an allied city, ferry and air routes may pick up there, and carriers load your units there (rules 47). |

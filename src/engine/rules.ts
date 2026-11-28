@@ -71,4 +71,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 46: only an Army or Armor with a move left can turn into an Airbase.
 // 47: city routes may end at a teammate's city; ferry and air routes may pick up there, and carriers load there.
 // 48: an Airbase takes no place in its square's stack (4 land units may share it); one Airbase to a square.
-export const RULES_VERSION = 48;
+// 49: a ferry carrier waits beside a drop square its own side fills, and says when an enemy holds it.
+export const RULES_VERSION = 49;

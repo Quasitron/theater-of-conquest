@@ -89,7 +89,7 @@ export type Orders =
   | { kind: 'escort'; transportId: number };
 
 export type OrdersEndReason =
-  | 'arrived' | 'blocked' | 'enemySighted' | 'lowFuel' | 'nothingToExplore' | 'nothingToHunt' | 'vehicleAboard' |'cityFound' | 'returning' | 'destinationLost'
+  | 'arrived' | 'blocked' | 'enemySighted' | 'lowFuel' | 'nothingToExplore' | 'nothingToHunt' | 'vehicleAboard' |'cityFound' | 'returning' | 'destinationLost' | 'dropHeld'
   | 'baseLost' | 'baseOutOfRange' | 'repaired' | 'cityLost' | 'escortLost' | 'crippled';
 
 /** A city's standing route: matching units it builds head for another city of the owner. */

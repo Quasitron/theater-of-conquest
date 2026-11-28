@@ -6,12 +6,12 @@ import { chebyshev, index, isCoastal, neighbors, reliefAt } from './map';
 import { canJoinStack, cargoOf, cityAt, hasRoomFor, isAtRefuelPoint, topLevelUnitsAt } from './query';
 import { areFriendly } from './relations';
 import { canPlayerSeeUnit, updateFog } from './fog';
-import { moveUnit } from './movement';
+import { moveUnit, relocate, slowArmor, spendMove } from './movement';
 import { attackRestriction, attackUnit } from './attack';
 import { unloadCargo } from './cargo';
-import { aircraftCanReach, dirBetween, findBeside, findFrontier, findPath, pathMapFromState } from './path';
+import { aircraftCanReach, dirBetween, findBeside, findFrontier, findPath, pathMapFromState, type PathMap } from './path';
 import { pickUpRoute } from './routes';
-import { airDrop, airDropApproach, airDropReady, ferryArrive, ferryPickupPlace, ferryRouteOf, pruneFerryRoutes } from './ferry';
+import { airDrop, airDropApproach, airDropReady, enemyOnSquare, ferryArrive, ferryPickupPlace, ferryRouteOf, pruneFerryRoutes } from './ferry';
 
 const NO_AIR_EXPLORE = 'aircraft cannot explore yet';
 const NO_PATROL_BASE = 'patrol must start or end at a city or carrier';
@@ -97,7 +97,10 @@ export function validateOrders(s: GameState, u: Unit, o: Orders): string | null 
         if (way === null || !home) return 'no known path';
         return way.steps + chebyshev(s, way.pos, home) > (u.fuel ?? 0) ? 'out of range' : null;
       }
-      const path = findPath(map, u, o.target);
+      // A ship or APC may set out for a drop square that our own side fills: it waits beside it for room.
+      const dropRun = o.ferry === 'drop' && !air;
+      if (dropRun && enemyOnSquare(s, u.owner, o.target)) return 'an enemy is on the drop square';
+      const path = findPath(dropRun && ownBlocks(s, u, o.target) ? openSquare(map, o.target) : map, u, o.target);
       if (path === null) return 'no known path';
       if (air && !aircraftCanReach(map, path.length, u.fuel ?? 0, o.target, u.type)) return 'out of range';
       return null;
@@ -241,6 +244,36 @@ function ownBlocks(s: GameState, u: Unit, p: Pos): boolean {
   const here = topLevelUnitsAt(s, p.x, p.y).filter((o) => areFriendly(s, o.owner, u.owner) && o !== u);
   if (here.length === 0) return false;
   return !here.some((h) => h.owner === u.owner && hasRoomFor(s, h, u.type)) && !canJoinStack(s, u, p);
+}
+
+/** The path map with square p taken as free, whoever of ours stands on it. */
+function openSquare(m: PathMap, p: Pos): PathMap {
+  const i = p.y * m.width + p.x;
+  const own = new Map(m.own);
+  const enemy = new Set(m.enemy);
+  own.delete(i);
+  enemy.delete(i); // without the stacking rule an ally's unit is marked here too
+  return { ...m, own, enemy };
+}
+
+/**
+ * Two carriers meeting in a narrow place: one heading back from the drop square changes places with one of the same
+ * drop square that is waiting to get in, so that neither blocks the other for good.
+ */
+function passCarrier(s: GameState, u: Unit, next: Pos, events: GameEvent[]): boolean {
+  const route = ferryRouteOf(s, u);
+  if (!route || u.orders?.kind !== 'goto' || u.orders.ferry !== 'pickup') return false;
+  const other = topLevelUnitsAt(s, next.x, next.y).find((w) => {
+    if (w.owner !== u.owner || w.orders?.kind !== 'goto' || w.orders.ferry !== 'drop') return false;
+    const theirs = ferryRouteOf(s, w);
+    return UNIT_STATS[w.type].domain === UNIT_STATS[u.type].domain && theirs?.drop.x === route.drop.x && theirs.drop.y === route.drop.y;
+  });
+  if (!other) return false;
+  relocate(s, other, { x: u.x, y: u.y }, events);
+  spendMove(u);
+  relocate(s, u, next, events);
+  slowArmor(s, u);
+  return true;
 }
 
 /** True when an aircraft of ours would have to stay on p: own units stand there (not a city), none can host it or take it into a stack. */
@@ -414,8 +447,12 @@ export function executeOrders(
         continue;
       }
     }
-    const path = findPath(map, u, target);
-    if (path === null || path.length === 0) return blocked();
+    // A ferry carrier bound for its drop square (not an Air Transport): an enemy there stops it; our own units there make it wait.
+    const dropRun = o.kind === 'goto' && o.ferry === 'drop' && UNIT_STATS[u.type].domain !== 'air';
+    const held = dropRun && enemyOnSquare(s, u.owner, target);
+    const queued = dropRun && !held && ownBlocks(s, u, target);
+    const path = findPath(queued ? openSquare(map, target) : map, u, target);
+    if (path === null || path.length === 0) return held ? endOrders(u, 'dropHeld', events) : blocked();
     if (u.fuel !== null && o.kind === 'goto' && !drop && !aircraftCanReach(map, path.length, u.fuel, target, u.type)) {
       return endOrders(u, 'lowFuel', events);
     }
@@ -426,8 +463,13 @@ export function executeOrders(
       const free = freeSquareToward(s, u, map, target);
       if (free) next = free;
     }
+    if (queued && next.x === target.x && next.y === target.y) {
+      u.blockedTurns = 0;
+      return; // beside the full drop square: wait there for room, orders kept
+    }
     if (ownBlocks(s, u, next)) {
-      const freeMap = pathMapFromState(s, u.owner, { blockOwn: true });
+      const blockedMap = pathMapFromState(s, u.owner, { blockOwn: true });
+      const freeMap = queued ? openSquare(blockedMap, target) : blockedMap;
       let detour = findPath(freeMap, u, target);
       if (detour === null && (o.kind === 'explore' || o.kind === 'hunt')) {
         // No free way to that frontier: an explorer heads for the nearest frontier it can still reach round the stack.
@@ -436,6 +478,13 @@ export function executeOrders(
       }
       if (detour && detour.length > 0 && !ownBlocks(s, u, detour[0])) next = detour[0];
       else {
+        if (passCarrier(s, u, next, events)) {
+          u.blockedTurns = 0;
+          updateFog(s, u.owner);
+          if (enemyAdjacent(s, u)) return endOrders(u, 'enemySighted', events);
+          continue;
+        }
+        if (queued) return; // others are queued ahead: wait
         if (turnStart) {
           u.blockedTurns += 1;
           if (u.blockedTurns >= (o.kind === 'goto' && o.wait ? o.wait : 3)) return endOrders(u, 'blocked', events);
@@ -465,7 +514,10 @@ export function executeOrders(
         continue;
       }
     } else if (o.kind === 'goto' && u.x === o.target.x && u.y === o.target.y) return arrive();
-    if (u.carriedBy === null && enemyAdjacent(s, u)) return endOrders(u, 'enemySighted', events);
+    if (u.carriedBy === null && enemyAdjacent(s, u)) {
+      const onDrop = o.kind === 'goto' && o.ferry === 'drop' && enemyOnSquare(s, u.owner, o.target);
+      return endOrders(u, onDrop ? 'dropHeld' : 'enemySighted', events);
+    }
     if (cityBefore && [...adjacentForeignCities(s, u)].some((id) => !cityBefore.has(id))) {
       return endOrders(u, 'cityFound', events);
     }

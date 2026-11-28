@@ -21,6 +21,7 @@ const ORDERS_END: Record<Exclude<OrdersEndReason, 'arrived' | 'returning' | 'bas
   nothingToHunt: 'nothing left to hunt',
   vehicleAboard: 'a vehicle cannot be airdropped',
   destinationLost: 'destination city lost',
+  dropHeld: 'an enemy is on the drop square',
   escortLost: 'its transport is gone',
   crippled: 'badly damaged',
 };
