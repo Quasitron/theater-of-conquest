@@ -26,7 +26,7 @@ import { battlesAgainstMe, newEliminations, recentSightings, sentryLines } from 
 import { EliminationNotice } from './EliminationNotice';
 import { NewsNotice } from './NewsNotice';
 import { cityThreatened } from '../engine/orders';
-import { stackLimitOf } from '../engine/query';
+import { stackCountOf, stackLimitOf } from '../engine/query';
 import { spyHeadlines, type NewsItem } from './spyNews';
 import { unitsHeadingLeft } from './unitIcons';
 import { builtThisTurn, nextReadyAfter, readyUnits, reportQueue, threatOf, type NearHint, type ProductionReportItem } from './cycle';
@@ -388,8 +388,10 @@ export function GameScreen({ session, onQuit }: Props) {
     const plan = planPath(view, selectedUnit, hover);
     // Stacking rule: a square that already holds the most units (yours and your allies') cannot be joined.
     if (!plan.path && view.rules.stacking && UNIT_STATS[selectedUnit.type].domain !== 'air') {
-      const here = view.myUnits.filter((u) => u.carriedBy === null && u.x === hover.x && u.y === hover.y).length
-        + view.allyUnits.filter((a) => a.x === hover.x && a.y === hover.y).length;
+      const here = stackCountOf([
+        ...view.myUnits.filter((u) => u.carriedBy === null && u.x === hover.x && u.y === hover.y),
+        ...view.allyUnits.filter((a) => a.x === hover.x && a.y === hover.y),
+      ]);
       if (here >= stackLimitOf(UNIT_STATS[selectedUnit.type].domain) && view.terrain[hover.y * view.width + hover.x] !== 'city') return { ...plan, label: `stack full (${here})` };
     }
     return plan;
@@ -1478,8 +1480,8 @@ export function GameScreen({ session, onQuit }: Props) {
     const unit = stackAt >= 0 && stack.length > 1 ? stack[(stackAt + 1) % stack.length] : stack[0];
     // A host with room for the selected unit (a carrier for a fighter, a transport for an army) is a boarding
     // order, not a selection. Press Esc first to select the host itself.
-    if (unit && selectedUnit && stackAt < 0 && unit.id !== selectedUnit.id && explored && unit.type !== 'airCargo'
-      && hostHasRoom(unit, view.myUnits.filter((c) => c.carriedBy === unit.id), selectedUnit.type)) {
+    if (unit && selectedUnit && stackAt < 0 && explored && stack.some((h) => h.id !== selectedUnit.id && h.type !== 'airCargo'
+      && hostHasRoom(h, view.myUnits.filter((c) => c.carriedBy === h.id), selectedUnit.type))) {
       return giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
     }
     // Stacking rule: with a unit selected that is not part of this stack, a click on the square is an order to join it
@@ -1488,7 +1490,7 @@ export function GameScreen({ session, onQuit }: Props) {
       && UNIT_STATS[selectedUnit.type].domain !== 'air' && view.terrain[p.y * view.width + p.x] !== 'city'
       && !stack.some((u) => UNIT_STATS[u.type].domain === 'air')) {
       const limit = stackLimitOf(UNIT_STATS[selectedUnit.type].domain);
-      const total = stack.length + view.allyUnits.filter((a) => a.x === p.x && a.y === p.y).length;
+      const total = stackCountOf([...stack, ...view.allyUnits.filter((a) => a.x === p.x && a.y === p.y)]);
       if (total < limit) return giveRoute(selectedUnit, { kind: 'goto', target: p }, p);
     }
     if (unit) return setSelection({ kind: 'unit', id: unit.id });

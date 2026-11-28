@@ -70,4 +70,5 @@ units rule on, older games replay differently; older saves load from their saved
 // 45: the Air Transport takes 22 turns to build, then 18 (was 16 and 14).
 // 46: only an Army or Armor with a move left can turn into an Airbase.
 // 47: city routes may end at a teammate's city; ferry and air routes may pick up there, and carriers load there.
-export const RULES_VERSION = 47;
+// 48: an Airbase takes no place in its square's stack (4 land units may share it); one Airbase to a square.
+export const RULES_VERSION = 48;

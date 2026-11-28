@@ -47,7 +47,7 @@ function buildOwn(
     if (m.terrain[i] === 'city') continue;
     let e = own.get(i);
     if (!e) own.set(i, (e = { count: 0, air: 0, room: {} }));
-    e.count++;
+    if (u.type !== 'airbase') e.count++; // an Airbase takes no place in a stack
     if (UNIT_STATS[u.type].domain === 'air') e.air++;
     // Nothing walks or flies aboard an Air Transport out in the open: it is loaded in a city or at an Airbase.
     if (u.type === 'airCargo') continue;
@@ -57,15 +57,15 @@ function buildOwn(
 }
 
 /** A friend's unit in the open: it blocks the square, or with the stacking rule counts towards the square's stack. */
-function addFriend(own: PathMap['own'], enemy: Set<number>, stacking: boolean, i: number, air: boolean): void {
+function addFriend(own: PathMap['own'], enemy: Set<number>, stacking: boolean, i: number, type: UnitType): void {
   if (!stacking) {
     enemy.add(i);
     return;
   }
   let e = own.get(i);
   if (!e) own.set(i, (e = { count: 0, air: 0, room: {} }));
-  e.count++;
-  if (air) e.air++;
+  if (type !== 'airbase') e.count++;
+  if (UNIT_STATS[type].domain === 'air') e.air++;
 }
 
 export function pathMapFromState(s: GameState, pid: PlayerId, opts: { blockOwn?: boolean } = {}): PathMap {
@@ -88,7 +88,7 @@ export function pathMapFromState(s: GameState, pid: PlayerId, opts: { blockOwn?:
   for (const u of s.units) {
     if (u.owner === pid || u.carriedBy !== null || !areFriendly(s, u.owner, pid)) continue;
     const i = index(s, u.x, u.y);
-    if (s.terrain[i] !== 'city') addFriend(own, enemy, s.rules.stacking, i, UNIT_STATS[u.type].domain === 'air');
+    if (s.terrain[i] !== 'city') addFriend(own, enemy, s.rules.stacking, i, u.type);
   }
   return {
     width: s.width, height: s.height, wrap: s.wrap, me: pid, turn: s.turn,
@@ -107,7 +107,7 @@ export function pathMapFromView(v: PlayerView, opts: { blockOwn?: boolean } = {}
   const m = { width: v.width, terrain: v.terrain };
   const own = buildOwn(m, v.myUnits);
   // A city can always be shared, so allied units inside one neither block it nor count towards a stack.
-  for (const a of v.allyUnits) if (v.terrain[a.y * v.width + a.x] !== 'city') addFriend(own, enemy, v.rules.stacking, a.y * v.width + a.x, UNIT_STATS[a.type].domain === 'air');
+  for (const a of v.allyUnits) if (v.terrain[a.y * v.width + a.x] !== 'city') addFriend(own, enemy, v.rules.stacking, a.y * v.width + a.x, a.type);
   return {
     width: v.width, height: v.height, wrap: v.wrap, me: v.me, turn: v.turn,
     terrain: v.terrain, ...(v.relief && v.rules.advancedUnits ? { relief: v.relief } : {}), cityOwner, enemy,

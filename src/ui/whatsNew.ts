@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'airbase-stack',
+    version: '0.9.166',
+    date: '2026-11-27',
+    title: 'A full stack at an Airbase',
+    text: ['With Stackable units on, 4 land units can now share an Airbase\'s square, beside the 8 aircraft it holds. After that the square is full.', 'A square takes only one Airbase.'],
+  },
+  {
     id: 'crash-explosion',
     version: '0.9.165',
     date: '2026-11-27',

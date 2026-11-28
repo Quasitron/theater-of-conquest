@@ -51,7 +51,7 @@ const KEY_MEANING: Record<(typeof KEY_ORDER)[number], string> = {
   unload: 'Unload what is aboard onto land or into a city.',
   clearOrders: 'Clear the unit\'s orders so it waits for you again.',
   disband: 'Disband (scrap) the unit. This cannot be undone.',
-  airbase: 'Turn an Army or Armor on open land into an Airbase (Advanced units rule). It needs a move left this turn. This is permanent.',
+  airbase: 'Turn an Army or Armor on open land into an Airbase (Advanced units rule). It needs a move left this turn. This is permanent. A square takes only one Airbase. It holds 8 aircraft, and with Stackable units 4 land units can share its square.',
   sabotage: 'A Spy in an enemy city wrecks the production that city has built up.',
   hurt: 'A Spy in an enemy city damages one unit of its garrison.',
   incite: 'An Elite Spy tries to turn an enemy city against its owner (needs the Promotions rule).',
