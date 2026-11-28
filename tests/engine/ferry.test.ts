@@ -30,6 +30,57 @@ const DROP = { x: 5, y: 0 };
 const ferry = (s: GameState, unitId: number, f: { routeId: number } | { pickup: number; drop: { x: number; y: number } } | null) =>
   apply(s, { type: 'setFerry', player: 0, unitId, ferry: f });
 
+describe('a ferry drop square that is taken', () => {
+  const loaded = (s: GameState, x: number) => {
+    const t = addUnit(s, 'transport', 0, x, 0);
+    addUnit(s, 'army', 0, x, 0, { carriedBy: t.id });
+    return t;
+  };
+
+  it('with our own ship on it, the carrier sails up beside it, waits, and goes in when there is room', () => {
+    const s = game();
+    const t = loaded(s, 1);
+    const sitter = addUnit(s, 'transport', 0, DROP.x, 0);
+    let r = run(s, { type: 'setFerry', player: 0, unitId: t.id, ferry: { pickup: 0, drop: DROP } }).state;
+    for (let i = 0; i < 6; i++) r = round(r).state;
+    const waiting = r.units.find((u) => u.id === t.id)!;
+    expect(waiting.x).toBe(DROP.x - 1);
+    expect(waiting.orders).toMatchObject({ kind: 'goto', ferry: 'drop' });
+    r.units = r.units.filter((u) => u.id !== sitter.id);
+    r = round(r).state;
+    expect(r.units.find((u) => u.type === 'army')!.carriedBy).toBeNull();
+  });
+
+  it('two carriers on one route pass each other in a one-square channel', () => {
+    const s = game();
+    const first = loaded(s, 1);
+    const second = loaded(s, 2);
+    let r = run(s, { type: 'setFerry', player: 0, unitId: second.id, ferry: { pickup: 0, drop: DROP } }).state;
+    r = run(r, { type: 'setFerry', player: 0, unitId: first.id, ferry: { routeId: 1 } }).state;
+    let ashore = 0;
+    for (let i = 0; i < 12; i++) {
+      r = round(r).state;
+      // The one shore square is cleared as armies land, so the next can follow.
+      const landed = r.units.filter((u) => u.type === 'army' && u.carriedBy === null && u.x === 6);
+      ashore += landed.length;
+      r.units = r.units.filter((u) => !landed.includes(u));
+    }
+    expect(ashore).toBe(2); // neither carrier blocked the other for good
+  });
+
+  it('with an enemy on it, the route stops and says why', () => {
+    const s = game();
+    const t = loaded(s, 1);
+    let r = run(s, { type: 'setFerry', player: 0, unitId: t.id, ferry: { pickup: 0, drop: DROP } }).state;
+    addUnit(r, 'battleship', 1, DROP.x, 0);
+    const out = round(r);
+    r = out.state;
+    expect(out.events).toContainEqual({ type: 'ordersEnded', unitId: t.id, owner: 0, reason: 'dropHeld' });
+    expect(apply(r, { type: 'resumeFerry', player: 0, unitId: t.id })).toMatchObject({ ok: false, error: 'an enemy is on the drop square' });
+    expect(apply(r, { type: 'setFerry', player: 0, unitId: t.id, ferry: { pickup: 0, drop: DROP } })).toMatchObject({ ok: false, error: 'an enemy is on the drop square' });
+  });
+});
+
 describe('ferry routes', () => {
   it('the drop square must be a sea tile (or one of your cities)', () => {
     const s = game();

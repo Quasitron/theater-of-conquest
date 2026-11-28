@@ -16,6 +16,13 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: 'ferry-queue',
+    version: '0.9.167',
+    date: '2026-11-27',
+    title: 'Ferries wait their turn',
+    text: ['A ferry whose drop square is full of your own side\'s units now sails up beside it and waits for room, instead of stopping.', 'If an enemy is on the drop square, the game now says so.'],
+  },
+  {
     id: 'airbase-stack',
     version: '0.9.166',
     date: '2026-11-27',
